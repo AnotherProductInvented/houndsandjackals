@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hounds and Jackals</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* Global Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background-color: #f0ddb5; /* Light parchment color */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    /* Logo in the bottom right */
+    #logo {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 80px;
+      z-index: 1000;
+    }
+    /* Header Titles */
+    .header-title {
+      margin-top: 50px;
+      text-align: center;
+    }
+    .header-title h2 {
+      font-size: 1.8em;
+      color: #000;
+      text-shadow: 1px 1px 2px #ccc;
+    }
+    .header-title h1 {
+      font-size: 2.5em;
+      color: #000;
+      text-shadow: 1px 1px 2px #ccc;
+      margin-bottom: 20px;
+    }
+    /* Turn Indicator */
+    #turnIndicator {
+      font-size: 24px;
+      color: #000;
+      margin: 20px 0;
+    }
+    /* Game Container */
+    #gameContainer {
+      position: relative;
+      width: 600px;
+      height: 400px;
+      background: url('houndsjackalsboard.png') no-repeat center center;
+      background-size: cover;
+      border: 2px solid #555;
+      margin-bottom: 10px;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    /* Controls */
+    #controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    button {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #ffcc00;
+      color: #333;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
+    /* Overlay Screens */
+    .overlayScreen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      z-index: 10;
+    }
+    .overlayScreen.active {
+      display: flex;
+    }
+    /* Warning Message (centered over game) */
+    #warningMessage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.8);
+      padding: 20px;
+      border: 2px solid #333;
+      border-radius: 10px;
+      font-size: 20px;
+      color: #333;
+      display: none;
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+  <!-- Logo -->
+  <img src="logo.png" alt="Logo" id="logo">
+  <!-- Header Titles -->
+  <div class="header-title">
+    <h2>Another Product Invented</h2>
+    <h1>Hounds and Jackals</h1>
+  </div>
+  <!-- Turn Indicator -->
+  <div id="turnIndicator"></div>
+  <!-- Game Container -->
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <div id="warningMessage"></div>
+    <!-- Overlay Screens -->
+    <div id="menuScreen" class="overlayScreen active">
+      <h2>Menu</h2>
+      <button id="newGameBtn">New Game</button>
+      <button id="instructionsBtn">Instructions</button>
+    </div>
+    <div id="instructionsScreen" class="overlayScreen">
+      <h2>Instructions</h2>
+      <p>1) Each player has 5 pegs.</p>
+      <p>2) Roll the dice to move a peg along the holes.</p>
+      <p>3) The first to get all pegs to the final hole wins!</p>
+      <p>Press [M] to return to the menu.</p>
+      <button id="backToMenuFromInstrBtn">Back to Menu</button>
+    </div>
+    <div id="difficultyScreen" class="overlayScreen">
+      <h2>Select Difficulty</h2>
+      <button id="easyBtn">Easy</button>
+      <button id="mediumBtn">Medium</button>
+      <button id="hardBtn">Hard</button>
+    </div>
+  </div>
+  <!-- Controls -->
+  <div id="controls">
+    <button id="rollDiceBtn">Roll Dice</button>
+  </div>
+  <div id="messageArea"></div>
+
+  <script>
+    'use strict';
+    console.log("[DEBUG] Hounds and Jackals started");
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // Simplified game layout: 10 holes per track, 2 tracks (Human vs AI)
+    // We'll create an array of holes for each track
+    const TOTAL_HOLES = 10;
+    let humanPegs = [0,0,0,0,0]; // 5 pegs
+    let aiPegs = [0,0,0,0,0];
+    let turn = "human"; // "human", "ai", or "gameover"
+    let difficulty = "medium";
+
+    // We'll store the hole positions so we can draw them and place pegs
+    let holesHuman = []; // array of {x, y}
+    let holesAI = [];    // array of {x, y}
+
+    // DOM elements
+    const turnIndicator = document.getElementById("turnIndicator");
+    const warningMessage = document.getElementById("warningMessage");
+    const menuScreen = document.getElementById("menuScreen");
+    const instructionsScreen = document.getElementById("instructionsScreen");
+    const difficultyScreen = document.getElementById("difficultyScreen");
+    const newGameBtn = document.getElementById("newGameBtn");
+    const instructionsBtn = document.getElementById("instructionsBtn");
+    const backToMenuFromInstrBtn = document.getElementById("backToMenuFromInstrBtn");
+    const easyBtn = document.getElementById("easyBtn");
+    const mediumBtn = document.getElementById("mediumBtn");
+    const hardBtn = document.getElementById("hardBtn");
+    const rollDiceBtn = document.getElementById("rollDiceBtn");
+    const messageArea = document.getElementById("messageArea");
+
+    // Update turn indicator text
+    function updateTurnIndicator() {
+      if (turn === "human") {
+        turnIndicator.textContent = "Your turn";
+      } else if (turn === "ai") {
+        turnIndicator.textContent = "AI's turn";
+      } else {
+        turnIndicator.textContent = "";
+      }
+    }
+
+    // Show a warning message in the center of the game area
+    function showWarning(msg) {
+      warningMessage.textContent = msg;
+      warningMessage.style.display = "block";
+      setTimeout(() => { warningMessage.style.display = "none"; }, 2000);
+    }
+
+    // Overlay screen control
+    function showOverlay(screen) {
+      menuScreen.classList.remove("active");
+      instructionsScreen.classList.remove("active");
+      difficultyScreen.classList.remove("active");
+      if (screen) {
+        screen.classList.add("active");
+      }
+    }
+
+    // Setup hole positions for each track
+    // We'll do a simple linear layout from left to right
+    function setupHoles() {
+      holesHuman = [];
+      holesAI = [];
+      let spacing = W / (TOTAL_HOLES + 1);
+      // For the human track, let's place them at y = H/2 - 50
+      let humanY = H/2 - 50;
+      // For the AI track, let's place them at y = H/2 + 50
+      let aiY = H/2 + 50;
+
+      for (let i = 0; i < TOTAL_HOLES; i++) {
+        holesHuman.push({ x: spacing * (i+1), y: humanY });
+        holesAI.push({ x: spacing * (i+1), y: aiY });
+      }
+    }
+
+    // Draw the board: the holes and the pegs
+    function drawBoard() {
+      ctx.clearRect(0, 0, W, H);
+      // Draw holes for human
+      ctx.fillStyle = "#ddd";
+      for (let i = 0; i < TOTAL_HOLES; i++) {
+        let hPos = holesHuman[i];
+        ctx.beginPath();
+        ctx.arc(hPos.x, hPos.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#444";
+        ctx.stroke();
+      }
+      // Draw holes for AI
+      for (let i = 0; i < TOTAL_HOLES; i++) {
+        let aPos = holesAI[i];
+        ctx.beginPath();
+        ctx.arc(aPos.x, aPos.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#444";
+        ctx.stroke();
+      }
+
+      // Draw human pegs (blue)
+      ctx.fillStyle = "#00f";
+      humanPegs.forEach(p => {
+        // p is the hole index (0..9)
+        if (p < TOTAL_HOLES) {
+          let pos = holesHuman[p];
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, 10, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // If p >= TOTAL_HOLES, that peg is "finished"
+        }
+      });
+
+      // Draw AI pegs (red)
+      ctx.fillStyle = "#f00";
+      aiPegs.forEach(p => {
+        if (p < TOTAL_HOLES) {
+          let pos = holesAI[p];
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, 10, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+
+    // Check if the game is over (if all pegs are done)
+    function checkGameOver() {
+      // If all human pegs >= 10, human wins
+      let humanDone = humanPegs.every(p => p >= TOTAL_HOLES);
+      let aiDone = aiPegs.every(p => p >= TOTAL_HOLES);
+      if (humanDone) {
+        showWarning("Game Over! You win!");
+        turn = "gameover";
+        updateTurnIndicator();
+        return true;
+      }
+      if (aiDone) {
+        showWarning("Game Over! AI wins!");
+        turn = "gameover";
+        updateTurnIndicator();
+        return true;
+      }
+      return false;
+    }
+
+    // Human turn: roll dice and move a peg
+    rollDiceBtn.addEventListener("click", function() {
+      if (turn !== "human") return;
+      let dice = Math.floor(Math.random() * 6) + 1;
+      showWarning("You rolled a " + dice);
+
+      // Try to move the first peg that isn't done
+      let moved = false;
+      for (let i = 0; i < humanPegs.length; i++) {
+        if (humanPegs[i] < TOTAL_HOLES) {
+          humanPegs[i] = Math.min(humanPegs[i] + dice, TOTAL_HOLES);
+          moved = true;
+          break;
+        }
+      }
+      drawBoard();
+      if (!checkGameOver() && moved) {
+        turn = "ai";
+        updateTurnIndicator();
+        setTimeout(aiMove, 1000);
+      }
+    });
+
+    // AI move logic – dice roll based on difficulty
+    function aiMove() {
+      if (turn !== "ai") return;
+      let dice;
+      if (difficulty === "easy") {
+        dice = Math.floor(Math.random() * 3) + 1; // easier, lower numbers
+      } else if (difficulty === "medium") {
+        dice = Math.floor(Math.random() * 4) + 1; // moderate range
+      } else { // hard
+        dice = Math.floor(Math.random() * 6) + 1; // full dice
+      }
+      showWarning("AI rolled a " + dice);
+
+      let moved = false;
+      for (let i = 0; i < aiPegs.length; i++) {
+        if (aiPegs[i] < TOTAL_HOLES) {
+          aiPegs[i] = Math.min(aiPegs[i] + dice, TOTAL_HOLES);
+          moved = true;
+          break;
+        }
+      }
+      drawBoard();
+      if (!checkGameOver() && moved) {
+        turn = "human";
+        updateTurnIndicator();
+      }
+    }
+
+    // New Game button: show difficulty selection overlay
+    newGameBtn.addEventListener("click", function() {
+      showOverlay(difficultyScreen);
+    });
+
+    // Instructions button
+    instructionsBtn.addEventListener("click", function() {
+      showOverlay(instructionsScreen);
+    });
+
+    // Back to Menu from Instructions overlay
+    backToMenuFromInstrBtn.addEventListener("click", function() {
+      showOverlay(menuScreen);
+    });
+
+    // Difficulty selection buttons
+    easyBtn.addEventListener("click", function() {
+      difficulty = "easy";
+      startNewGame();
+    });
+    mediumBtn.addEventListener("click", function() {
+      difficulty = "medium";
+      startNewGame();
+    });
+    hardBtn.addEventListener("click", function() {
+      difficulty = "hard";
+      startNewGame();
+    });
+
+    // Start a new game
+    function startNewGame() {
+      humanPegs = [0,0,0,0,0];
+      aiPegs = [0,0,0,0,0];
+      setupHoles();
+      turn = "human";
+      updateTurnIndicator();
+      drawBoard();
+      showOverlay(null);
+      showWarning("New game started. Your turn!");
+    }
+
+    // Listen for key [M] to return to menu
+    document.addEventListener("keydown", function(e) {
+      if (e.key.toLowerCase() === "m") {
+        showOverlay(menuScreen);
+      }
+    });
+
+    // Initial setup
+    setupHoles();
+    updateTurnIndicator();
+    drawBoard();
+  </script>
+</body>
+</html>
