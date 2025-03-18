@@ -398,6 +398,10 @@ function drawBoard() {
     ctx.strokeStyle = "#6b4e2e";
     ctx.lineWidth = 3;
     ctx.stroke();
+    ctx.fillStyle = "#000";
+    ctx.font = "12px Arial";
+    ctx.fillText(label, sq.x, sq.y - 18);
+
 
     // Draw slot number
     
