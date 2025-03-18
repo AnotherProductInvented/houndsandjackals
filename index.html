@@ -45,7 +45,7 @@
     /* Game Container */
 #gameContainer {
   position: relative;
-  width: 640px;
+  width: 840px;
   height: 500px;
 
   padding: 20px;
@@ -196,7 +196,8 @@ canvas {
         <button id="gameOverNewGameBtn">New Game</button>
         <p>Press [M] to return to the Main Menu.</p>
       </div>
-      <canvas id="gameCanvas" width="620" height="320"></canvas>
+      <canvas id="gameCanvas" width="820" height="320"></canvas>
+
 
 
     </div>
@@ -236,7 +237,7 @@ for (let i = 1; i <= 15; i++) {
   boardPath.push(`A${i}`);
 }
 for (let i = 1; i <= 15; i++) {
-  boardSquares[`D${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 3 };
+  boardSquares[`D${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 3.6 };
   boardPath.push(`D${i}`);
 }
 
@@ -253,7 +254,7 @@ for (let i = 1; i <= 10; i++) {
 
 // Arch Path E1–E9 (starting after D15 and curving around)
 const archCenters = [
-  { x: START_X + SLOT_SPACING * 15.5, y: START_Y + SLOT_SPACING * 3.4 },
+  { x: START_X + SLOT_SPACING * 15.5, y: START_Y + SLOT_SPACING * 3.6 },
   { x: START_X + SLOT_SPACING * 15.2, y: START_Y + SLOT_SPACING * 2.6 },
   { x: START_X + SLOT_SPACING * 14.8, y: START_Y + SLOT_SPACING * 2.2 },
   { x: START_X + SLOT_SPACING * 14.3, y: START_Y + SLOT_SPACING * 1.8 },
