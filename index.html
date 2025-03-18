@@ -56,7 +56,7 @@
       background: #f5f2e8;
       margin: auto;
     }
-    /* Overlay Screens */
+    /* Overlays */
     .overlayScreen {
       position: absolute;
       top: 0; left: 0;
@@ -76,6 +76,15 @@
     .overlayScreen.active {
       display: flex;
     }
+    /* Instructions overlay additional buttons */
+    #instructionsContent {
+      font-size: 20px;
+      margin: 10px;
+    }
+    #instructionsNav {
+      margin-top: 10px;
+    }
+    /* Buttons */
     button {
       font-size: 18px;
       margin: 10px;
@@ -142,18 +151,11 @@
         <button id="instructionsBtn">Instructions</button>
       </div>
       <div id="instructionsScreen" class="overlayScreen">
-        <p>
-          <strong>Classic Rules:</strong><br>
-          • Each player has 5 pieces.<br>
-          • To enter a piece onto the board, you must roll a 1 or a 6.<br>
-          • Pieces move along a 30‑square path (exact roll required to finish).<br>
-          • Landing on an opponent’s piece (if not on a safe square) sends it off‑board.<br>
-          • You cannot land on a square occupied by your own piece (except in designated safe zones).<br>
-          • Rolling a 6 grants an extra turn.<br>
-          • The first to get all 5 pieces to the final square wins.<br>
-          <br>
-          Press [M] to return to the Main Menu.
-        </p>
+        <div id="instructionsContent"></div>
+        <div id="instructionsNav">
+          <button id="instructionsPrevBtn">Previous</button>
+          <button id="instructionsNextBtn">Next</button>
+        </div>
       </div>
       <div id="difficultyScreen" class="overlayScreen">
         <p>Select AI Difficulty:</p>
@@ -179,7 +181,11 @@
 
   <script>
     'use strict';
-
+    const debugMode = true;
+    function debugLog(msg) {
+      if (debugMode) console.log("[DEBUG]", msg);
+    }
+    
     /***********************************
      * 1) Board & Canvas Setup
      ***********************************/
@@ -198,18 +204,16 @@
           y: r * squareSize,
           w: squareSize,
           h: squareSize,
-          safe: (r === 1 && (c === 2 || c === 7)) // Example safe zones on middle row
+          safe: (r === 1 && (c === 2 || c === 7)) // two safe zones in middle row
         });
       }
     }
     // Define the movement path in serpentine order (30 squares)
     let path = [];
-    // First row: left-to-right
     for (let i = 0; i < boardCols; i++) path.push(i);
-    // Second row: right-to-left
     for (let i = boardCols; i < 2 * boardCols; i++) path.push(2 * boardCols - 1 - (i - boardCols));
-    // Third row: left-to-right
     for (let i = 2 * boardCols; i < 3 * boardCols; i++) path.push(i);
+    debugLog("Board squares and path created.");
 
     /***********************************
      * 2) Game State Variables
@@ -226,6 +230,7 @@
     let houndsPieces = [], jackalsPieces = [];
     let moveHistory = [];
     let lastMove = null;
+    debugLog("Game state variables initialized.");
 
     /***********************************
      * 3) DOM Elements & Overlays
@@ -238,31 +243,87 @@
     const difficultyScreen = document.getElementById("difficultyScreen");
     const gameOverScreen = document.getElementById("gameOverScreen");
     const gameOverText = document.getElementById("gameOverText");
+    const instructionsContent = document.getElementById("instructionsContent");
+    const instructionsPrevBtn = document.getElementById("instructionsPrevBtn");
+    const instructionsNextBtn = document.getElementById("instructionsNextBtn");
+    debugLog("DOM elements loaded.");
 
     /***********************************
-     * 4) Initialization
+     * 4) Instructions (2 Pages)
+     ***********************************/
+    const instructionsPages = [
+      `Page 1 – Gameplay Overview:<br>
+      • Each player has 5 pieces.<br>
+      • To enter a piece onto the board, you must roll a 1 or 6.<br>
+      • Pieces move along a 30‑square path in a serpentine pattern.<br>
+      • Landing on an opponent’s piece (if not on a safe zone) captures it (sends it off‑board).<br>
+      • Rolling a 6 grants an extra turn.`,
+      `Page 2 – Special Rules:<br>
+      • You cannot land on a square occupied by your own piece (except safe zones).<br>
+      • Exact roll is required to land on the final square.<br>
+      • Safe zones (marked with a star) protect pieces from capture.<br>
+      • The first player to get all 5 pieces to the final square wins.<br>
+      Press [M] at any time to return to the Main Menu.`
+    ];
+    let currentInstructionsPage = 0;
+    function updateInstructions() {
+      instructionsContent.innerHTML = instructionsPages[currentInstructionsPage];
+      instructionsPrevBtn.style.display = (currentInstructionsPage === 0) ? "none" : "inline-block";
+      instructionsNextBtn.style.display = (currentInstructionsPage === instructionsPages.length - 1) ? "none" : "inline-block";
+      debugLog("Instructions updated to page " + (currentInstructionsPage + 1));
+    }
+    instructionsPrevBtn.onclick = () => {
+      if (currentInstructionsPage > 0) {
+        currentInstructionsPage--;
+        updateInstructions();
+      }
+    };
+    instructionsNextBtn.onclick = () => {
+      if (currentInstructionsPage < instructionsPages.length - 1) {
+        currentInstructionsPage++;
+        updateInstructions();
+      }
+    };
+
+    /***********************************
+     * 5) External Images for Pieces
+     ***********************************/
+    let houndsImg = new Image();
+    houndsImg.src = "hounds.png";  // your custom image for hounds
+    houndsImg.crossOrigin = "anonymous";
+    let jackalsImg = new Image();
+    jackalsImg.src = "jackals.png"; // your custom image for jackals
+    jackalsImg.crossOrigin = "anonymous";
+    houndsImg.onload = () => debugLog("Hounds image loaded.");
+    jackalsImg.onload = () => debugLog("Jackals image loaded.");
+
+    /***********************************
+     * 6) Initialization of Pieces
      ***********************************/
     function initPieces() {
-      houndsPieces = Array(NUM_PIECES).fill(-1);  // off-board
+      houndsPieces = Array(NUM_PIECES).fill(-1);  // pieces off-board
       jackalsPieces = Array(NUM_PIECES).fill(-1);
       lastMove = null;
       moveHistory = [];
       updateMoveHistoryDisplay();
+      debugLog("Pieces initialized.");
     }
 
     /***********************************
-     * 5) Dice Function
+     * 7) Dice Function
      ***********************************/
     function rollDice() {
-      return Math.floor(Math.random() * 6) + 1;
+      const roll = Math.floor(Math.random() * 6) + 1;
+      debugLog("Dice rolled: " + roll);
+      return roll;
     }
 
     /***********************************
-     * 6) Drawing Functions
+     * 8) Drawing Functions
      ***********************************/
     function drawBoard() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      boardSquares.forEach((sq, idx) => {
+      boardSquares.forEach((sq) => {
         let grad = ctx.createLinearGradient(sq.x, sq.y, sq.x + sq.w, sq.y + sq.h);
         grad.addColorStop(0, "#f4e2c0");
         grad.addColorStop(1, "#c5a36c");
@@ -278,11 +339,11 @@
           ctx.restore();
         }
       });
+      debugLog("Board drawn.");
     }
     function drawStar(cx, cy, spikes, outerRadius, innerRadius, fillColor, strokeColor, lineWidth) {
       let rot = Math.PI / 2 * 3;
-      let x = cx;
-      let y = cy;
+      let x = cx, y = cy;
       let step = Math.PI / spikes;
       ctx.beginPath();
       ctx.moveTo(cx, cy - outerRadius);
@@ -305,61 +366,44 @@
       ctx.stroke();
     }
     function drawPieces() {
-      // Draw hounds pieces (blue) and jackals pieces (red)
+      // Draw Hounds pieces using your image
       houndsPieces.forEach((pos, i) => {
         if (pos === -1 || pos === 29) return;
         let sqIdx = path[pos];
         let sq = boardSquares[sqIdx];
-        let cx = sq.x + sq.w/2;
-        let cy = sq.y + sq.h/2;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
-        let grad = ctx.createRadialGradient(cx - 5, cy - 5, 5, cx, cy, 20);
-        grad.addColorStop(0, "#99ccff");
-        grad.addColorStop(1, "#003399");
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.strokeStyle = "#000";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.font = "bold 16px sans-serif";
-        ctx.fillStyle = "#000";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(i+1, cx, cy);
-        ctx.restore();
+        let cx = sq.x + sq.w/2, cy = sq.y + sq.h/2;
+        if (houndsImg.complete) {
+          ctx.drawImage(houndsImg, cx - 24, cy - 24, 48, 48);
+        } else {
+          ctx.beginPath();
+          ctx.arc(cx, cy, 24, 0, Math.PI * 2);
+          ctx.fillStyle = "#99ccff";
+          ctx.fill();
+        }
       });
+      // Draw Jackals pieces using your image
       jackalsPieces.forEach((pos, i) => {
         if (pos === -1 || pos === 29) return;
         let sqIdx = path[pos];
         let sq = boardSquares[sqIdx];
-        let cx = sq.x + sq.w/2;
-        let cy = sq.y + sq.h/2;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
-        let grad = ctx.createRadialGradient(cx - 5, cy - 5, 5, cx, cy, 20);
-        grad.addColorStop(0, "#ff9999");
-        grad.addColorStop(1, "#cc0000");
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.font = "bold 16px sans-serif";
-        ctx.fillStyle = "#fff";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(i+1, cx, cy);
-        ctx.restore();
+        let cx = sq.x + sq.w/2, cy = sq.y + sq.h/2;
+        if (jackalsImg.complete) {
+          ctx.drawImage(jackalsImg, cx - 24, cy - 24, 48, 48);
+        } else {
+          ctx.beginPath();
+          ctx.arc(cx, cy, 24, 0, Math.PI * 2);
+          ctx.fillStyle = "#ff9999";
+          ctx.fill();
+        }
       });
+      debugLog("Pieces drawn.");
     }
     function redrawPlayScreen() {
       drawBoard();
       drawPieces();
       updateDiceRollDisplay();
       updateMoveHistoryDisplay();
+      debugLog("Play screen redrawn.");
     }
     function updateDiceRollDisplay() {
       diceRollDisplay.textContent = `Dice: ${currentDiceRoll || "-"}`;
@@ -368,22 +412,24 @@
       moveHistory.push(txt);
       if (moveHistory.length > 5) moveHistory.shift();
       updateMoveHistoryDisplay();
+      debugLog("Move added: " + txt);
     }
     function updateMoveHistoryDisplay() {
       moveHistoryDiv.innerHTML = "Moves:<br>" + moveHistory.join("<br>");
     }
 
     /***********************************
-     * 7) Movement & Rule Functions
+     * 9) Movement & Rules Functions
      ***********************************/
     // Pieces start off-board at -1. To enter, must roll 1 or 6.
     function getValidMove(piecePos, diceValue, color) {
+      debugLog(`Validating move for ${color} piece at ${piecePos} with dice ${diceValue}`);
       if (piecePos === -1) {
         if (diceValue === 1 || diceValue === 6) return 0;
         return null;
       }
       let target = piecePos + diceValue;
-      if (target > 29) return null; // Must land exactly on 29
+      if (target > 29) return null; // must land exactly on final square (29)
       return target;
     }
     function canLandOn(pos, color) {
@@ -401,26 +447,29 @@
         if (!canLandOn(newPos, color)) continue;
         opts.push({ pieceIndex: i, fromPos: pos, toPos: newPos });
       }
+      debugLog(`${color} move options: ${JSON.stringify(opts)}`);
       return opts;
     }
     function executeMove(pieceIndex, toPos, color) {
       let own = (color === "hounds") ? houndsPieces : jackalsPieces;
       let opp = (color === "hounds") ? jackalsPieces : houndsPieces;
       let fromPos = own[pieceIndex];
-      // Capture rule: if landing on opponent and square is not safe, capture it.
+      // Capture rule: if landing on opponent’s piece (and square not safe), capture it.
       if (toPos !== 0 && toPos !== 29) {
         if (opp.includes(toPos)) {
           let sq = boardSquares[path[toPos]];
           if (!sq.safe) {
             let oppIdx = opp.indexOf(toPos);
             opp[oppIdx] = -1;
-            addMoveToHistory(`${color} captured an opponent's piece at square ${toPos+1}`);
+            addMoveToHistory(`${color} captured opponent at square ${toPos+1}`);
+            debugLog(`${color} captured opponent piece at ${toPos}`);
           }
         }
       }
       own[pieceIndex] = toPos;
-      addMoveToHistory(`${color} moved piece #${pieceIndex+1} from ${fromPos === -1 ? "off-board" : fromPos+1} to ${toPos+1}`);
+      addMoveToHistory(`${color} moved piece #${pieceIndex+1} from ${fromPos===-1?"off-board":fromPos+1} to ${toPos+1}`);
       lastMove = { fromPos, toPos, color, pieceIndex };
+      // Extra turn on rolling a 6
       if (currentDiceRoll === 6) {
         extraTurn = true;
         nextPlayer = color;
@@ -428,16 +477,18 @@
         extraTurn = false;
         nextPlayer = (color === "hounds") ? "jackals" : "hounds";
       }
+      // Check win condition:
       let finished = own.filter(p => p === 29).length;
       if (finished === NUM_PIECES) {
         gameOverText.textContent = (color === humanSide) ? "You Win!" : "You Lose!";
         addMoveToHistory(`${color} wins the game!`);
         showGameOver();
       }
+      debugLog(`${color} executed move for piece ${pieceIndex} to ${toPos}`);
     }
 
     /***********************************
-     * 8) Turn Management
+     * 10) Turn Management
      ***********************************/
     function endTurn(isHumanTurn) {
       diceRolled = false;
@@ -449,11 +500,12 @@
         if (currentTurn !== humanSide) {
           setTimeout(aiAutoRoll, 2000);
         }
+        debugLog("Turn ended. Next turn: " + currentTurn);
       }, isHumanTurn ? 1000 : 2000);
     }
 
     /***********************************
-     * 9) Human Interaction
+     * 11) Human Interaction
      ***********************************/
     function humanRollDice() {
       if (gameState !== "playing") return;
@@ -489,7 +541,7 @@
         let sq = boardSquares[sqIdx];
         let cx = sq.x + sq.w/2, cy = sq.y + sq.h/2;
         let dx = mx - cx, dy = my - cy;
-        if (Math.sqrt(dx*dx + dy*dy) <= 20) {
+        if (Math.sqrt(dx*dx + dy*dy) <= 24) {
           let found = opts.find(o => o.pieceIndex === i);
           if (!found) {
             showTemporaryMessage("Illegal move!");
@@ -505,7 +557,7 @@
     }
 
     /***********************************
-     * 10) AI Turn
+     * 12) AI Turn
      ***********************************/
     function aiAutoRoll() {
       if (gameState !== "playing") return;
@@ -568,17 +620,18 @@
     }
 
     /***********************************
-     * 11) Temporary Messages
+     * 13) Temporary Messages
      ***********************************/
     function showTemporaryMessage(msg) {
       const overlay = document.getElementById("diceMessageOverlay");
       overlay.textContent = msg;
       overlay.style.display = "block";
       setTimeout(() => { overlay.style.display = "none"; }, 2000);
+      debugLog("Message: " + msg);
     }
 
     /***********************************
-     * 12) Overlays & Navigation
+     * 14) Overlays & Navigation
      ***********************************/
     function hideAllScreens() {
       menuScreen.style.display = "none";
@@ -590,20 +643,26 @@
       hideAllScreens();
       gameState = "menu";
       menuScreen.style.display = "flex";
+      debugLog("Showing Menu.");
     }
     function showInstructions() {
       hideAllScreens();
       gameState = "instructions";
       instructionsScreen.style.display = "flex";
+      currentInstructionsPage = 0;
+      updateInstructions();
+      debugLog("Showing Instructions.");
     }
     function showDifficultyScreen() {
       hideAllScreens();
       gameState = "selectDifficulty";
       difficultyScreen.style.display = "flex";
+      debugLog("Showing Difficulty Screen.");
     }
     function setDifficulty(d) {
       aiDifficulty = d;
       startPlaying();
+      debugLog("Difficulty set to " + d);
     }
     function startPlaying() {
       hideAllScreens();
@@ -619,16 +678,21 @@
       if (currentTurn !== humanSide) {
         setTimeout(aiAutoRoll, 2000);
       }
+      debugLog("Game started.");
     }
     function showGameOver() {
       hideAllScreens();
       gameState = "gameover";
       gameOverScreen.style.display = "flex";
+      debugLog("Game Over.");
     }
 
     /***********************************
-     * 13) Buttons & Keyboard
+     * 15) Buttons & Keyboard
      ***********************************/
+    // For side selection, we assume human picks either "hounds" or "jackals" via external buttons.
+    // Here, for simplicity, we'll assume human always plays hounds.
+    humanSide = "hounds"; // (Set by your images/controls; adjust as needed)
     document.getElementById("newGameBtn").onclick = () => showDifficultyScreen();
     document.getElementById("instructionsBtn").onclick = () => showInstructions();
     document.getElementById("gameOverNewGameBtn") && (document.getElementById("gameOverNewGameBtn").onclick = () => showDifficultyScreen());
@@ -656,7 +720,7 @@
     });
 
     /***********************************
-     * 14) Main Loop
+     * 16) Main Loop
      ***********************************/
     function mainLoop() {
       if (gameState === "playing") {
@@ -668,6 +732,7 @@
     function startAll() {
       showMenu();
       requestAnimationFrame(mainLoop);
+      debugLog("Main loop started.");
     }
     window.addEventListener("load", startAll);
   </script>
