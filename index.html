@@ -46,7 +46,8 @@
 #gameContainer {
   position: relative;
   width: 640px;
-  height: 800px; /* 👈 ADDED: makes the container much taller */
+  height: 500px;
+
   padding: 20px;
   background: #fff;
   border: 10px double #8b4513;
@@ -195,7 +196,8 @@ canvas {
         <button id="gameOverNewGameBtn">New Game</button>
         <p>Press [M] to return to the Main Menu.</p>
       </div>
-      <canvas id="gameCanvas" width="1200" height="720"></canvas>
+      <canvas id="gameCanvas" width="620" height="320"></canvas>
+
 
     </div>
 
@@ -223,8 +225,8 @@ const boardSquares = {};
 const boardPath = [];
 
 // Board settings
-const SLOT_RADIUS = 20;
-const SLOT_SPACING = 60;
+const SLOT_RADIUS = 14;
+const SLOT_SPACING = 44;
 const START_X = 100;
 const START_Y = 100;
 
@@ -238,15 +240,16 @@ for (let i = 1; i <= 15; i++) {
   boardPath.push(`D${i}`);
 }
 
-// Rows B & C: 10 peg holes each (centered under A & above D)
+// Rows B & C: 10 peg holes each (aligned just under A1 and D1, better spacing)
 for (let i = 1; i <= 10; i++) {
-  boardSquares[`B${i}`] = { x: START_X + (i + 2) * SLOT_SPACING, y: START_Y + SLOT_SPACING };
+  boardSquares[`B${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 1.2 };
   boardPath.push(`B${i}`);
 }
 for (let i = 1; i <= 10; i++) {
-  boardSquares[`C${i}`] = { x: START_X + (i + 2) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 2 };
+  boardSquares[`C${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 2.4 };
   boardPath.push(`C${i}`);
 }
+
 
 // Arch Path E1–E9 (starting after D15 and curving around)
 const archCenters = [
