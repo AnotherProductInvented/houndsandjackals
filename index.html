@@ -252,19 +252,20 @@ for (let i = 1; i <= 10; i++) {
 }
 
 
-// Arch Path E1–E9: Custom "C" curve from A15 to D15 (using manual coordinates)
+// Scaled Arch Path E1–E9 to fit inside canvas
 const archCenters = [
-  { x: 1302, y: 664 },
-  { x: 1344, y: 676 },
-  { x: 1377, y: 696 },
-  { x: 1400, y: 723 },
-  { x: 1407, y: 754 },
-  { x: 1405, y: 785 },
-  { x: 1387, y: 826 },
-  { x: 1365, y: 850 },
-  { x: 1322, y: 874 }
+  { x: 1302 / 2, y: 664 / 2 },
+  { x: 1344 / 2, y: 676 / 2 },
+  { x: 1377 / 2, y: 696 / 2 },
+  { x: 1400 / 2, y: 723 / 2 },
+  { x: 1407 / 2, y: 754 / 2 },
+  { x: 1405 / 2, y: 785 / 2 },
+  { x: 1387 / 2, y: 826 / 2 },
+  { x: 1365 / 2, y: 850 / 2 },
+  { x: 1322 / 2, y: 874 / 2 }
 ];
 
+    
 for (let i = 1; i <= 9; i++) {
   boardSquares[`E${i}`] = archCenters[i - 1];
   boardPath.push(`E${i}`);
