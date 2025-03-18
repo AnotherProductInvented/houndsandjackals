@@ -218,32 +218,53 @@ const ctx = canvas.getContext("2d");
     /***********************************
      * 1) Board & Canvas Setup
      ***********************************/
-   // Hounds and Jackals Rectangular Board Layout
-const boardSquares = [];
-const boardPath = [];  // Defines the actual path
+const boardSquares = {};
+const boardPath = [];
 
+// Board settings
 const SLOT_RADIUS = 20;
-const START_X = 100, START_Y = 80;
-const SLOT_SPACING_X = 80, SLOT_SPACING_Y = 80;
+const SLOT_SPACING = 60;
+const START_X = 100;
+const START_Y = 100;
 
-// Layout: 2 columns of 15 slots vertically (total 30 holes)
-for (let row = 0; row < 15; row++) {
-  // Left column (Player A side)
-  boardSquares.push({
-    x: START_X,
-    y: START_Y + row * SLOT_SPACING_Y,
-    safe: row === 4 || row === 10, // you can pick which ones are safe zones
-  });
-  boardPath.push(boardSquares.length - 1);
-
-  // Right column (Player B side)
-  boardSquares.push({
-    x: START_X + SLOT_SPACING_X,
-    y: START_Y + row * SLOT_SPACING_Y,
-    safe: row === 4 || row === 10,
-  });
-  boardPath.push(boardSquares.length - 1);
+// Rows A & D: 15 peg holes each
+for (let i = 1; i <= 15; i++) {
+  boardSquares[`A${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y };
+  boardPath.push(`A${i}`);
 }
+for (let i = 1; i <= 15; i++) {
+  boardSquares[`D${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 3 };
+  boardPath.push(`D${i}`);
+}
+
+// Rows B & C: 10 peg holes each (centered under A & above D)
+for (let i = 1; i <= 10; i++) {
+  boardSquares[`B${i}`] = { x: START_X + (i + 2) * SLOT_SPACING, y: START_Y + SLOT_SPACING };
+  boardPath.push(`B${i}`);
+}
+for (let i = 1; i <= 10; i++) {
+  boardSquares[`C${i}`] = { x: START_X + (i + 2) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 2 };
+  boardPath.push(`C${i}`);
+}
+
+// Arch Path E1–E9 (starting after D15 and curving around)
+const archCenters = [
+  { x: START_X + SLOT_SPACING * 15.5, y: START_Y + SLOT_SPACING * 3 },
+  { x: START_X + SLOT_SPACING * 15.2, y: START_Y + SLOT_SPACING * 2.6 },
+  { x: START_X + SLOT_SPACING * 14.8, y: START_Y + SLOT_SPACING * 2.2 },
+  { x: START_X + SLOT_SPACING * 14.3, y: START_Y + SLOT_SPACING * 1.8 },
+  { x: START_X + SLOT_SPACING * 13.8, y: START_Y + SLOT_SPACING * 1.5 },
+  { x: START_X + SLOT_SPACING * 13.2, y: START_Y + SLOT_SPACING * 1.2 },
+  { x: START_X + SLOT_SPACING * 12.6, y: START_Y + SLOT_SPACING },
+  { x: START_X + SLOT_SPACING * 12, y: START_Y + SLOT_SPACING * 0.8 },
+  { x: START_X + SLOT_SPACING * 11.5, y: START_Y }
+];
+
+for (let i = 1; i <= 9; i++) {
+  boardSquares[`E${i}`] = archCenters[i - 1];
+  boardPath.push(`E${i}`);
+}
+
 
     /***********************************
      * 2) Game State Variables
@@ -355,7 +376,7 @@ for (let row = 0; row < 15; row++) {
      ***********************************/
 function drawBoard() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  boardSquares.forEach((sq, index) => {
+  Object.entries(boardSquares).forEach(([label, sq], index) => {
     // Base slot
     ctx.beginPath();
     ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
@@ -369,11 +390,7 @@ function drawBoard() {
     ctx.stroke();
 
     // Draw slot number
-    ctx.fillStyle = "#222";
-    ctx.font = "bold 16px serif";
-    ctx.textAlign = "center";
-    ctx.fillText((index + 1), sq.x, sq.y + 30);
-
+    
     // Safe zone mark
     if (sq.safe) {
       drawStar(sq.x, sq.y, 6, 12, 6, "#ffcc00", "#000", 2);
@@ -409,11 +426,10 @@ function drawBoard() {
 function drawPieces() {
   houndsPieces.forEach((pos, i) => {
     if (pos === -1 || pos === 29) return;
-    const sqIdx = path[pos];
-    const sq = boardSquares[sqIdx];
-    const cx = sq.x + sq.w / 2;
-    const cy = sq.y + sq.h / 2;
-
+    const label = boardPath[pos];
+    const sq = boardSquares[label];
+    const cx = sq.x;
+    const cy = sq.y;
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,0.3)";
     ctx.shadowBlur = 6;
@@ -436,10 +452,11 @@ function drawPieces() {
 
   jackalsPieces.forEach((pos, i) => {
     if (pos === -1 || pos === 29) return;
-    const sqIdx = path[pos];
-    const sq = boardSquares[sqIdx];
-    const cx = sq.x + sq.w / 2;
-    const cy = sq.y + sq.h / 2;
+    const label = boardPath[pos];
+    const sq = boardSquares[label];
+    const cx = sq.x;
+    const cy = sq.y;
+
 
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,0.3)";
