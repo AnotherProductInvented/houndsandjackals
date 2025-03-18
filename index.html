@@ -721,6 +721,10 @@
     document.getElementById("gameOverNewGameBtn") && (document.getElementById("gameOverNewGameBtn").onclick = () => showDifficultyScreen());
     rollDiceBtn.addEventListener("click", humanRollDice);
     canvas.addEventListener("mousedown", handleBoardClick);
+    document.getElementById("easyBtn").onclick = () => setDifficulty("easy");
+    document.getElementById("mediumBtn").onclick = () => setDifficulty("medium");
+    document.getElementById("hardBtn").onclick = () => setDifficulty("hard");
+
     document.addEventListener("keydown", (e) => {
       let key = e.key.toLowerCase();
       if (gameState === "selectDifficulty") {
