@@ -45,11 +45,12 @@
     /* Game Container */
     #gameContainer {
       position: relative;
-      width: 620px; /* canvas (600px) + padding */
-      padding: 10px;
+      width: 640px; /* canvas (600px) + padding */
+      padding: 20px;  /* increased padding so text is never under border */
       background: #fff;
-      border: 4px double #8b4513;
+      border: 10px double #8b4513;  /* thicker, longer border */
       border-radius: 6px;
+      margin-bottom: 20px;
     }
     canvas {
       display: block;
@@ -69,9 +70,10 @@
       justify-content: center;
       text-align: center;
       padding: 20px;
-      border: 4px double #8b4513;
+      border: 10px double #8b4513;
       border-radius: 6px;
       z-index: 10;
+      overflow-y: auto;
     }
     .overlayScreen.active {
       display: flex;
@@ -118,6 +120,22 @@
       width: 200px;
       text-align: left;
     }
+    /* Temporary message overlay */
+    #diceMessageOverlay {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.9);
+      border: 2px solid #8b4513;
+      border-radius: 6px;
+      font-family: "Papyrus", cursive, serif;
+      font-size: 28px;
+      color: #8b4513;
+      display: none;
+      z-index: 1500;
+    }
     /* Logo */
     #logo {
       position: fixed;
@@ -144,6 +162,8 @@
 
     <!-- Center Panel: Game Container -->
     <div id="gameContainer">
+      <!-- Temporary Message Overlay -->
+      <div id="diceMessageOverlay"></div>
       <!-- Overlays -->
       <div id="menuScreen" class="overlayScreen active">
         <h1>Hounds and Jackals</h1>
@@ -249,21 +269,23 @@
     debugLog("DOM elements loaded.");
 
     /***********************************
-     * 4) Instructions (2 Pages)
+     * 4) Instructions (3 Pages)
      ***********************************/
     const instructionsPages = [
       `Page 1 – Gameplay Overview:<br>
       • Each player has 5 pieces.<br>
       • To enter a piece onto the board, you must roll a 1 or 6.<br>
-      • Pieces move along a 30‑square path in a serpentine pattern.<br>
+      • Pieces move along a 30‑square serpentine path.<br>
       • Landing on an opponent’s piece (if not on a safe zone) captures it (sends it off‑board).<br>
       • Rolling a 6 grants an extra turn.`,
       `Page 2 – Special Rules:<br>
       • You cannot land on a square occupied by your own piece (except safe zones).<br>
       • Exact roll is required to land on the final square.<br>
-      • Safe zones (marked with a star) protect pieces from capture.<br>
+      • Safe zones (marked with a star) protect pieces from capture.`,
+      `Page 3 – Winning & Additional Details:<br>
       • The first player to get all 5 pieces to the final square wins.<br>
-      Press [M] at any time to return to the Main Menu.`
+      • If no legal moves are available, the turn is forfeited.<br>
+      • Press [M] at any time to return to the Main Menu.`
     ];
     let currentInstructionsPage = 0;
     function updateInstructions() {
@@ -469,7 +491,6 @@
       own[pieceIndex] = toPos;
       addMoveToHistory(`${color} moved piece #${pieceIndex+1} from ${fromPos===-1?"off-board":fromPos+1} to ${toPos+1}`);
       lastMove = { fromPos, toPos, color, pieceIndex };
-      // Extra turn on rolling a 6
       if (currentDiceRoll === 6) {
         extraTurn = true;
         nextPlayer = color;
@@ -477,7 +498,6 @@
         extraTurn = false;
         nextPlayer = (color === "hounds") ? "jackals" : "hounds";
       }
-      // Check win condition:
       let finished = own.filter(p => p === 29).length;
       if (finished === NUM_PIECES) {
         gameOverText.textContent = (color === humanSide) ? "You Win!" : "You Lose!";
@@ -690,9 +710,9 @@
     /***********************************
      * 15) Buttons & Keyboard
      ***********************************/
-    // For side selection, we assume human picks either "hounds" or "jackals" via external buttons.
-    // Here, for simplicity, we'll assume human always plays hounds.
-    humanSide = "hounds"; // (Set by your images/controls; adjust as needed)
+    // For side selection, we assume human picks via external controls.
+    // For simplicity, we assume human always plays hounds.
+    humanSide = "hounds";
     document.getElementById("newGameBtn").onclick = () => showDifficultyScreen();
     document.getElementById("instructionsBtn").onclick = () => showInstructions();
     document.getElementById("gameOverNewGameBtn") && (document.getElementById("gameOverNewGameBtn").onclick = () => showDifficultyScreen());
