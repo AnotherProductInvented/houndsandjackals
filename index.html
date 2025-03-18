@@ -252,19 +252,19 @@ for (let i = 1; i <= 10; i++) {
 }
 
 
-// Arch Path E1–E9 (smooth curved arc from D15)
+// Arch Path E1–E9 (a proper smooth arch from D15)
 const archCenters = [];
-const arcStartX = START_X + SLOT_SPACING * 15; // starting near D15
-const arcCenterX = arcStartX - SLOT_SPACING * 4.5; // center of arc (leftward from D15)
-const arcCenterY = START_Y + SLOT_SPACING * 1.5;   // center of arc vertically
-const radius = SLOT_SPACING * 5;
+const arcCenterX = START_X + SLOT_SPACING * 11.5; // Center of the arch (horizontal)
+const arcCenterY = START_Y - SLOT_SPACING * 1.5;  // Center of the arch (above the board)
+const archRadius = SLOT_SPACING * 5;
 
 for (let i = 0; i < 9; i++) {
-  let angle = Math.PI * (0.15 + 0.7 * (i / 8)); // angles from ~27° to ~143°
-  let x = arcCenterX + radius * Math.cos(angle);
-  let y = arcCenterY - radius * Math.sin(angle); // arch goes upward
+  let angle = Math.PI * (0.25 + (i * 0.5 / 8)); // From 45° to 135°
+  let x = arcCenterX + archRadius * Math.cos(angle);
+  let y = arcCenterY + archRadius * Math.sin(angle);
   archCenters.push({ x, y });
 }
+
 
 
 for (let i = 1; i <= 9; i++) {
