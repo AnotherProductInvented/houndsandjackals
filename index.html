@@ -53,6 +53,7 @@
   border-radius: 6px;
   margin-bottom: 20px;
   overflow-y: auto; /* 👈 Optional: if overflow ever happens, scrollbars will show */
+  background: linear-gradient(to bottom, #f5e6ca, #ecd8b5);
 }
 
 canvas {
@@ -215,31 +216,32 @@ canvas {
     /***********************************
      * 1) Board & Canvas Setup
      ***********************************/
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    const boardCols = 10, boardRows = 3;
-    const squareSize = 60;
-    const boardWidth = boardCols * squareSize;
-    const boardHeight = boardRows * squareSize;
-    const boardSquares = [];
-    // Generate a 3x10 grid of squares
-    for (let r = 0; r < boardRows; r++) {
-      for (let c = 0; c < boardCols; c++) {
-        boardSquares.push({
-          x: c * squareSize,
-          y: r * squareSize,
-          w: squareSize,
-          h: squareSize,
-          safe: (r === 1 && (c === 2 || c === 7)) // two safe zones in middle row
-        });
-      }
-    }
-    // Define the movement path in serpentine order (30 squares)
-    let path = [];
-    for (let i = 0; i < boardCols; i++) path.push(i);
-    for (let i = boardCols; i < 2 * boardCols; i++) path.push(2 * boardCols - 1 - (i - boardCols));
-    for (let i = 2 * boardCols; i < 3 * boardCols; i++) path.push(i);
-    debugLog("Board squares and path created.");
+   // Hounds and Jackals Rectangular Board Layout
+const boardSquares = [];
+const boardPath = [];  // Defines the actual path
+
+const SLOT_RADIUS = 20;
+const START_X = 100, START_Y = 80;
+const SLOT_SPACING_X = 80, SLOT_SPACING_Y = 80;
+
+// Layout: 2 columns of 15 slots vertically (total 30 holes)
+for (let row = 0; row < 15; row++) {
+  // Left column (Player A side)
+  boardSquares.push({
+    x: START_X,
+    y: START_Y + row * SLOT_SPACING_Y,
+    safe: row === 4 || row === 10, // you can pick which ones are safe zones
+  });
+  boardPath.push(boardSquares.length - 1);
+
+  // Right column (Player B side)
+  boardSquares.push({
+    x: START_X + SLOT_SPACING_X,
+    y: START_Y + row * SLOT_SPACING_Y,
+    safe: row === 4 || row === 10,
+  });
+  boardPath.push(boardSquares.length - 1);
+}
 
     /***********************************
      * 2) Game State Variables
@@ -352,39 +354,31 @@ canvas {
 function drawBoard() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   boardSquares.forEach((sq, index) => {
-    // Fancy gradient background
-    const grad = ctx.createLinearGradient(sq.x, sq.y, sq.x + sq.w, sq.y + sq.h);
-    grad.addColorStop(0, "#e6d3aa");
-    grad.addColorStop(0.5, "#d1b97b");
-    grad.addColorStop(1, "#b9995a");
+    // Base slot
+    ctx.beginPath();
+    ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
+    let grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
+    grad.addColorStop(0, "#fcebbd");
+    grad.addColorStop(1, "#b38b4d");
     ctx.fillStyle = grad;
-    ctx.fillRect(sq.x, sq.y, sq.w, sq.h);
+    ctx.fill();
+    ctx.strokeStyle = "#6b4e2e";
+    ctx.lineWidth = 3;
+    ctx.stroke();
 
-    // Fancy border with soft shadows
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.2)";
-    ctx.shadowBlur = 5;
-    ctx.strokeStyle = "#5c3b0f";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(sq.x, sq.y, sq.w, sq.h);
-    ctx.restore();
+    // Draw slot number
+    ctx.fillStyle = "#222";
+    ctx.font = "bold 16px serif";
+    ctx.textAlign = "center";
+    ctx.fillText((index + 1), sq.x, sq.y + 30);
 
-    // Add square number labels (for clarity)
-    ctx.font = "12px sans-serif";
-    ctx.fillStyle = "#5c3b0f";
-    ctx.fillText(index + 1, sq.x + 4, sq.y + 14);
-
-    // Safe zones
+    // Safe zone mark
     if (sq.safe) {
-      ctx.save();
-      ctx.translate(sq.x + sq.w / 2, sq.y + sq.h / 2);
-      drawStar(0, 0, 6, 12, 6, "#ffd700", "#8b4513", 2);
-      ctx.restore();
+      drawStar(sq.x, sq.y, 6, 12, 6, "#ffcc00", "#000", 2);
     }
   });
-
-  debugLog("Board drawn.");
 }
+
 
     function drawStar(cx, cy, spikes, outerRadius, innerRadius, fillColor, strokeColor, lineWidth) {
       let rot = Math.PI / 2 * 3;
