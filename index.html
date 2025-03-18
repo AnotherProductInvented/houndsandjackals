@@ -252,26 +252,20 @@ for (let i = 1; i <= 10; i++) {
 }
 
 
-// Arch Path E1–E9 (smooth curve following yellow-marked arc)
-const archCenters = [
-  { x: START_X + SLOT_SPACING * 15.0, y: START_Y + SLOT_SPACING * 2.5 },
-  { x: START_X + SLOT_SPACING * 15.4, y: START_Y + SLOT_SPACING * 2.8 },
-  { x: START_X + SLOT_SPACING * 15.6, y: START_Y + SLOT_SPACING * 3.1 },
-  { x: START_X + SLOT_SPACING * 15.4, y: START_Y + SLOT_SPACING * 3.4 },
-  { x: START_X + SLOT_SPACING * 15.0, y: START_Y + SLOT_SPACING * 3.6 },
-  { x: START_X + SLOT_SPACING * 14.4, y: START_Y + SLOT_SPACING * 3.7 },
-  { x: START_X + SLOT_SPACING * 13.8, y: START_Y + SLOT_SPACING * 3.5 },
-  { x: START_X + SLOT_SPACING * 13.4, y: START_Y + SLOT_SPACING * 3.2 },
-  { x: START_X + SLOT_SPACING * 13.2, y: START_Y + SLOT_SPACING * 2.9 }
-];
+// Arch Path E1–E9 (true circular arc shape)
+const archRadius = SLOT_SPACING * 4.5; // adjust for desired size
+const archCenterX = START_X + SLOT_SPACING * 14; // center of the arc (adjust as needed)
+const archCenterY = START_Y + SLOT_SPACING * 3.6;
 
-
-
-
-for (let i = 1; i <= 9; i++) {
-  boardSquares[`E${i}`] = archCenters[i - 1];
-  boardPath.push(`E${i}`);
+// Create 9 points along the arc (start from right side, curve down and left)
+for (let i = 0; i < 9; i++) {
+  const angle = Math.PI * (0.2 + i * 0.07); // slight angle spread
+  const x = archCenterX + archRadius * Math.cos(angle);
+  const y = archCenterY + archRadius * Math.sin(angle);
+  boardSquares[`E${i + 1}`] = { x, y };
+  boardPath.push(`E${i + 1}`);
 }
+
 
 
     /***********************************
