@@ -212,7 +212,9 @@ canvas {
     function debugLog(msg) {
       if (debugMode) console.log("[DEBUG]", msg);
     }
-    
+    const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
     /***********************************
      * 1) Board & Canvas Setup
      ***********************************/
