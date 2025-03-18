@@ -252,18 +252,19 @@ for (let i = 1; i <= 10; i++) {
 }
 
 
-// Arch Path E1–E9 (a proper smooth arch from D15)
-const archCenters = [];
-const arcCenterX = START_X + SLOT_SPACING * 11.5; // Center of the arch (horizontal)
-const arcCenterY = START_Y - SLOT_SPACING * 1.5;  // Center of the arch (above the board)
-const archRadius = SLOT_SPACING * 5;
+// Arch Path E1–E9 (smooth curve following yellow-marked arc)
+const archCenters = [
+  { x: START_X + SLOT_SPACING * 15.0, y: START_Y + SLOT_SPACING * 2.5 },
+  { x: START_X + SLOT_SPACING * 15.4, y: START_Y + SLOT_SPACING * 2.8 },
+  { x: START_X + SLOT_SPACING * 15.6, y: START_Y + SLOT_SPACING * 3.1 },
+  { x: START_X + SLOT_SPACING * 15.4, y: START_Y + SLOT_SPACING * 3.4 },
+  { x: START_X + SLOT_SPACING * 15.0, y: START_Y + SLOT_SPACING * 3.6 },
+  { x: START_X + SLOT_SPACING * 14.4, y: START_Y + SLOT_SPACING * 3.7 },
+  { x: START_X + SLOT_SPACING * 13.8, y: START_Y + SLOT_SPACING * 3.5 },
+  { x: START_X + SLOT_SPACING * 13.4, y: START_Y + SLOT_SPACING * 3.2 },
+  { x: START_X + SLOT_SPACING * 13.2, y: START_Y + SLOT_SPACING * 2.9 }
+];
 
-for (let i = 0; i < 9; i++) {
-  let angle = Math.PI * (0.25 + (i * 0.5 / 8)); // From 45° to 135°
-  let x = arcCenterX + archRadius * Math.cos(angle);
-  let y = arcCenterY + archRadius * Math.sin(angle);
-  archCenters.push({ x, y });
-}
 
 
 
