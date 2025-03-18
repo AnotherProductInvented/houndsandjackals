@@ -252,18 +252,20 @@ for (let i = 1; i <= 10; i++) {
 }
 
 
-// Arch Path E1–E9 (starting after D15 and curving around)
-const archCenters = [
-  { x: START_X + SLOT_SPACING * 15.5, y: START_Y + SLOT_SPACING * 3.6 },
-  { x: START_X + SLOT_SPACING * 15.2, y: START_Y + SLOT_SPACING * 2.6 },
-  { x: START_X + SLOT_SPACING * 14.8, y: START_Y + SLOT_SPACING * 2.2 },
-  { x: START_X + SLOT_SPACING * 14.3, y: START_Y + SLOT_SPACING * 1.8 },
-  { x: START_X + SLOT_SPACING * 13.8, y: START_Y + SLOT_SPACING * 1.5 },
-  { x: START_X + SLOT_SPACING * 13.2, y: START_Y + SLOT_SPACING * 1.2 },
-  { x: START_X + SLOT_SPACING * 12.6, y: START_Y + SLOT_SPACING },
-  { x: START_X + SLOT_SPACING * 12, y: START_Y + SLOT_SPACING * 0.8 },
-  { x: START_X + SLOT_SPACING * 11.5, y: START_Y }
-];
+// Arch Path E1–E9 (smooth curved arc from D15)
+const archCenters = [];
+const arcStartX = START_X + SLOT_SPACING * 15; // starting near D15
+const arcCenterX = arcStartX - SLOT_SPACING * 4.5; // center of arc (leftward from D15)
+const arcCenterY = START_Y + SLOT_SPACING * 1.5;   // center of arc vertically
+const radius = SLOT_SPACING * 5;
+
+for (let i = 0; i < 9; i++) {
+  let angle = Math.PI * (0.15 + 0.7 * (i / 8)); // angles from ~27° to ~143°
+  let x = arcCenterX + radius * Math.cos(angle);
+  let y = arcCenterY - radius * Math.sin(angle); // arch goes upward
+  archCenters.push({ x, y });
+}
+
 
 for (let i = 1; i <= 9; i++) {
   boardSquares[`E${i}`] = archCenters[i - 1];
