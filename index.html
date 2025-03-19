@@ -226,7 +226,7 @@ const boardSquares = {};
 const boardPath = [];
 
 // Board settings
-const SLOT_RADIUS = 14;
+const SLOT_RADIUS = 7;
 const SLOT_SPACING = 44;
 const START_X = 40;
 const START_Y = 100;
@@ -395,6 +395,15 @@ function drawBoard() {
     ctx.strokeStyle = "#6b4e2e";
     ctx.lineWidth = 3;
     ctx.stroke();
+    // Special thick black outline for marked slots
+if (["A5", "A15", "D5", "D15", "E5"].includes(label)) {
+  ctx.beginPath();
+  ctx.arc(sq.x, sq.y, SLOT_RADIUS + 5, 0, Math.PI * 2); // bigger outer circle
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "#000";
+  ctx.stroke();
+}
+
     ctx.fillStyle = "#000";
     ctx.font = "12px Arial";
     ctx.fillText(label, sq.x, sq.y - 18);
