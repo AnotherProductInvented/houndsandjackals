@@ -252,28 +252,26 @@ for (let i = 1; i <= 10; i++) {
 }
 
 
-// Section E1–E9 as a symmetrical vertical "C" arch between A15 and D15
+// Section E1–E9: Symmetrical "C" arch from A15 to D15
 const archPoints = 9;
 const xStart = boardSquares["A15"].x;
 const xEnd = boardSquares["D15"].x;
-const archWidth = xEnd - xStart;
-const centerX = xStart + archWidth / 2;
-const archHeight = SLOT_SPACING * 3.5; // You can adjust this to make the arch taller or shorter
+const centerX = xStart + (xEnd - xStart) / 2;
+const archHeight = SLOT_SPACING * 3; // How high the arch dips — increase to widen curve
 
 for (let i = 0; i < archPoints; i++) {
   const label = `E${i + 1}`;
-  const t = i / (archPoints - 1); // t from 0 to 1 (goes 0, 0.125, 0.25, ..., 1)
+  const t = i / (archPoints - 1); // 0 to 1
+  const x = xStart + t * (xEnd - xStart);
 
-  // X position spreads evenly from A15 to D15
-  const x = xStart + t * archWidth;
-
-  // Y position follows a symmetrical parabola dip (C shape arch)
-  const mirrorIndex = Math.abs(i - (archPoints - 1) / 2);
-  const y = boardSquares["A15"].y + archHeight * Math.pow(mirrorIndex / ((archPoints - 1) / 2), 2);
+  // Make a nice symmetrical "C" using a sine wave mirrored top-bottom
+  const mirror = Math.abs(i - (archPoints - 1) / 2);
+  const y = boardSquares["A15"].y + archHeight * Math.sin((mirror / ((archPoints - 1) / 2)) * (Math.PI / 2));
 
   boardSquares[label] = { x, y };
   boardPath.push(label);
 }
+
 
 
 
