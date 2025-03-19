@@ -432,6 +432,59 @@ function drawBoard() {
   drawDoubleArrow(boardSquares["C1"], boardSquares["C3"]);
 }
 
+function drawDoubleArrow(from, to) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const angle = Math.atan2(dy, dx);
+  const len = Math.sqrt(dx * dx + dy * dy);
+
+  ctx.save();
+  ctx.translate(from.x, from.y);
+  ctx.rotate(angle);
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(len, 0);
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Arrowhead style
+  const headLen = 10;
+  const headAngle = Math.PI / 6;
+
+  // Start arrowhead
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(
+    headLen * Math.cos(Math.PI - headAngle),
+    headLen * Math.sin(Math.PI - headAngle)
+  );
+  ctx.lineTo(
+    headLen * Math.cos(Math.PI + headAngle),
+    headLen * Math.sin(Math.PI + headAngle)
+  );
+  ctx.closePath();
+  ctx.fillStyle = "#000";
+  ctx.fill();
+
+  // End arrowhead
+  ctx.beginPath();
+  ctx.moveTo(len, 0);
+  ctx.lineTo(
+    len - headLen * Math.cos(Math.PI - headAngle),
+    headLen * Math.sin(Math.PI - headAngle)
+  );
+  ctx.lineTo(
+    len - headLen * Math.cos(Math.PI + headAngle),
+    -headLen * Math.sin(Math.PI + headAngle)
+  );
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
 
 
     function drawStar(cx, cy, spikes, outerRadius, innerRadius, fillColor, strokeColor, lineWidth) {
