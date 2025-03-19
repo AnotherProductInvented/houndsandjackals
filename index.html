@@ -252,25 +252,33 @@ for (let i = 1; i <= 10; i++) {
 }
 
 
-const archCenters = [
-  { x: boardSquares["A15"].x + SLOT_SPACING * 0.9, y: boardSquares["A15"].y + SLOT_SPACING * 0.3 }, // E1
-  { x: boardSquares["A15"].x + SLOT_SPACING * 1.3, y: boardSquares["A15"].y + SLOT_SPACING * 0.9 }, // E2
-  { x: boardSquares["A15"].x + SLOT_SPACING * 1.5, y: boardSquares["A15"].y + SLOT_SPACING * 1.7 }, // E3
-  { x: boardSquares["A15"].x + SLOT_SPACING * 1.3, y: boardSquares["A15"].y + SLOT_SPACING * 2.5 }, // E4
-  { x: boardSquares["A15"].x + SLOT_SPACING * 0.9, y: boardSquares["A15"].y + SLOT_SPACING * 3.1 }, // E5 (center)
-  { x: boardSquares["A15"].x + SLOT_SPACING * 0.5, y: boardSquares["A15"].y + SLOT_SPACING * 2.5 }, // E6
-  { x: boardSquares["A15"].x + SLOT_SPACING * 0.3, y: boardSquares["A15"].y + SLOT_SPACING * 1.7 }, // E7
-  { x: boardSquares["A15"].x + SLOT_SPACING * 0.5, y: boardSquares["A15"].y + SLOT_SPACING * 0.9 }, // E8
-  { x: boardSquares["D15"].x, y: boardSquares["D15"].y }                                           // E9
-];
+// We'll generate 9 points (E1..E9) using a sine wave from A15 to D15.
+const Nx = 9; // number of arch holes
+const amplitude = SLOT_SPACING * 3; // how far down the arch dips at the middle
+const xA = boardSquares["A15"].x;
+const yA = boardSquares["A15"].y;
+const xD = boardSquares["D15"].x;
+const yD = boardSquares["D15"].y;
 
+// We assume A15 and D15 are horizontally aligned (same y).
+// If they differ slightly, it still works but won't be a perfect "flat" top.
+for (let i = 0; i < Nx; i++) {
+  // t goes from 0..1
+  let t = i / (Nx - 1);
 
+  // x moves linearly from A15.x to D15.x
+  let x = xA + t * (xD - xA);
 
-for (let i = 1; i <= 9; i++) {
-  boardSquares[`E${i}`] = archCenters[i - 1];
-  boardPath.push(`E${i}`);
+  // y uses a sine wave so E1=E9 at top, E5 at bottom center
+  // sin(0)=0 => E1 at yA, sin(π)=0 => E9 at yA, sin(π/2)=1 => E5 at yA+amplitude
+  let y = yA + amplitude * Math.sin(Math.PI * t);
+
+  // Optionally shift the entire arch up/down by adding e.g. (- 20) if needed
+  // y -= 20; // uncomment if you want to lift the arch up by 20 px
+
+  boardSquares[`E${i + 1}`] = { x, y };
+  boardPath.push(`E${i + 1}`);
 }
-
 
 
 
