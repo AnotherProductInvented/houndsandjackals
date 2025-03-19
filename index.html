@@ -251,26 +251,25 @@ for (let i = 1; i <= 10; i++) {
   boardPath.push(`C${i}`);
 }
 
+// Arch Path E1–E9: Clean, symmetrical "C" shape from A15 to D15
+const archPoints = [
+  { x: boardSquares["A15"].x + SLOT_SPACING * 0.5, y: boardSquares["A15"].y + SLOT_SPACING * 0.5 },
+  { x: boardSquares["A15"].x + SLOT_SPACING * 1.0, y: boardSquares["A15"].y + SLOT_SPACING * 1.0 },
+  { x: boardSquares["A15"].x + SLOT_SPACING * 1.5, y: boardSquares["A15"].y + SLOT_SPACING * 1.8 },
+  { x: boardSquares["A15"].x + SLOT_SPACING * 1.8, y: boardSquares["A15"].y + SLOT_SPACING * 2.6 },
+  { x: (boardSquares["A15"].x + boardSquares["D15"].x) / 2, y: boardSquares["A15"].y + SLOT_SPACING * 3.2 }, // E5 (center bottom)
+  { x: boardSquares["D15"].x - SLOT_SPACING * 1.8, y: boardSquares["D15"].y - SLOT_SPACING * 2.6 },
+  { x: boardSquares["D15"].x - SLOT_SPACING * 1.5, y: boardSquares["D15"].y - SLOT_SPACING * 1.8 },
+  { x: boardSquares["D15"].x - SLOT_SPACING * 1.0, y: boardSquares["D15"].y - SLOT_SPACING * 1.0 },
+  { x: boardSquares["D15"].x - SLOT_SPACING * 0.5, y: boardSquares["D15"].y - SLOT_SPACING * 0.5 }
+];
 
-// Section E1–E9: Symmetrical "C" arch from A15 to D15
-const archPoints = 9;
-const xStart = boardSquares["A15"].x;
-const xEnd = boardSquares["D15"].x;
-const centerX = xStart + (xEnd - xStart) / 2;
-const archHeight = SLOT_SPACING * 3; // How high the arch dips — increase to widen curve
-
-for (let i = 0; i < archPoints; i++) {
-  const label = `E${i + 1}`;
-  const t = i / (archPoints - 1); // 0 to 1
-  const x = xStart + t * (xEnd - xStart);
-
-  // Make a nice symmetrical "C" using a sine wave mirrored top-bottom
-  const mirror = Math.abs(i - (archPoints - 1) / 2);
-  const y = boardSquares["A15"].y + archHeight * Math.sin((mirror / ((archPoints - 1) / 2)) * (Math.PI / 2));
-
-  boardSquares[label] = { x, y };
-  boardPath.push(label);
+// Add E1 to E9 on board
+for (let i = 0; i < archPoints.length; i++) {
+  boardSquares[`E${i + 1}`] = archPoints[i];
+  boardPath.push(`E${i + 1}`);
 }
+
 
 
 
