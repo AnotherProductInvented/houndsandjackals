@@ -252,32 +252,25 @@ for (let i = 1; i <= 10; i++) {
 }
 
 
-// We'll generate 9 points (E1..E9) using a sine wave from A15 to D15.
-const Nx = 9; // number of arch holes
-const amplitude = SLOT_SPACING * 3; // how far down the arch dips at the middle
-const xA = boardSquares["A15"].x;
-const yA = boardSquares["A15"].y;
-const xD = boardSquares["D15"].x;
-const yD = boardSquares["D15"].y;
+// Section E1–E9 as a symmetrical vertical "C" arch between A15 and D15
+const archPoints = 9;
+const xStart = boardSquares["A15"].x;
+const xEnd = boardSquares["D15"].x;
+const archWidth = xEnd - xStart;
+const centerX = xStart + archWidth / 2;
+const archHeight = SLOT_SPACING * 3.5; // adjust this to make the arch taller or shorter
 
-// We assume A15 and D15 are horizontally aligned (same y).
-// If they differ slightly, it still works but won't be a perfect "flat" top.
-for (let i = 0; i < Nx; i++) {
-  // t goes from 0..1
-  let t = i / (Nx - 1);
+for (let i = 0; i < archPoints; i++) {
+  const label = `E${i + 1}`;
+  const t = i / (archPoints - 1); // t from 0 to 1
+  const x = xStart + t * archWidth;
 
-  // x moves linearly from A15.x to D15.x
-  let x = xA + t * (xD - xA);
+  // Symmetrical top ↔ bottom: y follows a parabola curve (up-down-up)
+  const offsetFromCenter = Math.abs(i - (archPoints - 1) / 2);
+  const y = boardSquares["A15"].y + (archHeight * Math.pow(offsetFromCenter / ((archPoints - 1) / 2), 2));
 
-  // y uses a sine wave so E1=E9 at top, E5 at bottom center
-  // sin(0)=0 => E1 at yA, sin(π)=0 => E9 at yA, sin(π/2)=1 => E5 at yA+amplitude
-  let y = yA + amplitude * Math.sin(Math.PI * t);
-
-  // Optionally shift the entire arch up/down by adding e.g. (- 20) if needed
-  // y -= 20; // uncomment if you want to lift the arch up by 20 px
-
-  boardSquares[`E${i + 1}`] = { x, y };
-  boardPath.push(`E${i + 1}`);
+  boardSquares[label] = { x, y };
+  boardPath.push(label);
 }
 
 
