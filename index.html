@@ -251,23 +251,20 @@ for (let i = 1; i <= 10; i++) {
   boardPath.push(`C${i}`);
 }
 
-// Arch Path E1–E9: Smooth symmetrical "C" curve from A15 to D15
+// Define curved arch positions for E1 to E9
 const archCenters = [
-[
-  { x: boardSquares["A15"].x + SLOT_SPACING * 0.7, y: boardSquares["A15"].y + SLOT_SPACING * 0.5 }, // E1 (unchanged)
-
-  { x: boardSquares["A15"].x + SLOT_SPACING * 1.3, y: boardSquares["A15"].y + SLOT_SPACING * 0.4 }, // E2 (slightly more outward, slightly higher)
-  { x: boardSquares["A15"].x + SLOT_SPACING * 2.0, y: boardSquares["A15"].y + SLOT_SPACING * 0.7 }, // E3 (slightly more rounded)
-  { x: boardSquares["A15"].x + SLOT_SPACING * 2.6, y: boardSquares["A15"].y + SLOT_SPACING * 1.2 }, // E4 (more balanced curvature)
-
-  { x: boardSquares["A15"].x + SLOT_SPACING * 3.2, y: boardSquares["A15"].y + SLOT_SPACING * 1.9 }, // E5 (perfect center)
-
+  { x: boardSquares["A15"].x + SLOT_SPACING * 0.7, y: boardSquares["A15"].y + SLOT_SPACING * 0.5 }, // E1
+  { x: boardSquares["A15"].x + SLOT_SPACING * 1.3, y: boardSquares["A15"].y + SLOT_SPACING * 0.4 }, // E2
+  { x: boardSquares["A15"].x + SLOT_SPACING * 2.0, y: boardSquares["A15"].y + SLOT_SPACING * 0.7 }, // E3
+  { x: boardSquares["A15"].x + SLOT_SPACING * 2.6, y: boardSquares["A15"].y + SLOT_SPACING * 1.2 }, // E4
+  { x: boardSquares["A15"].x + SLOT_SPACING * 3.2, y: boardSquares["A15"].y + SLOT_SPACING * 1.9 }, // E5
   { x: boardSquares["A15"].x + SLOT_SPACING * 2.6, y: boardSquares["A15"].y + SLOT_SPACING * 2.6 }, // E6
   { x: boardSquares["A15"].x + SLOT_SPACING * 2.0, y: boardSquares["A15"].y + SLOT_SPACING * 3.1 }, // E7
   { x: boardSquares["A15"].x + SLOT_SPACING * 1.3, y: boardSquares["A15"].y + SLOT_SPACING * 3.4 }, // E8
   { x: boardSquares["A15"].x + SLOT_SPACING * 0.7, y: boardSquares["A15"].y + SLOT_SPACING * 3.3 }  // E9
+];
 
-// Create E1–E9 from this curve
+// Assign coordinates to boardSquares and add to path
 for (let i = 0; i < 9; i++) {
   boardSquares[`E${i + 1}`] = archCenters[i];
   boardPath.push(`E${i + 1}`);
