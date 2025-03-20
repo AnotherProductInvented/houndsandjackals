@@ -475,9 +475,17 @@ function drawDoubleArrow(from, to, direction = "above") {
   }
 
   // Draw arrowheads
-  drawArrowhead(from.x, from.y, midX, midY);
-  drawArrowhead(midX, midY, to.x, to.y);
-}
+  const dx1 = midX - from.x;
+  const dy1 = midY - from.y;
+  const angle1 = Math.atan2(dy1, dx1);
+
+  const dx2 = to.x - midX;
+  const dy2 = to.y - midY;
+  const angle2 = Math.atan2(dy2, dx2);
+
+  drawArrowhead(midX - Math.cos(angle1) * 10, midY - Math.sin(angle1) * 10, midX, midY);
+  drawArrowhead(to.x - Math.cos(angle2) * 10, to.y - Math.sin(angle2) * 10, to.x, to.y);
+
 
 
  
