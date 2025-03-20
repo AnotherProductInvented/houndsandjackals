@@ -479,27 +479,7 @@ function drawDoubleArrow(from, to, direction = "above") {
   drawArrowhead(midX, midY, to.x, to.y);
 }
 
-  // Arrowhead helper
-  function drawArrowhead(x0, y0, x1, y1) {
-    const angle = Math.atan2(y1 - y0, x1 - x0);
-    const len = 10;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 - len * Math.cos(angle - Math.PI / 6), y1 - len * Math.sin(angle - Math.PI / 6));
-    ctx.lineTo(x1 - len * Math.cos(angle + Math.PI / 6), y1 - len * Math.sin(angle + Math.PI / 6));
-    ctx.closePath();
-    ctx.fillStyle = "#000";
-    ctx.fill();
-  }
-
-  // Draw arrowheads
-  drawArrowhead(midX, midY, from.x, from.y);
-  drawArrowhead(midX, midY, to.x, to.y);
-
-
-
-
-
+ 
     function drawStar(cx, cy, spikes, outerRadius, innerRadius, fillColor, strokeColor, lineWidth) {
       let rot = Math.PI / 2 * 3;
       let x = cx, y = cy;
