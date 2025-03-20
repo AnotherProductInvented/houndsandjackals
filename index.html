@@ -426,21 +426,29 @@ function drawBoard() {
   });
 
   // 🔥 Double Arrows (move them OUTSIDE the loop!)
-  drawDoubleArrow(boardSquares["A10"], boardSquares["B5"]);
-  drawDoubleArrow(boardSquares["D10"], boardSquares["C5"]);
+  drawDoubleArrow(boardSquares["A10"], boardSquares["B5"], "between");
+  drawDoubleArrow(boardSquares["D10"], boardSquares["C5"], "between");
   drawDoubleArrow(boardSquares["B1"], boardSquares["B3"]);
   drawDoubleArrow(boardSquares["C1"], boardSquares["C3"], "below");
 
 }
 
 function drawDoubleArrow(from, to, direction = "above") {
-  const midX = (from.x + to.x) / 2;
-  const offsetY = 30; // how high/low the arch goes
-  const midY = direction === "above"
-    ? Math.min(from.y, to.y) - offsetY
-    : Math.max(from.y, to.y) + offsetY;
+  let midX = (from.x + to.x) / 2;
+  let midY;
 
-  // Draw curved arc
+  // Calculate arc height based on direction
+  if (direction === "above") {
+    midY = Math.min(from.y, to.y) - 30;
+  } else if (direction === "below") {
+    midY = Math.max(from.y, to.y) + 30;
+  } else if (direction === "between") {
+    // Bend smoothly downward through center of rows (between A and B or D and C)
+    midY = (from.y + to.y) / 2 + 20;
+    midX += 10; // slight horizontal curve to make it look natural
+  }
+
+  // Draw arc
   ctx.beginPath();
   ctx.moveTo(from.x, from.y);
   ctx.quadraticCurveTo(midX, midY, to.x, to.y);
@@ -461,10 +469,11 @@ function drawDoubleArrow(from, to, direction = "above") {
     ctx.fill();
   }
 
-  // Draw arrowheads at both ends
+  // Draw arrowheads
   drawArrowhead(midX, midY, from.x, from.y);
   drawArrowhead(midX, midY, to.x, to.y);
 }
+
 
 
 
