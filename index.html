@@ -437,17 +437,17 @@ function drawDoubleArrow(from, to, direction = "above") {
   let midX = (from.x + to.x) / 2;
   let midY;
 
+  // Adjust arc based on direction
   if (direction === "above") {
     midY = Math.min(from.y, to.y) - 30;
   } else if (direction === "below") {
     midY = Math.max(from.y, to.y) + 30;
   } else if (direction === "between") {
-    // 👇 Wider curve to avoid cutting through holes
-    midY = (from.y + to.y) / 2 + 60; // increase from +20 to +60
-    midX += (from.x < to.x ? 40 : -40); // shift arc further outward
+    midY = (from.y + to.y) / 2 + 60; // deeper arch to avoid cutting holes
+    midX += (from.x < to.x ? 40 : -40); // pull left or right based on direction
   }
 
-  // Arc
+  // Draw arc
   ctx.beginPath();
   ctx.moveTo(from.x, from.y);
   ctx.quadraticCurveTo(midX, midY, to.x, to.y);
@@ -455,8 +455,8 @@ function drawDoubleArrow(from, to, direction = "above") {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Arrowhead helper
-  function drawArrowhead(x0, y0, x1, y1) {
+  // Arrowhead helper function
+  const drawArrowhead = (x0, y0, x1, y1) => {
     const angle = Math.atan2(y1 - y0, x1 - x0);
     const len = 10;
     ctx.beginPath();
@@ -466,9 +466,9 @@ function drawDoubleArrow(from, to, direction = "above") {
     ctx.closePath();
     ctx.fillStyle = "#000";
     ctx.fill();
-  }
+  };
 
-  // Draw arrowheads
+  // Draw arrowheads at both ends
   drawArrowhead(midX, midY, from.x, from.y);
   drawArrowhead(midX, midY, to.x, to.y);
 }
