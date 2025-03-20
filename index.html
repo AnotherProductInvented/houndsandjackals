@@ -474,17 +474,17 @@ function drawDoubleArrow(from, to, direction = "above") {
     ctx.fill();
   }
 
-  // Draw arrowheads
-  const dx1 = midX - from.x;
-  const dy1 = midY - from.y;
-  const angle1 = Math.atan2(dy1, dx1);
+// Draw arrowhead at curve end (based on curve derivative/tangent)
+function getCurveAngle(x0, y0, cx, cy, x1, y1, t = 0.99) {
+  // Derivative of quadratic Bézier: 2*(1 - t)*(cx - x0) + 2*t*(x1 - cx)
+  const dx = 2 * (1 - t) * (cx - x0) + 2 * t * (x1 - cx);
+  const dy = 2 * (1 - t) * (cy - y0) + 2 * t * (y1 - cy);
+  return Math.atan2(dy, dx);
+}
 
-  const dx2 = to.x - midX;
-  const dy2 = to.y - midY;
-  const angle2 = Math.atan2(dy2, dx2);
+const angle = getCurveAngle(from.x, from.y, midX, midY, to.x, to.y);
+drawArrowhead(to.x - Math.cos(angle) * 10, to.y - Math.sin(angle) * 10, to.x, to.y);
 
-drawArrowhead(midX - Math.cos(angle1) * 10, midY - Math.sin(angle1) * 10, midX, midY);  // start arrow
-drawArrowhead(to.x - Math.cos(angle2) * 10, to.y - Math.sin(angle2) * 10, to.x, to.y);  // end arrow
 
 }
 
