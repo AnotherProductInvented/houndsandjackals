@@ -437,17 +437,17 @@ function drawDoubleArrow(from, to, direction = "above") {
   let midX = (from.x + to.x) / 2;
   let midY;
 
-  // Calculate arc midpoint Y based on direction
+  // Adjusted curve heights to go BETWEEN rows, not over peg holes
   if (direction === "above") {
-    midY = Math.min(from.y, to.y) - 30;
+    midY = (from.y + to.y) / 2 - SLOT_SPACING * 0.75;
   } else if (direction === "below") {
-    midY = Math.max(from.y, to.y) + 30;
+    midY = (from.y + to.y) / 2 + SLOT_SPACING * 0.75;
   } else if (direction === "between") {
-    midY = (from.y + to.y) / 2 + 60;
-    midX += (from.x < to.x ? 40 : -40);
+    midY = (from.y + to.y) / 2;
+    midX += (from.x < to.x ? SLOT_SPACING * 0.9 : -SLOT_SPACING * 0.9);
   }
 
-  // Draw curved arrow line
+  // Draw curved arrow
   ctx.beginPath();
   ctx.moveTo(from.x, from.y);
   ctx.quadraticCurveTo(midX, midY, to.x, to.y);
@@ -455,7 +455,7 @@ function drawDoubleArrow(from, to, direction = "above") {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // === Arrowhead helper ===
+  // Arrowhead helper
   function drawArrowhead(x0, y0, x1, y1) {
     const angle = Math.atan2(y1 - y0, x1 - x0);
     const len = 10;
@@ -478,6 +478,7 @@ function drawDoubleArrow(from, to, direction = "above") {
   drawArrowhead(from.x, from.y, midX, midY);
   drawArrowhead(midX, midY, to.x, to.y);
 }
+
 
  
     function drawStar(cx, cy, spikes, outerRadius, innerRadius, fillColor, strokeColor, lineWidth) {
