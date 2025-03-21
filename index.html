@@ -162,11 +162,14 @@ canvas {
   </div>
 
   <div id="gameWrapper">
-    <!-- Left Panel: Dice Controls -->
-    <div id="leftPanel">
-      <div id="diceRollDisplay">Dice: -</div>
-      <button id="rollDiceBtn">Roll Dice</button>
-    </div>
+   <!-- Left Panel: Dice Controls -->
+<div id="leftPanel">
+  <div id="diceRollDisplay">Dice: -</div>
+  <button id="rollDiceBtn">Roll Dice</button>
+  <input type="number" id="customDiceInput" min="1" max="6" placeholder="Set Dice (1-6)">
+  <button id="setCustomDiceBtn">Use Custom Dice</button>
+</div>
+
 
     <!-- Center Panel: Game Container -->
     <div id="gameContainer">
@@ -308,6 +311,9 @@ for (let i = 0; i < 9; i++) {
     const instructionsPrevBtn = document.getElementById("instructionsPrevBtn");
     const instructionsNextBtn = document.getElementById("instructionsNextBtn");
     debugLog("DOM elements loaded.");
+    const customDiceInput = document.getElementById("customDiceInput");
+const setCustomDiceBtn = document.getElementById("setCustomDiceBtn");
+
 
     /***********************************
      * 4) Instructions (3 Pages)
@@ -620,10 +626,10 @@ function drawPieces() {
     // Pieces start off-board at -1. To enter, must roll 1 or 6.
     function getValidMove(piecePos, diceValue, color) {
       debugLog(`Validating move for ${color} piece at ${piecePos} with dice ${diceValue}`);
-      if (piecePos === -1) {
-        if (diceValue === 1 || diceValue === 6) return 0;
-        return null;
-      }
+ if (piecePos === -1) {
+  if (diceValue === 6) return 0; // ONLY 6 now required to enter the board
+  return null;
+}
       let target = piecePos + diceValue;
       if (target > 29) return null; // must land exactly on final square (29)
       return target;
@@ -928,6 +934,29 @@ if ((color === "hounds" && ["B6", "B7", "B8", "B9", "B10"].includes(label)) ||
     document.getElementById("easyBtn").onclick = () => setDifficulty("easy");
     document.getElementById("mediumBtn").onclick = () => setDifficulty("medium");
     document.getElementById("hardBtn").onclick = () => setDifficulty("hard");
+    setCustomDiceBtn.addEventListener("click", () => {
+  if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
+  const customValue = parseInt(customDiceInput.value);
+  if (isNaN(customValue) || customValue < 1 || customValue > 6) {
+    showTemporaryMessage("Invalid dice value!");
+    return;
+  }
+  currentDiceRoll = customValue;
+  diceRolled = true;
+  addMoveToHistory(`${humanSide} used custom dice ${currentDiceRoll}`);
+  showTemporaryMessage(`${humanSide} used custom dice ${currentDiceRoll}`);
+  redrawPlayScreen();
+
+  let opts = getMoveOptions(currentDiceRoll, currentTurn);
+  if (opts.length === 0) {
+    showTemporaryMessage("No legal moves. Passing turn...");
+    nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+    diceRolled = false;
+    currentDiceRoll = 0;
+    endTurn(true);
+  }
+});
+
 
     document.addEventListener("keydown", (e) => {
       let key = e.key.toLowerCase();
