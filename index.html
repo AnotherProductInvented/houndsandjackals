@@ -480,8 +480,14 @@ function drawDoubleArrow(from, to, direction = "above") {
     return Math.atan2(dy, dx);
   }
 
-  const angle = getCurveAngle(from.x, from.y, midX, midY, to.x, to.y);
-  drawArrowhead(to.x, to.y, angle); // clean, sharp, perfectly placed
+ // Arrowhead at start
+const angleStart = getCurveAngle(to.x, to.y, midX, midY, from.x, from.y);
+drawArrowhead(from.x, from.y, angleStart);
+
+// Arrowhead at end
+const angleEnd = getCurveAngle(from.x, from.y, midX, midY, to.x, to.y);
+drawArrowhead(to.x, to.y, angleEnd);
+
 }
 
 
