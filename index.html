@@ -388,13 +388,27 @@ function drawBoard() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   Object.entries(boardSquares).forEach(([label, sq], index) => {
     // Base slot
-    ctx.beginPath();
-    ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
-    let grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-    grad.addColorStop(0, "#fcebbd");
-    grad.addColorStop(1, "#b38b4d");
-    ctx.fillStyle = grad;
-    ctx.fill();
+   ctx.beginPath();
+ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
+
+// 🌈 Custom color logic
+if (["B6", "B7", "B8", "B9", "B10"].includes(label)) {
+  grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
+  grad.addColorStop(0, "#aad4ff");  // light royal blue
+  grad.addColorStop(1, "#005fa3");  // deep royal blue
+} else if (["C6", "C7", "C8", "C9", "C10"].includes(label)) {
+  grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
+  grad.addColorStop(0, "#aaf0aa");  // soft green
+  grad.addColorStop(1, "#007a3d");  // deep green
+} else {
+  grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
+  grad.addColorStop(0, "#fcebbd");
+  grad.addColorStop(1, "#b38b4d");
+}
+
+ctx.fillStyle = grad;
+ctx.fill();
+
     ctx.strokeStyle = "#6b4e2e";
     ctx.lineWidth = 3;
     ctx.stroke();
@@ -622,6 +636,12 @@ function drawPieces() {
       let own = (color === "hounds") ? houndsPieces : jackalsPieces;
       for (let i = 0; i < own.length; i++) {
         let pos = own[i];
+        let label = (color === "hounds") ? boardPathHounds[pos] : boardPathJackals[pos];
+if ((color === "hounds" && ["B6", "B7", "B8", "B9", "B10"].includes(label)) ||
+    (color === "jackals" && ["C6", "C7", "C8", "C9", "C10"].includes(label))) {
+  continue; // This piece is stuck permanently
+}
+
         let newPos = getValidMove(pos, diceValue, color);
         if (newPos === null) continue;
         if (!canLandOn(newPos, color)) continue;
@@ -646,6 +666,32 @@ function drawPieces() {
           }
         }
       }
+
+      function checkSpecialVictoryCondition() {
+  const houndsSpecialOccupied = ["B6", "B7", "B8", "B9", "B10"].every(label =>
+    houndsPieces.some(pos => boardPathHounds[pos] === label)
+  );
+  const jackalsSpecialOccupied = ["C6", "C7", "C8", "C9", "C10"].every(label =>
+    jackalsPieces.some(pos => boardPathJackals[pos] === label)
+  );
+
+  if (houndsSpecialOccupied) {
+    gameOverText.textContent = "Hounds Win by Occupying All Special Spots!";
+    addMoveToHistory(`Hounds win by occupying all special spots!`);
+    showGameOver();
+    return true;
+  }
+
+  if (jackalsSpecialOccupied) {
+    gameOverText.textContent = "Jackals Win by Occupying All Special Spots!";
+    addMoveToHistory(`Jackals win by occupying all special spots!`);
+    showGameOver();
+    return true;
+  }
+
+  return false;
+}
+
       own[pieceIndex] = toPos;
       addMoveToHistory(`${color} moved piece #${pieceIndex+1} from ${fromPos===-1?"off-board":fromPos+1} to ${toPos+1}`);
       lastMove = { fromPos, toPos, color, pieceIndex };
@@ -658,6 +704,7 @@ function drawPieces() {
       }
       let finished = own.filter(p => p === 29).length;
       if (finished === NUM_PIECES) {
+        if (checkSpecialVictoryCondition()) return;
         gameOverText.textContent = (color === humanSide) ? "You Win!" : "You Lose!";
         addMoveToHistory(`${color} wins the game!`);
         showGameOver();
