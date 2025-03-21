@@ -201,12 +201,15 @@ canvas {
         <button id="gameOverNewGameBtn">New Game</button>
         <p>Press [M] to return to the Main Menu.</p>
       </div>
- <!-- ✅ Jackals Tray ABOVE canvas (still inside gameContainer) -->
+      <!-- ✅ Jackals Tray ABOVE canvas (still inside gameContainer) -->
 <div id="jackalsTray" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 10px;"></div>
-<canvas id="gameCanvas" width="820" height="320" style="width: 100%; height: auto;">
 
-<!-- ✅ Hounds Tray BELOW board -->
-<div id="houndsTray" style="display: flex; gap: 10px; justify-content: center; margin-top: 30px;"></div>
+<!-- ✅ Canvas for the board -->
+<canvas id="gameCanvas" width="820" height="320" style="width: 100%; height: auto;"></canvas>
+
+<!-- ✅ Hounds Tray BELOW canvas (still inside gameContainer) -->
+<div id="houndsTray" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;"></div>
+
 
 
     </div>
