@@ -390,6 +390,8 @@ function drawBoard() {
     // Base slot
    ctx.beginPath();
 ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
+    let grad;
+
 
 // 🌈 Custom color logic
 if (["B6", "B7", "B8", "B9", "B10"].includes(label)) {
