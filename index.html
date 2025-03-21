@@ -222,8 +222,11 @@ const ctx = canvas.getContext("2d");
     /***********************************
      * 1) Board & Canvas Setup
      ***********************************/
-const boardSquares = {};
 const boardPath = [];
+const boardSquares = {};
+const boardPathHounds = ["E5", "E6", "E7", "E8", "E9", "D15", "D14", "D13", "D12", "D11", "D10", "D9", "D8", "D7", "D6", "D5", "D4", "D3", "D2", "D1", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10"];
+const boardPathJackals = ["E5", "E4", "E3", "E2", "E1", "A15", "A14", "A13", "A12", "A11", "A10", "A9", "A8", "A7", "A6", "A5", "A4", "A3", "A2", "A1", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10"];
+
 
 // Board settings
 const SLOT_RADIUS = 7;
@@ -519,7 +522,7 @@ drawArrowhead(to.x, to.y, angleEnd);
 function drawPieces() {
   houndsPieces.forEach((pos, i) => {
     if (pos === -1 || pos === 29) return;
-    const label = boardPath[pos];
+    const label = boardPathHounds[pos];
     const sq = boardSquares[label];
     const cx = sq.x;
     const cy = sq.y;
@@ -543,9 +546,10 @@ function drawPieces() {
     ctx.restore();
   });
 
+
   jackalsPieces.forEach((pos, i) => {
     if (pos === -1 || pos === 29) return;
-    const label = boardPath[pos];
+    const label = (color === "hounds") ? boardPathHounds[pos] : boardPathJackals[pos];
     const sq = boardSquares[label];
     const cx = sq.x;
     const cy = sq.y;
@@ -633,7 +637,7 @@ function drawPieces() {
       // Capture rule: if landing on opponent’s piece (and square not safe), capture it.
       if (toPos !== 0 && toPos !== 29) {
         if (opp.includes(toPos)) {
-          let sq = boardSquares[path[toPos]];
+          let sq = boardSquares[(color === "hounds" ? boardPathHounds[toPos] : boardPathJackals[toPos])];
           if (!sq.safe) {
             let oppIdx = opp.indexOf(toPos);
             opp[oppIdx] = -1;
@@ -711,7 +715,7 @@ function drawPieces() {
       for (let i = 0; i < own.length; i++) {
         let pos = own[i];
         if (pos === 29) continue;
-        let sqIdx = path[pos === -1 ? 0 : pos];
+        let sqIdx = (currentTurn === "hounds") ? boardPathHounds[pos === -1 ? 0 : pos] : boardPathJackals[pos === -1 ? 0 : pos];
         let sq = boardSquares[sqIdx];
         let cx = sq.x + sq.w/2, cy = sq.y + sq.h/2;
         let dx = mx - cx, dy = my - cy;
