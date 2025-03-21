@@ -65,6 +65,7 @@ canvas {
   box-shadow: 0 0 15px rgba(0,0,0,0.2);
 }
 
+
     /* Overlays */
     .overlayScreen {
       position: absolute;
@@ -200,6 +201,11 @@ canvas {
         <p>Press [M] to return to the Main Menu.</p>
       </div>
       <canvas id="gameCanvas" width="820" height="320"></canvas>
+<!-- Piece Trays for Hounds and Jackals -->
+<div style="display: flex; justify-content: space-between; width: 100%; margin-top: 10px;">
+  <div id="houndsTray" style="display: flex; gap: 10px; justify-content: center; width: 50%;"></div>
+  <div id="jackalsTray" style="display: flex; gap: 10px; justify-content: center; width: 50%;"></div>
+</div>
 
 
 
@@ -318,22 +324,27 @@ const setCustomDiceBtn = document.getElementById("setCustomDiceBtn");
     /***********************************
      * 4) Instructions (3 Pages)
      ***********************************/
-    const instructionsPages = [
-      `Page 1 – Gameplay Overview:<br>
-      • Each player has 5 pieces.<br>
-      • To enter a piece onto the board, you must roll a 1 or 6.<br>
-      • Pieces move along a 30‑square serpentine path.<br>
-      • Landing on an opponent’s piece (if not on a safe zone) captures it (sends it off‑board).<br>
-      • Rolling a 6 grants an extra turn.`,
-      `Page 2 – Special Rules:<br>
-      • You cannot land on a square occupied by your own piece (except safe zones).<br>
-      • Exact roll is required to land on the final square.<br>
-      • Safe zones (marked with a star) protect pieces from capture.`,
-      `Page 3 – Winning & Additional Details:<br>
-      • The first player to get all 5 pieces to the final square wins.<br>
-      • If no legal moves are available, the turn is forfeited.<br>
-      • Press [M] at any time to return to the Main Menu.`
-    ];
+const instructionsPages = [
+  `📜 <strong>Page 1 – Game Objective & Overview</strong><br><br>
+  • Each player has <strong>5 pieces</strong> (Hounds or Jackals).<br>
+  • The goal is to move all your pieces along your path and reach the final square.<br>
+  • You can also win instantly by occupying all <strong>5 special trap spaces</strong> on your side (B6–B10 for Hounds, C6–C10 for Jackals).`,
+
+  `🎲 <strong>Page 2 – Movement & Rules</strong><br><br>
+  • To enter a piece onto the board, you must roll a <strong>6</strong>.<br>
+  • Pieces move forward by the exact number rolled on the dice.<br>
+  • If you roll a <strong>6</strong>, you get an <strong>extra turn</strong>.<br>
+  • You must land exactly on the final square to finish a piece.<br>
+  • If no legal move is possible, your opponent gets to use your roll.`,
+
+  `⚔️ <strong>Page 3 – Special Spaces & Capturing</strong><br><br>
+  • You <strong>cannot land</strong> on a square already occupied by your own piece.<br>
+  • Landing on an opponent’s piece <strong>captures</strong> it (unless it’s on a <strong>safe zone</strong>).<br>
+  • Safe zones (A5, A15, D5, D15, E5) protect pieces from being captured.<br>
+  • Trap spaces (B6–B10 and C6–C10) make pieces stuck permanently.<br><br>
+  • Press <strong>[M]</strong> anytime to return to the Main Menu.`
+];
+
     let currentInstructionsPage = 0;
     function updateInstructions() {
       instructionsContent.innerHTML = instructionsPages[currentInstructionsPage];
@@ -543,7 +554,6 @@ drawArrowhead(to.x, to.y, angleEnd);
     }
 function drawPieces() {
   houndsPieces.forEach((pos, i) => {
-    if (pos === -1 || pos === 29) return;
     const label = boardPathHounds[pos];
     const sq = boardSquares[label];
     const cx = sq.x;
@@ -571,7 +581,7 @@ function drawPieces() {
 
   jackalsPieces.forEach((pos, i) => {
     if (pos === -1 || pos === 29) return;
-    const label = (color === "hounds") ? boardPathHounds[pos] : boardPathJackals[pos];
+    const label = boardPathJackals[pos];
     const sq = boardSquares[label];
     const cx = sq.x;
     const cy = sq.y;
@@ -601,13 +611,6 @@ function drawPieces() {
 }
 
     function redrawPlayScreen() {
-      drawBoard();
-      drawPieces();
-      updateDiceRollDisplay();
-      updateMoveHistoryDisplay();
-      debugLog("Play screen redrawn.");
-    }
-    function redrawPlayScreen() {
   drawBoard();
   drawPieces();
   updateDiceRollDisplay();
@@ -628,26 +631,33 @@ function drawPieces() {
     function updateMoveHistoryDisplay() {
       moveHistoryDiv.innerHTML = "Moves:<br>" + moveHistory.join("<br>");
     }
-    function updateTrays() {
+  function updateTrays() {
   const houndsTray = document.getElementById("houndsTray");
   const jackalsTray = document.getElementById("jackalsTray");
   houndsTray.innerHTML = "";
   jackalsTray.innerHTML = "";
 
   for (let i = 0; i < NUM_PIECES; i++) {
-    const hDiv = document.createElement("div");
-    hDiv.textContent = "🐶";
-    hDiv.style.fontSize = "28px";
-    hDiv.style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
-    houndsTray.appendChild(hDiv);
+    const hImg = document.createElement("img");
+    hImg.src = "hounds.png";
+    hImg.alt = "Hound";
+    hImg.style.width = "40px";
+    hImg.style.height = "40px";
+    hImg.style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
+    hImg.style.transition = "opacity 0.3s ease";
+    houndsTray.appendChild(hImg);
 
-    const jDiv = document.createElement("div");
-    jDiv.textContent = "🦊";
-    jDiv.style.fontSize = "28px";
-    jDiv.style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
-    jackalsTray.appendChild(jDiv);
+    const jImg = document.createElement("img");
+    jImg.src = "jackals.png";
+    jImg.alt = "Jackal";
+    jImg.style.width = "40px";
+    jImg.style.height = "40px";
+    jImg.style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
+    jImg.style.transition = "opacity 0.3s ease";
+    jackalsTray.appendChild(jImg);
   }
 }
+
 
 
     /***********************************
