@@ -42,20 +42,20 @@
       flex-direction: column;
       align-items: center;
     }
-    /* Game Container */
+/* Game Container */
 #gameContainer {
   position: relative;
-  width: 840px;
-  height: 500px;
-
+  width: 100%;
+  max-width: 900px;
+  height: auto;
   padding: 20px;
-  background: #fff;
+  background: linear-gradient(to bottom, #f5e6ca, #ecd8b5);
   border: 10px double #8b4513;
   border-radius: 6px;
   margin-bottom: 20px;
-  overflow-y: auto; /* 👈 Optional: if overflow ever happens, scrollbars will show */
-  background: linear-gradient(to bottom, #f5e6ca, #ecd8b5);
+  overflow: hidden; /* ✅ removes scrollbars */
 }
+
 
 canvas {
   display: block;
@@ -202,7 +202,7 @@ canvas {
       </div>
  <!-- ✅ Jackals Tray ABOVE canvas (still inside gameContainer) -->
 <div id="jackalsTray" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 10px;"></div>
-<canvas id="gameCanvas" width="820" height="320"></canvas>
+<canvas id="gameCanvas" width="820" height="320" style="width: 100%; height: auto;">
 
 <!-- ✅ Hounds Tray BELOW board -->
 <div id="houndsTray" style="display: flex; gap: 10px; justify-content: center; margin: 10px 0;"></div>
