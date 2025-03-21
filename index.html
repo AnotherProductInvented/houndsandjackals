@@ -201,11 +201,15 @@ canvas {
         <p>Press [M] to return to the Main Menu.</p>
       </div>
       <canvas id="gameCanvas" width="820" height="320"></canvas>
-<!-- Piece Trays for Hounds and Jackals -->
-<div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px;">
-  <div id="jackalsTray" style="display: flex; gap: 10px; justify-content: center;"></div>
-  <div id="houndsTray" style="display: flex; gap: 10px; justify-content: center;"></div>
-</div>
+<!-- Jackals Tray ABOVE the board -->
+<div id="jackalsTray" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 10px;"></div>
+
+<!-- Game Board Canvas -->
+<canvas id="gameCanvas" width="820" height="320"></canvas>
+
+<!-- Hounds Tray BELOW the board -->
+<div id="houndsTray" style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;"></div>
+
 
 
 
