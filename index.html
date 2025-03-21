@@ -607,6 +607,15 @@ function drawPieces() {
       updateMoveHistoryDisplay();
       debugLog("Play screen redrawn.");
     }
+    function redrawPlayScreen() {
+  drawBoard();
+  drawPieces();
+  updateDiceRollDisplay();
+  updateMoveHistoryDisplay();
+  updateTrays(); // 👈 add this line
+  debugLog("Play screen redrawn.");
+}
+
     function updateDiceRollDisplay() {
       diceRollDisplay.textContent = `Dice: ${currentDiceRoll || "-"}`;
     }
@@ -619,6 +628,27 @@ function drawPieces() {
     function updateMoveHistoryDisplay() {
       moveHistoryDiv.innerHTML = "Moves:<br>" + moveHistory.join("<br>");
     }
+    function updateTrays() {
+  const houndsTray = document.getElementById("houndsTray");
+  const jackalsTray = document.getElementById("jackalsTray");
+  houndsTray.innerHTML = "";
+  jackalsTray.innerHTML = "";
+
+  for (let i = 0; i < NUM_PIECES; i++) {
+    const hDiv = document.createElement("div");
+    hDiv.textContent = "🐶";
+    hDiv.style.fontSize = "28px";
+    hDiv.style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
+    houndsTray.appendChild(hDiv);
+
+    const jDiv = document.createElement("div");
+    jDiv.textContent = "🦊";
+    jDiv.style.fontSize = "28px";
+    jDiv.style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
+    jackalsTray.appendChild(jDiv);
+  }
+}
+
 
     /***********************************
      * 9) Movement & Rules Functions
