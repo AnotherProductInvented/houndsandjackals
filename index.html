@@ -744,18 +744,13 @@ if (teleportPairs[currentLabel]) {
 extraTurn = false;
 nextPlayer = (color === "hounds") ? "jackals" : "hounds";
 
-      // Extra Turn if landed on A5, A15, D5, or D15
 const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
-if (["A5", "A15", "D5", "D15"].includes(landedLabel)) {
-  extraTurn = true;
-  addMoveToHistory(`${color} landed on ${landedLabel}, gets another turn!`);
-  showTemporaryMessage(`${color} gets another turn!`);
-}
 if (["A5", "A15", "D5", "D15", "E5"].includes(landedLabel)) {
   extraTurn = true;
   addMoveToHistory(`${color} landed on ${landedLabel}, gets another turn!`);
   showTemporaryMessage(`${color} gets another turn!`);
 }
+
 
 
       let finished = own.filter(p => p === 29).length;
@@ -883,20 +878,32 @@ if (extraOpponentDice > 0) {
   addMoveToHistory(`${currentTurn} uses opponent's extra dice: ${currentDiceRoll}`);
   showTemporaryMessage(`${currentTurn} uses opponent's extra dice: ${currentDiceRoll}`);
   redrawPlayScreen();
-  setTimeout(() => {
-    aiMakeMove(() => {
-          // New version with AI moved check
-      if (!aiMoved) {
-        showTemporaryMessage("AI could not use extra dice. Rolling normally...");
-      }
-      currentDiceRoll = rollDice();
-      addMoveToHistory(`${currentTurn} rolled ${currentDiceRoll}`);
-      showTemporaryMessage(`${currentTurn} rolled ${currentDiceRoll}`);
-      redrawPlayScreen();
-      setTimeout(() => aiMakeMove(() => endTurn(false)), 2000);
+ setTimeout(() => {
+  let movedWithExtra = false;
+  let opts = getMoveOptions(currentDiceRoll, currentTurn);
+  if (opts.length > 0) {
+    movedWithExtra = true;
+    let pick = opts[Math.floor(Math.random() * opts.length)];
+    executeMove(pick.pieceIndex, pick.toPos, currentTurn);
+    redrawPlayScreen();
+  }
 
-    });
-  }, 1500);
+  if (!movedWithExtra) {
+    showTemporaryMessage("AI could not use extra dice. Rolling normally...");
+    currentDiceRoll = rollDice();
+    addMoveToHistory(`${currentTurn} rolled ${currentDiceRoll}`);
+    showTemporaryMessage(`${currentTurn} rolled ${currentDiceRoll}`);
+    redrawPlayScreen();
+    setTimeout(() => aiMakeMove(() => endTurn(false)), 2000);
+  } else {
+    if (extraTurn) {
+      setTimeout(aiAutoRoll, 1500);
+    } else {
+      endTurn(false);
+    }
+  }
+}, 1500);
+
 } else {
   currentDiceRoll = rollDice();
   diceRolled = true;
