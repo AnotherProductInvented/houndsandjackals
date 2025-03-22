@@ -847,10 +847,18 @@ if (opts.length === 0) {
     showTemporaryMessage("Illegal move!");
     return;
   }
-  if (!executeMove(pieceIndex, found.toPos, color)) return;
-  redrawPlayScreen();
-  showTemporaryMessage(`${color} moved piece #${pieceIndex + 1}`);
+ if (!executeMove(pieceIndex, found.toPos, color)) return;
+redrawPlayScreen();
+showTemporaryMessage(`${color} moved piece #${pieceIndex + 1}`);
+if (!extraTurn) {
   endTurn(true);
+} else {
+  // Let the player roll again (do nothing here)
+  diceRolled = false;
+  currentDiceRoll = 0;
+  updateDiceRollDisplay();
+  addMoveToHistory(`${color} gets another turn!`);
+}
 }
 
 
