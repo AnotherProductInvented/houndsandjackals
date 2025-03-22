@@ -751,6 +751,11 @@ if (["A5", "A15", "D5", "D15"].includes(landedLabel)) {
   addMoveToHistory(`${color} landed on ${landedLabel}, gets another turn!`);
   showTemporaryMessage(`${color} gets another turn!`);
 }
+if (["A5", "A15", "D5", "D15", "E5"].includes(landedLabel)) {
+  extraTurn = true;
+  addMoveToHistory(`${color} landed on ${landedLabel}, gets another turn!`);
+  showTemporaryMessage(`${color} gets another turn!`);
+}
 
 
       let finished = own.filter(p => p === 29).length;
