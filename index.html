@@ -845,11 +845,13 @@ function tryMovePiece(pieceIndex, color) {
   if (currentTurn !== humanSide) return;
   if (!diceRolled) return;
   if (color !== currentTurn) return;
+  rollDiceBtn.disabled = true;  // Temporarily disable until dice is re-rolled
 
   let opts = getMoveOptions(currentDiceRoll, color);
   let found = opts.filter(o => o.pieceIndex === pieceIndex)[0];
   if (!found) {
     showTemporaryMessage("Illegal move!");
+    rollDiceBtn.disabled = false;
     return;
   }
 
@@ -905,56 +907,64 @@ if (extraOpponentDice > 0) {
 }
 
     }
-    function aiMakeMove(callback = null) {
-      if (typeof aiMoved !== 'undefined') aiMoved = false;
-      let opts = getMoveOptions(currentDiceRoll, currentTurn);
-      if (opts.length === 0) {
-        showTemporaryMessage("AI has no moves. Passing turn...");
-        nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
-        diceRolled = false;
-        currentDiceRoll = 0;
-        if (callback) callback();
-else endTurn(false);
+function aiMakeMove(callback = null) {
+  let aiMoved = false; // Always start fresh
+  let opts = getMoveOptions(currentDiceRoll, currentTurn);
+  if (opts.length === 0) {
+    showTemporaryMessage("AI has no moves. Passing turn...");
+    nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+    diceRolled = false;
+    currentDiceRoll = 0;
+    if (callback) callback();
+    else endTurn(false);
+    return;
+  }
 
-        return;
-      }
-      let pick;
-      if (aiDifficulty === "easy") {
-        pick = opts[Math.floor(Math.random() * opts.length)];
-      } else if (aiDifficulty === "medium") {
-        let captureMoves = opts.filter(o => {
-          let opp = (currentTurn === "hounds") ? jackalsPieces : houndsPieces;
-          return opp.includes(o.toPos);
-        });
-        pick = (captureMoves.length > 0) ? captureMoves[Math.floor(Math.random() * captureMoves.length)] : opts[Math.floor(Math.random() * opts.length)];
-      } else if (aiDifficulty === "hard") {
-        let captureMoves = opts.filter(o => {
-          let opp = (currentTurn === "hounds") ? jackalsPieces : houndsPieces;
-          return opp.includes(o.toPos);
-        });
-        if (captureMoves.length > 0) {
-          pick = captureMoves[Math.floor(Math.random() * captureMoves.length)];
-        } else {
-          pick = opts.reduce((best, o) => (o.fromPos < best.fromPos ? o : best), opts[0]);
-        }
-      }
-      if (!executeMove(pick.pieceIndex, pick.toPos, currentTurn)) {
-        nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
-        diceRolled = false;
-        currentDiceRoll = 0;
-        endTurn(false);
-        return;
-      }
-      redrawPlayScreen();
-      if (extraTurn) {
-        showTemporaryMessage(`${currentTurn} goes again!`);
-        diceRolled = false;
-        currentDiceRoll = 0;
-        aiAutoRoll();
-      } else {
-        endTurn(false);
-      }
+  let pick;
+  if (aiDifficulty === "easy") {
+    pick = opts[Math.floor(Math.random() * opts.length)];
+  } else if (aiDifficulty === "medium") {
+    let captureMoves = opts.filter(o => {
+      let opp = (currentTurn === "hounds") ? jackalsPieces : houndsPieces;
+      return opp.includes(o.toPos);
+    });
+    pick = (captureMoves.length > 0)
+      ? captureMoves[Math.floor(Math.random() * captureMoves.length)]
+      : opts[Math.floor(Math.random() * opts.length)];
+  } else if (aiDifficulty === "hard") {
+    let captureMoves = opts.filter(o => {
+      let opp = (currentTurn === "hounds") ? jackalsPieces : houndsPieces;
+      return opp.includes(o.toPos);
+    });
+    if (captureMoves.length > 0) {
+      pick = captureMoves[Math.floor(Math.random() * captureMoves.length)];
+    } else {
+      pick = opts.reduce((best, o) => (o.fromPos < best.fromPos ? o : best), opts[0]);
     }
+  }
+
+  // ✅ Update aiMoved properly
+  if (!executeMove(pick.pieceIndex, pick.toPos, currentTurn)) {
+    nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+    diceRolled = false;
+    currentDiceRoll = 0;
+    endTurn(false);
+    return;
+  }
+
+  aiMoved = true;
+  redrawPlayScreen();
+
+  if (extraTurn) {
+    showTemporaryMessage(`${currentTurn} goes again!`);
+    diceRolled = false;
+    currentDiceRoll = 0;
+    aiAutoRoll();
+  } else {
+    endTurn(false);
+  }
+}
+
 
     /***********************************
      * 13) Temporary Messages
