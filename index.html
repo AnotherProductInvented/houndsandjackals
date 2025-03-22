@@ -826,11 +826,20 @@ if (opts.length === 0) {
             showTemporaryMessage("Illegal move!");
             return;
           }
-          if (!executeMove(i, found.toPos, currentTurn)) return;
-          redrawPlayScreen();
-          showTemporaryMessage(`${currentTurn} moved piece #${i+1}`);
-          endTurn(true);
-          return;
+if (!executeMove(i, found.toPos, currentTurn)) return;
+redrawPlayScreen();
+showTemporaryMessage(`${currentTurn} moved piece #${i+1}`);
+if (extraTurn) {
+  diceRolled = false;
+  currentDiceRoll = 0;
+  updateDiceRollDisplay();
+  addMoveToHistory(`${currentTurn} gets another turn!`);
+  showTemporaryMessage(`${currentTurn} gets another turn!`);
+} else {
+  endTurn(true);
+}
+return;
+
         }
       }
     }
@@ -854,15 +863,15 @@ function tryMovePiece(pieceIndex, color) {
   redrawPlayScreen();
   showTemporaryMessage(`${color} moved piece #${pieceIndex + 1}`);
   
-  if (!extraTurn) {
-    endTurn(true);
-  } else {
-    // Player gets another turn
-    diceRolled = false;
-    currentDiceRoll = 0;
-    updateDiceRollDisplay();
-    addMoveToHistory(`${color} gets another turn!`);
-  }
+  if (extraTurn) {
+  diceRolled = false;
+  currentDiceRoll = 0;
+  updateDiceRollDisplay();
+  addMoveToHistory(`${currentTurn} gets another turn!`);
+  showTemporaryMessage(`${currentTurn} gets another turn!`);
+} else {
+  endTurn(true);
+}
 }
 
 
