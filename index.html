@@ -514,6 +514,29 @@ drawArrowhead(to.x, to.y, angleEnd);
 
 }
 
+function drawPieces() {
+  // Draw Hounds
+  houndsPieces.forEach((pos, i) => {
+    if (pos === -1 || pos === 29) return;
+    const label = boardPathHounds[pos];
+    const sq = boardSquares[label];
+    const cx = sq.x;
+    const cy = sq.y;
+
+    ctx.drawImage(houndsImg, cx - 20, cy - 20, 40, 40);
+  });
+
+  // Draw Jackals
+  jackalsPieces.forEach((pos, i) => {
+    if (pos === -1 || pos === 29) return;
+    const label = boardPathJackals[pos];
+    const sq = boardSquares[label];
+    const cx = sq.x;
+    const cy = sq.y;
+
+    ctx.drawImage(jackalsImg, cx - 20, cy - 20, 40, 40);
+  });
+}
 
  
     function drawStar(cx, cy, spikes, outerRadius, innerRadius, fillColor, strokeColor, lineWidth) {
@@ -540,29 +563,6 @@ drawArrowhead(to.x, to.y, angleEnd);
       ctx.lineWidth = lineWidth;
       ctx.stroke();
     }
-houndsPieces.forEach((pos, i) => {
-  if (pos === -1 || pos === 29) return;
-  const label = boardPathHounds[pos];
-  const sq = boardSquares[label];
-  const cx = sq.x;
-  const cy = sq.y;
-
-  ctx.save();
-  ctx.drawImage(houndsImg, cx - 20, cy - 20, 40, 40);
-  ctx.restore();
-});
-
-jackalsPieces.forEach((pos, i) => {
-  if (pos === -1 || pos === 29) return;
-  const label = boardPathJackals[pos];
-  const sq = boardSquares[label];
-  const cx = sq.x;
-  const cy = sq.y;
-
-  ctx.save();
-  ctx.drawImage(jackalsImg, cx - 20, cy - 20, 40, 40);
-  ctx.restore();
-});
 
     function redrawPlayScreen() {
   drawBoard();
