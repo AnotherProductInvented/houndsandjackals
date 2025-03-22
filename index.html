@@ -224,6 +224,25 @@ canvas {
   <img id="logo" src="logo.png" alt="Logo">
 
   <script>
+    function removeWhiteBackground(image, callback) {
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = image.width;
+  tempCanvas.height = image.height;
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.drawImage(image, 0, 0);
+  const imgData = tempCtx.getImageData(0, 0, image.width, image.height);
+  const data = imgData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] > 230 && data[i + 1] > 230 && data[i + 2] > 230) {
+      data[i + 3] = 0;
+    }
+  }
+  tempCtx.putImageData(imgData, 0, 0);
+  const newImage = new Image();
+  newImage.src = tempCanvas.toDataURL();
+  newImage.onload = () => callback(newImage);
+}
+
     'use strict';
     const debugMode = true;
     function debugLog(msg) {
@@ -378,8 +397,20 @@ const instructionsPages = [
     let jackalsImg = new Image();
     jackalsImg.src = "jackals.png"; // your custom image for jackals
     jackalsImg.crossOrigin = "anonymous";
-    houndsImg.onload = () => debugLog("Hounds image loaded.");
-    jackalsImg.onload = () => debugLog("Jackals image loaded.");
+houndsImg.onload = () => {
+  removeWhiteBackground(houndsImg, (cleaned) => {
+    houndsImg = cleaned;
+    debugLog("Hounds image cleaned.");
+  });
+};
+
+jackalsImg.onload = () => {
+  removeWhiteBackground(jackalsImg, (cleaned) => {
+    jackalsImg = cleaned;
+    debugLog("Jackals image cleaned.");
+  });
+};
+
 
     /***********************************
      * 6) Initialization of Pieces
@@ -590,27 +621,30 @@ function drawPieces() {
   const jackalsTray = document.getElementById("jackalsTray");
   houndsTray.innerHTML = "";
   jackalsTray.innerHTML = "";
+for (let i = 0; i < NUM_PIECES; i++) {
+  const hImg = document.createElement("img");
+  hImg.src = houndsImg.src;
+  hImg.alt = "Hound";
+  hImg.style.width = "40px";
+  hImg.style.height = "40px";
+  hImg.style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
+  hImg.style.transition = "opacity 0.3s ease";
+  hImg.dataset.index = i;
+  hImg.onclick = () => tryMovePiece(i, "hounds");
+  houndsTray.appendChild(hImg);
 
-  for (let i = 0; i < NUM_PIECES; i++) {
-    const hImg = document.createElement("img");
-    hImg.src = "hounds.png";
-    hImg.alt = "Hound";
-    hImg.style.width = "40px";
-    hImg.style.height = "40px";
-    hImg.style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
-    hImg.style.transition = "opacity 0.3s ease";
-    houndsTray.appendChild(hImg);
-
-    const jImg = document.createElement("img");
-    jImg.src = "jackals.png";
-    jImg.alt = "Jackal";
-    jImg.style.width = "40px";
-    jImg.style.height = "40px";
-    jImg.style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
-    jImg.style.transition = "opacity 0.3s ease";
-    jackalsTray.appendChild(jImg);
-  }
+  const jImg = document.createElement("img");
+  jImg.src = jackalsImg.src;
+  jImg.alt = "Jackal";
+  jImg.style.width = "40px";
+  jImg.style.height = "40px";
+  jImg.style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
+  jImg.style.transition = "opacity 0.3s ease";
+  jImg.dataset.index = i;
+  jImg.onclick = () => tryMovePiece(i, "jackals");
+  jackalsTray.appendChild(jImg);
 }
+
 
 
 
@@ -801,6 +835,25 @@ if (opts.length === 0) {
       }
     }
 
+    function tryMovePiece(pieceIndex, color) {
+  if (gameState !== "playing") return;
+  if (currentTurn !== humanSide) return;
+  if (!diceRolled) return;
+  if (color !== currentTurn) return;
+
+  let opts = getMoveOptions(currentDiceRoll, color);
+  let found = opts.find(o => o.pieceIndex === pieceIndex);
+  if (!found) {
+    showTemporaryMessage("Illegal move!");
+    return;
+  }
+  if (!executeMove(pieceIndex, found.toPos, color)) return;
+  redrawPlayScreen();
+  showTemporaryMessage(`${color} moved piece #${pieceIndex + 1}`);
+  endTurn(true);
+}
+
+
     /***********************************
      * 12) AI Turn
      ***********************************/
@@ -984,13 +1037,16 @@ else endTurn(false);
   redrawPlayScreen();
 
   let opts = getMoveOptions(currentDiceRoll, currentTurn);
-  if (opts.length === 0) {
-    showTemporaryMessage("No legal moves. Passing turn...");
-    nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
-    diceRolled = false;
-    currentDiceRoll = 0;
-    endTurn(true);
-  }
+if (opts.length === 0) {
+  showTemporaryMessage("No legal moves. Opponent gets your dice!");
+  addMoveToHistory(`No legal moves. ${nextPlayer} gets to use your dice (${currentDiceRoll})`);
+  extraOpponentDice = currentDiceRoll;
+  nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+  diceRolled = false;
+  currentDiceRoll = 0;
+  endTurn(true);
+}
+
 });
 
 
