@@ -835,30 +835,32 @@ if (opts.length === 0) {
       }
     }
 
-    function tryMovePiece(pieceIndex, color) {
+function tryMovePiece(pieceIndex, color) {
   if (gameState !== "playing") return;
   if (currentTurn !== humanSide) return;
   if (!diceRolled) return;
   if (color !== currentTurn) return;
 
   let opts = getMoveOptions(currentDiceRoll, color);
-  let found = opts.find(o => o.pieceIndex === pieceIndex);
+  let found = opts.filter(o => o.pieceIndex === pieceIndex)[0];
   if (!found) {
     showTemporaryMessage("Illegal move!");
     return;
   }
- if (!executeMove(pieceIndex, found.toPos, color)) return;
-redrawPlayScreen();
-showTemporaryMessage(`${color} moved piece #${pieceIndex + 1}`);
-if (!extraTurn) {
-  endTurn(true);
-} else {
-  // Let the player roll again (do nothing here)
-  diceRolled = false;
-  currentDiceRoll = 0;
-  updateDiceRollDisplay();
-  addMoveToHistory(`${color} gets another turn!`);
-}
+
+  if (!executeMove(pieceIndex, found.toPos, color)) return;
+  redrawPlayScreen();
+  showTemporaryMessage(`${color} moved piece #${pieceIndex + 1}`);
+  
+  if (!extraTurn) {
+    endTurn(true);
+  } else {
+    // Player gets another turn
+    diceRolled = false;
+    currentDiceRoll = 0;
+    updateDiceRollDisplay();
+    addMoveToHistory(`${color} gets another turn!`);
+  }
 }
 
 
