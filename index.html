@@ -863,15 +863,17 @@ function tryMovePiece(pieceIndex, color) {
   redrawPlayScreen();
   showTemporaryMessage(`${color} moved piece #${pieceIndex + 1}`);
   
-  if (extraTurn) {
+if (extraTurn) {
   diceRolled = false;
   currentDiceRoll = 0;
   updateDiceRollDisplay();
   addMoveToHistory(`${currentTurn} gets another turn!`);
   showTemporaryMessage(`${currentTurn} gets another turn!`);
 } else {
+  nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";  // ✅ FIX: ensure next player updates!
   endTurn(true);
 }
+
 }
 
 
