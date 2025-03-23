@@ -768,7 +768,7 @@ if (["A5", "A15", "D5", "D15", "E5"].includes(landedLabel)) {
     /***********************************
      * 10) Turn Management
      ***********************************/
-  function endTurn(isHumanTurn) {
+function endTurn(isHumanTurn) {
   diceRolled = false;
   currentDiceRoll = 0;
 
@@ -776,29 +776,8 @@ if (["A5", "A15", "D5", "D15", "E5"].includes(landedLabel)) {
     currentTurn = nextPlayer;
 
     if (extraOpponentDice > 0) {
-      currentDiceRoll = extraOpponentDice;
-      extraOpponentDice = 0;
-      diceRolled = true;
-
-      addMoveToHistory(`${currentTurn} gets opponent's dice (${currentDiceRoll})!`);
-      showTemporaryMessage(`${currentTurn} gets opponent's dice (${currentDiceRoll})!`);
-
-      let opts = getMoveOptions(currentDiceRoll, currentTurn);
-      if (opts.length === 0) {
-        showTemporaryMessage("No moves available with extra dice. Rolling normally...");
-        addMoveToHistory(`No moves with extra dice. Rolling normally.`);
-        diceRolled = false;
-        currentDiceRoll = 0;
-      } else {
-        redrawPlayScreen();
-        if (currentTurn !== humanSide) {
-          setTimeout(() => aiMakeMove(() => endTurn(false)), 2000);
-          return;
-        } else {
-          redrawPlayScreen();
-          return; // Human gets immediate chance to use extra dice
-        }
-      }
+      addMoveToHistory(`${currentTurn} received opponent's unused roll (${extraOpponentDice})`);
+      showTemporaryMessage(`${currentTurn} can use opponent's unused roll (${extraOpponentDice})`);
     }
 
     addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
@@ -812,30 +791,45 @@ if (["A5", "A15", "D5", "D15", "E5"].includes(landedLabel)) {
   }, isHumanTurn ? 1000 : 2000);
 }
 
+
     /***********************************
      * 11) Human Interaction
      ***********************************/
-    function humanRollDice() {
-      if (gameState !== "playing") return;
-      if (currentTurn !== humanSide) return;
-      if (diceRolled) return;
-      currentDiceRoll = rollDice();
-      diceRolled = true;
-      addMoveToHistory(`${humanSide} rolled ${currentDiceRoll}`);
-      showTemporaryMessage(`${humanSide} rolled ${currentDiceRoll}`);
-      redrawPlayScreen();
-      let opts = getMoveOptions(currentDiceRoll, currentTurn);
-if (opts.length === 0) {
-  showTemporaryMessage("No legal moves. Opponent gets your dice!");
-  addMoveToHistory(`No legal moves. ${nextPlayer} gets to use your dice (${currentDiceRoll})`);
-  extraOpponentDice = currentDiceRoll;
-  nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
-  diceRolled = false;
-  currentDiceRoll = 0;
-  endTurn(true);
+  function humanRollDice() {
+  if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
+
+  currentDiceRoll = rollDice();
+  diceRolled = true;
+  addMoveToHistory(`${humanSide} rolled ${currentDiceRoll}`);
+  showTemporaryMessage(`${humanSide} rolled ${currentDiceRoll}`);
+
+  redrawPlayScreen();
+
+  // First, check extra dice from opponent
+  if (extraOpponentDice > 0) {
+    const extraOpts = getMoveOptions(extraOpponentDice, humanSide);
+    if (extraOpts.length > 0) {
+      addMoveToHistory(`You can use extra dice (${extraOpponentDice}) first!`);
+      showTemporaryMessage(`You can use extra dice (${extraOpponentDice}) first!`);
+    } else {
+      showTemporaryMessage(`Cannot use extra dice (${extraOpponentDice}), discarding...`);
+      addMoveToHistory(`Extra dice (${extraOpponentDice}) discarded, no moves available.`);
+      extraOpponentDice = 0; // Clear if no options
+    }
+  }
+
+  const opts = getMoveOptions(currentDiceRoll, humanSide);
+  if (opts.length === 0) {
+    showTemporaryMessage("No moves with normal dice. Passing dice...");
+    addMoveToHistory(`No legal moves. Opponent gets your dice (${currentDiceRoll})`);
+    extraOpponentDice = currentDiceRoll;
+    diceRolled = false;
+    currentDiceRoll = 0;
+    nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+    endTurn(true);
+  }
 }
 
-    }
 function handleBoardClick(e) {
   if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled) return;
 
@@ -846,31 +840,19 @@ function handleBoardClick(e) {
   const ownPieces = (humanSide === "hounds") ? houndsPieces : jackalsPieces;
   const boardPathSide = (humanSide === "hounds") ? boardPathHounds : boardPathJackals;
 
-  let closestPiece = null;
-  let closestDist = Infinity;
-
   for (let i = 0; i < ownPieces.length; i++) {
     const pos = ownPieces[i];
-
-    if (pos === 29 || pos === -1) continue;
+    if (pos === -1 || pos === 29) continue;
 
     const label = boardPathSide[pos];
     const sq = boardSquares[label];
-    const dx = mx - sq.x;
-    const dy = my - sq.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (dist < closestDist && dist <= 40) {
-      closestDist = dist;
-      closestPiece = i;
+    if (mx >= sq.x - 20 && mx <= sq.x + 20 && my >= sq.y - 20 && my <= sq.y + 20) {
+      tryMovePiece(i, humanSide);
+      return;
     }
   }
-
-  if (closestPiece !== null) {
-    tryMovePiece(closestPiece, humanSide);
-  }
 }
-
 
 
 function tryMovePiece(pieceIndex, color) {
@@ -879,32 +861,43 @@ function tryMovePiece(pieceIndex, color) {
     return;
   }
 
-  const opts = getMoveOptions(currentDiceRoll, color);
-  const found = opts.find(o => o.pieceIndex === pieceIndex);
+  // First, get moves for normal dice
+  let normalOpts = getMoveOptions(currentDiceRoll, color);
+  let normalMove = normalOpts.find(o => o.pieceIndex === pieceIndex);
 
-  if (!found) {
-    showTemporaryMessage("Illegal move!");
-    return;
+  // Then, check extra dice separately
+  let extraMove = null;
+  if (extraOpponentDice > 0) {
+    let extraOpts = getMoveOptions(extraOpponentDice, color);
+    extraMove = extraOpts.find(o => o.pieceIndex === pieceIndex);
   }
 
-  executeMove(pieceIndex, found.toPos, color);
-  redrawPlayScreen();
-  showTemporaryMessage(`${color} moved piece #${pieceIndex + 1}`);
-
-  if (extraTurn) {
+  // Use extra dice if possible, else normal dice
+  if (extraMove) {
+    executeMove(pieceIndex, extraMove.toPos, color);
+    addMoveToHistory(`${color} used extra dice roll (${extraOpponentDice})`);
+    showTemporaryMessage(`${color} used extra dice roll (${extraOpponentDice})`);
+    extraOpponentDice = 0;
+    redrawPlayScreen();
+    return; // still have normal dice
+  } else if (normalMove) {
+    executeMove(pieceIndex, normalMove.toPos, color);
+    addMoveToHistory(`${color} moved with dice (${currentDiceRoll})`);
+    redrawPlayScreen();
     diceRolled = false;
     currentDiceRoll = 0;
-    updateDiceRollDisplay();
-    addMoveToHistory(`${currentTurn} gets another turn!`);
-    showTemporaryMessage(`${currentTurn} gets another turn!`);
+
+    if (extraTurn) {
+      addMoveToHistory(`${currentTurn} gets another turn!`);
+      showTemporaryMessage(`${currentTurn} gets another turn!`);
+    } else {
+      nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+      endTurn(true);
+    }
   } else {
-    diceRolled = false;               // ✅ fix: explicitly reset diceRolled
-    currentDiceRoll = 0;              // ✅ fix: explicitly reset currentDiceRoll
-    nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";  // ✅ fix: explicitly update nextPlayer
-    endTurn(true);
+    showTemporaryMessage("Illegal move!");
   }
 }
-
 
     /***********************************
      * 12) AI Turn
