@@ -916,29 +916,36 @@ function tryMovePiece(pieceIndex, color) {
     return;
   }
 
-  // First, get moves for normal dice
+  // Check if moving from off-board to on-board:
+  const pieces = color === "hounds" ? houndsPieces : jackalsPieces;
+
+  if (pieces[pieceIndex] === -1) {
+    if (currentDiceRoll === 6 && canLandOn(0, color)) {
+      executeMove(pieceIndex, 0, color);
+      addMoveToHistory(`${color} placed piece on board.`);
+      diceRolled = false;
+      currentDiceRoll = 0;
+      if (extraTurn) {
+        addMoveToHistory(`${currentTurn} gets another turn!`);
+        showTemporaryMessage(`${currentTurn} gets another turn!`);
+      } else {
+        nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+        endTurn(true);
+      }
+      redrawPlayScreen();
+    } else {
+      showTemporaryMessage("Cannot place piece! Need a 6.");
+    }
+    return;
+  }
+
+  // Regular on-board move logic
   let normalOpts = getMoveOptions(currentDiceRoll, color);
   let normalMove = normalOpts.find(o => o.pieceIndex === pieceIndex);
 
-  // Then, check extra dice separately
-  let extraMove = null;
-  if (extraOpponentDice > 0) {
-    let extraOpts = getMoveOptions(extraOpponentDice, color);
-    extraMove = extraOpts.find(o => o.pieceIndex === pieceIndex);
-  }
-
-  // Use extra dice if possible, else normal dice
-  if (extraMove) {
-    executeMove(pieceIndex, extraMove.toPos, color);
-    addMoveToHistory(`${color} used extra dice roll (${extraOpponentDice})`);
-    showTemporaryMessage(`${color} used extra dice roll (${extraOpponentDice})`);
-    extraOpponentDice = 0;
-    redrawPlayScreen();
-    return; // still have normal dice
-  } else if (normalMove) {
+  if (normalMove) {
     executeMove(pieceIndex, normalMove.toPos, color);
     addMoveToHistory(`${color} moved with dice (${currentDiceRoll})`);
-    redrawPlayScreen();
     diceRolled = false;
     currentDiceRoll = 0;
 
@@ -949,10 +956,12 @@ function tryMovePiece(pieceIndex, color) {
       nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
       endTurn(true);
     }
+    redrawPlayScreen();
   } else {
     showTemporaryMessage("Illegal move!");
   }
 }
+
 
     /***********************************
      * 12) AI Turn
