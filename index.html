@@ -618,88 +618,88 @@ function drawPieces() {
     function updateMoveHistoryDisplay() {
       moveHistoryDiv.innerHTML = "Moves:<br>" + moveHistory.join("<br>");
     }
+let hTrayImages = [];
+let jTrayImages = [];
+let imagesReady = false;
+
+function prepareTrayImages(callback) {
+  let readyCount = 0;
+
+  function checkReady() {
+    readyCount++;
+    if (readyCount === 2) {
+      imagesReady = true;
+      callback();
+    }
+  }
+
+  removeWhiteBackground(houndsImg, (cleanedHounds) => {
+    houndsImg = cleanedHounds;
+    for (let i = 0; i < NUM_PIECES; i++) {
+      const hImg = document.createElement("img");
+      hImg.src = houndsImg.src;
+      hImg.alt = "Hound";
+      hImg.style.width = "50px";
+      hImg.style.height = "50px";
+      hImg.style.cursor = "pointer";
+      hImg.dataset.index = i;
+      hImg.onclick = () => offBoardClick(i, "hounds");
+      hTrayImages.push(hImg);
+    }
+    checkReady();
+  });
+
+  removeWhiteBackground(jackalsImg, (cleanedJackals) => {
+    jackalsImg = cleanedJackals;
+    for (let i = 0; i < NUM_PIECES; i++) {
+      const jImg = document.createElement("img");
+      jImg.src = jackalsImg.src;
+      jImg.alt = "Jackal";
+      jImg.style.width = "50px";
+      jImg.style.height = "50px";
+      jImg.style.cursor = "pointer";
+      jImg.dataset.index = i;
+      jImg.onclick = () => offBoardClick(i, "jackals");
+      jTrayImages.push(jImg);
+    }
+    checkReady();
+  });
+}
+
+function offBoardClick(i, color) {
+  if (currentTurn !== color) {
+    showTemporaryMessage("It's not your turn yet!");
+    return;
+  }
+  if (!diceRolled) {
+    showTemporaryMessage("Roll the dice first!");
+    return;
+  }
+  if (currentDiceRoll !== 6) {
+    showTemporaryMessage("You need a 6 to enter!");
+    return;
+  }
+  const pieces = color === "hounds" ? houndsPieces : jackalsPieces;
+  if (pieces[i] !== -1) {
+    showTemporaryMessage("Piece already on board!");
+    return;
+  }
+  tryMovePiece(i, color);
+}
+
 function updateTrays() {
+  if (!imagesReady) return;
   const houndsTray = document.getElementById("houndsTray");
   const jackalsTray = document.getElementById("jackalsTray");
   houndsTray.innerHTML = "";
   jackalsTray.innerHTML = "";
 
   for (let i = 0; i < NUM_PIECES; i++) {
-    // Hounds Tray
-    const hImg = document.createElement("img");
-    hImg.src = houndsImg.src;
-    hImg.alt = "Hound";
-    hImg.style.width = "50px";
-    hImg.style.height = "50px";
-    hImg.style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
-    hImg.style.transition = "opacity 0.3s ease";
-    hImg.style.cursor = "pointer";
-    hImg.dataset.index = i;
+    hTrayImages[i].style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
+    houndsTray.appendChild(hTrayImages[i]);
 
-    const hContainer = document.createElement("div");
-    hContainer.style.padding = "10px";
-    hContainer.style.margin = "5px";
-    hContainer.appendChild(hImg);
-    
-    hContainer.onclick = () => {
-      if (currentTurn !== humanSide) {
-        showTemporaryMessage("It's not your turn yet!");
-        return;
-      }
-      if (!diceRolled) {
-        showTemporaryMessage("Roll the dice first!");
-        return;
-      }
-      if (currentDiceRoll !== 6) {
-        showTemporaryMessage("You need a 6 to enter a new piece!");
-        return;
-      }
-      if (houndsPieces[i] !== -1) {
-        showTemporaryMessage("This piece is already on the board!");
-        return;
-      }
-      tryMovePiece(i, "hounds");
-    };
-
-    houndsTray.appendChild(hContainer);
-
-    // Jackals Tray (if needed)
-    const jImg = document.createElement("img");
-    jImg.src = jackalsImg.src;
-    jImg.alt = "Jackal";
-    jImg.style.width = "50px";
-    jImg.style.height = "50px";
-    jImg.style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
-    jImg.style.transition = "opacity 0.3s ease";
-    jImg.style.cursor = "pointer";
-    jImg.dataset.index = i;
-
-    const jContainer = document.createElement("div");
-    jContainer.style.padding = "10px";
-    jContainer.style.margin = "5px";
-    jContainer.appendChild(jImg);
-    
-    jContainer.onclick = () => {
-      if (currentTurn !== "jackals") {
-        showTemporaryMessage("It's not Jackals' turn!");
-        return;
-      }
-      if (!diceRolled) {
-        showTemporaryMessage("Dice hasn't been rolled yet!");
-        return;
-      }
-      if (currentDiceRoll !== 6) {
-        showTemporaryMessage("A 6 is required to enter this piece!");
-        return;
-      }
-      if (jackalsPieces[i] !== -1) {
-        showTemporaryMessage("This Jackal is already on the board!");
-        return;
-      }
-      tryMovePiece(i, "jackals");
-    };
-
-    jackalsTray.appendChild(jContainer);
+    jTrayImages[i].style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
+    jackalsTray.appendChild(jTrayImages[i]);
   }
 }
 
@@ -1106,22 +1106,34 @@ function aiMakeMove(callback = null) {
       startPlaying();
       debugLog("Difficulty set to " + d);
     }
-    function startPlaying() {
-      hideAllScreens();
-      gameState = "playing";
-      initPieces();
-      currentTurn = "hounds"; // Hounds always start (if human is hounds, human goes first)
-      diceRolled = false;
-      currentDiceRoll = 0;
-      extraTurn = false;
-      addMoveToHistory("Hounds Turn! Roll dice...");
-      showTemporaryMessage("Hounds Turn! Roll dice...");
+function startPlaying() {
+  hideAllScreens();
+  gameState = "playing";
+  initPieces();
+  currentTurn = "hounds";
+  diceRolled = false;
+  currentDiceRoll = 0;
+  extraTurn = false;
+  addMoveToHistory("Hounds Turn! Roll dice...");
+  showTemporaryMessage("Hounds Turn! Roll dice...");
+
+  if (imagesReady) {
+    redrawPlayScreen();
+    if (currentTurn !== humanSide) {
+      setTimeout(aiAutoRoll, 2000);
+    }
+  } else {
+    prepareTrayImages(() => {
       redrawPlayScreen();
       if (currentTurn !== humanSide) {
         setTimeout(aiAutoRoll, 2000);
       }
-      debugLog("Game started.");
-    }
+    });
+  }
+
+  debugLog("Game started.");
+}
+
     function showGameOver() {
       hideAllScreens();
       gameState = "gameover";
