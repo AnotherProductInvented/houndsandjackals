@@ -473,14 +473,15 @@ function drawBoard() {
   });
 
   // Special thick circle slots
-  ["A5", "A15", "D5", "D15", "E5"].forEach(label => {
-    const sq = boardSquares[label];
-    ctx.beginPath();
-    ctx.arc(sq.x, sq.y, SLOT_RADIUS + 10, 0, Math.PI * 2);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = "#8b0000";
-    ctx.stroke();
-  });
+["A5", "A15", "D5", "D15", "E5"].forEach(label => {
+  const sq = boardSquares[label];
+  ctx.beginPath();
+  ctx.arc(sq.x, sq.y, SLOT_RADIUS + 3, 0, Math.PI * 2); // ✅ reduced radius
+  ctx.lineWidth = 3;                                   // ✅ slightly thinner stroke
+  ctx.strokeStyle = "#8b0000";
+  ctx.stroke();
+});
+
 
   // Draw connecting arrows
   drawDoubleArrow(boardSquares["A10"], boardSquares["B5"], "between");
@@ -767,19 +768,49 @@ if (["A5", "A15", "D5", "D15", "E5"].includes(landedLabel)) {
     /***********************************
      * 10) Turn Management
      ***********************************/
-    function endTurn(isHumanTurn) {
-      diceRolled = false;
-      currentDiceRoll = 0;
-      setTimeout(() => {
-        currentTurn = nextPlayer;
-        addMoveToHistory(`${currentTurn} Turn! Roll dice...`);
+  function endTurn(isHumanTurn) {
+  diceRolled = false;
+  currentDiceRoll = 0;
+
+  setTimeout(() => {
+    currentTurn = nextPlayer;
+
+    if (extraOpponentDice > 0) {
+      currentDiceRoll = extraOpponentDice;
+      extraOpponentDice = 0;
+      diceRolled = true;
+
+      addMoveToHistory(`${currentTurn} gets opponent's dice (${currentDiceRoll})!`);
+      showTemporaryMessage(`${currentTurn} gets opponent's dice (${currentDiceRoll})!`);
+
+      let opts = getMoveOptions(currentDiceRoll, currentTurn);
+      if (opts.length === 0) {
+        showTemporaryMessage("No moves available with extra dice. Rolling normally...");
+        addMoveToHistory(`No moves with extra dice. Rolling normally.`);
+        diceRolled = false;
+        currentDiceRoll = 0;
+      } else {
         redrawPlayScreen();
         if (currentTurn !== humanSide) {
-          setTimeout(aiAutoRoll, 2000);
+          setTimeout(() => aiMakeMove(() => endTurn(false)), 2000);
+          return;
+        } else {
+          redrawPlayScreen();
+          return; // Human gets immediate chance to use extra dice
         }
-        debugLog("Turn ended. Next turn: " + currentTurn);
-      }, isHumanTurn ? 1000 : 2000);
+      }
     }
+
+    addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+    showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+    redrawPlayScreen();
+
+    if (currentTurn !== humanSide) {
+      setTimeout(aiAutoRoll, 2000);
+    }
+    debugLog("Turn ended. Next turn: " + currentTurn);
+  }, isHumanTurn ? 1000 : 2000);
+}
 
     /***********************************
      * 11) Human Interaction
@@ -830,7 +861,7 @@ function handleBoardClick(e) {
     const dy = my - sq.y;
 
     // Check if click is within piece (radius increased for easier click)
-    if (Math.sqrt(dx * dx + dy * dy) <= 24) {
+    if (Math.sqrt(dx * dx + dy * dy) <= 40) { // ✅ Increased clickable radius
       tryMovePiece(i, humanSide);
       return;
     }
