@@ -845,35 +845,35 @@ return;
     }
 
 function tryMovePiece(pieceIndex, color) {
-  if (gameState !== "playing") return;
-  if (currentTurn !== humanSide) return;
-  if (!diceRolled) return;
-  if (color !== currentTurn) return;
-  rollDiceBtn.disabled = true;  // Temporarily disable until dice is re-rolled
-
-  let opts = getMoveOptions(currentDiceRoll, color);
-  let found = opts.filter(o => o.pieceIndex === pieceIndex)[0];
-  if (!found) {
-    showTemporaryMessage("Illegal move!");
-    rollDiceBtn.disabled = false;
+  if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled || color !== currentTurn) {
+    showTemporaryMessage("Can't move right now!");
     return;
   }
 
-  if (!executeMove(pieceIndex, found.toPos, color)) return;
+  const opts = getMoveOptions(currentDiceRoll, color);
+  const found = opts.find(o => o.pieceIndex === pieceIndex);
+
+  if (!found) {
+    showTemporaryMessage("Illegal move!");
+    return;
+  }
+
+  executeMove(pieceIndex, found.toPos, color);
   redrawPlayScreen();
   showTemporaryMessage(`${color} moved piece #${pieceIndex + 1}`);
-  
-if (extraTurn) {
-  diceRolled = false;
-  currentDiceRoll = 0;
-  updateDiceRollDisplay();
-  addMoveToHistory(`${currentTurn} gets another turn!`);
-  showTemporaryMessage(`${currentTurn} gets another turn!`);
-} else {
-  nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";  // ✅ FIX: ensure next player updates!
-  endTurn(true);
-}
 
+  if (extraTurn) {
+    diceRolled = false;
+    currentDiceRoll = 0;
+    updateDiceRollDisplay();
+    addMoveToHistory(`${currentTurn} gets another turn!`);
+    showTemporaryMessage(`${currentTurn} gets another turn!`);
+  } else {
+    diceRolled = false;               // ✅ fix: explicitly reset diceRolled
+    currentDiceRoll = 0;              // ✅ fix: explicitly reset currentDiceRoll
+    nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";  // ✅ fix: explicitly update nextPlayer
+    endTurn(true);
+  }
 }
 
 
