@@ -618,34 +618,47 @@ function drawPieces() {
     function updateMoveHistoryDisplay() {
       moveHistoryDiv.innerHTML = "Moves:<br>" + moveHistory.join("<br>");
     }
-  function updateTrays() {
+function updateTrays() {
   const houndsTray = document.getElementById("houndsTray");
   const jackalsTray = document.getElementById("jackalsTray");
   houndsTray.innerHTML = "";
   jackalsTray.innerHTML = "";
-for (let i = 0; i < NUM_PIECES; i++) {
-  const hImg = document.createElement("img");
-  hImg.src = houndsImg.src;
-  hImg.alt = "Hound";
-  hImg.style.width = "40px";
-  hImg.style.height = "40px";
-  hImg.style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
-  hImg.style.transition = "opacity 0.3s ease";
-  hImg.dataset.index = i;
-  hImg.onclick = () => tryMovePiece(i, "hounds");
-  houndsTray.appendChild(hImg);
 
-  const jImg = document.createElement("img");
-  jImg.src = jackalsImg.src;
-  jImg.alt = "Jackal";
-  jImg.style.width = "40px";
-  jImg.style.height = "40px";
-  jImg.style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
-  jImg.style.transition = "opacity 0.3s ease";
-  jImg.dataset.index = i;
-  jImg.onclick = () => tryMovePiece(i, "jackals");
-  jackalsTray.appendChild(jImg);
-}
+  for (let i = 0; i < NUM_PIECES; i++) {
+    const hImg = document.createElement("img");
+    hImg.src = houndsImg.src;
+    hImg.alt = "Hound";
+    hImg.style.width = "50px";  // Slightly bigger
+    hImg.style.height = "50px";
+    hImg.style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
+    hImg.style.transition = "opacity 0.3s ease";
+    hImg.dataset.index = i;
+    hImg.style.cursor = "pointer";
+
+    const hContainer = document.createElement("div");
+    hContainer.style.padding = "10px"; // Generous clickable padding
+    hContainer.style.margin = "5px";
+    hContainer.appendChild(hImg);
+    hContainer.onclick = () => tryMovePiece(i, "hounds");
+    houndsTray.appendChild(hContainer);
+
+    const jImg = document.createElement("img");
+    jImg.src = jackalsImg.src;
+    jImg.alt = "Jackal";
+    jImg.style.width = "50px";
+    jImg.style.height = "50px";
+    jImg.style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
+    jImg.style.transition = "opacity 0.3s ease";
+    jImg.dataset.index = i;
+    jImg.style.cursor = "pointer";
+
+    const jContainer = document.createElement("div");
+    jContainer.style.padding = "10px"; // Generous clickable padding
+    jContainer.style.margin = "5px";
+    jContainer.appendChild(jImg);
+    jContainer.onclick = () => tryMovePiece(i, "jackals");
+    jackalsTray.appendChild(jContainer);
+  }
 }
 
 
