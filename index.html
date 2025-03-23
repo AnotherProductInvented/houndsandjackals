@@ -439,53 +439,54 @@ jackalsImg.onload = () => {
      ***********************************/
 function drawBoard() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  Object.entries(boardSquares).forEach(([label, sq], index) => {
-    // Base slot
-   ctx.beginPath();
-ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
+
+  // Draw base slots
+  Object.entries(boardSquares).forEach(([label, sq]) => {
+    ctx.beginPath();
+    ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
+
     let grad;
+    if (["B6", "B7", "B8", "B9", "B10"].includes(label)) {
+      grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
+      grad.addColorStop(0, "#aad4ff");
+      grad.addColorStop(1, "#005fa3");
+    } else if (["C6", "C7", "C8", "C9", "C10"].includes(label)) {
+      grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
+      grad.addColorStop(0, "#aaf0aa");
+      grad.addColorStop(1, "#007a3d");
+    } else {
+      grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
+      grad.addColorStop(0, "#fcebbd");
+      grad.addColorStop(1, "#b38b4d");
+    }
 
-
-// 🌈 Custom color logic
-if (["B6", "B7", "B8", "B9", "B10"].includes(label)) {
-  grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-  grad.addColorStop(0, "#aad4ff");  // light royal blue
-  grad.addColorStop(1, "#005fa3");  // deep royal blue
-} else if (["C6", "C7", "C8", "C9", "C10"].includes(label)) {
-  grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-  grad.addColorStop(0, "#aaf0aa");  // soft green
-  grad.addColorStop(1, "#007a3d");  // deep green
-} else {
-  grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-  grad.addColorStop(0, "#fcebbd");
-  grad.addColorStop(1, "#b38b4d");
-}
-
-ctx.fillStyle = grad;
-ctx.fill();
-
+    ctx.fillStyle = grad;
+    ctx.fill();
     ctx.strokeStyle = "#6b4e2e";
     ctx.lineWidth = 3;
     ctx.stroke();
-
 
     // Draw label
     ctx.fillStyle = "#000";
     ctx.font = "12px Arial";
     ctx.fillText(label, sq.x, sq.y - 18);
-
-    // Draw safe zone star
-    if (sq.safe) {
-      drawStar(sq.x, sq.y, 6, 12, 6, "#ffcc00", "#000", 2);
-    }
   });
 
-  // 🔥 Double Arrows (move them OUTSIDE the loop!)
+  // Special thick circle slots
+  ["A5", "A15", "D5", "D15", "E5"].forEach(label => {
+    const sq = boardSquares[label];
+    ctx.beginPath();
+    ctx.arc(sq.x, sq.y, SLOT_RADIUS + 10, 0, Math.PI * 2);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#8b0000";
+    ctx.stroke();
+  });
+
+  // Draw connecting arrows
   drawDoubleArrow(boardSquares["A10"], boardSquares["B5"], "between");
   drawDoubleArrow(boardSquares["D10"], boardSquares["C5"], "between");
   drawDoubleArrow(boardSquares["B1"], boardSquares["B3"]);
   drawDoubleArrow(boardSquares["C1"], boardSquares["C3"], "below");
-
 }
 
 function drawDoubleArrow(from, to, direction = "above") {
@@ -804,45 +805,38 @@ if (opts.length === 0) {
 }
 
     }
-    function handleBoardClick(e) {
-      if (gameState !== "playing") return;
-      if (currentTurn !== humanSide) return;
-      if (!diceRolled) return;
-      let opts = getMoveOptions(currentDiceRoll, currentTurn);
-      if (opts.length === 0) return;
-      let rect = canvas.getBoundingClientRect();
-      let mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      let own = (currentTurn === "hounds") ? houndsPieces : jackalsPieces;
-      for (let i = 0; i < own.length; i++) {
-        let pos = own[i];
-        if (pos === 29) continue;
-        let sqIdx = (currentTurn === "hounds") ? boardPathHounds[pos === -1 ? 0 : pos] : boardPathJackals[pos === -1 ? 0 : pos];
-        let sq = boardSquares[sqIdx];
-        let cx = sq.x, cy = sq.y;
-        let dx = mx - cx, dy = my - cy;
-        if (Math.sqrt(dx*dx + dy*dy) <= 24) {
-          let found = opts.find(o => o.pieceIndex === i);
-          if (!found) {
-            showTemporaryMessage("Illegal move!");
-            return;
-          }
-if (!executeMove(i, found.toPos, currentTurn)) return;
-redrawPlayScreen();
-showTemporaryMessage(`${currentTurn} moved piece #${i+1}`);
-if (extraTurn) {
-  diceRolled = false;
-  currentDiceRoll = 0;
-  updateDiceRollDisplay();
-  addMoveToHistory(`${currentTurn} gets another turn!`);
-  showTemporaryMessage(`${currentTurn} gets another turn!`);
-} else {
-  endTurn(true);
-}
-return;
+function handleBoardClick(e) {
+  if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled) return;
 
-        }
-      }
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const ownPieces = (humanSide === "hounds") ? houndsPieces : jackalsPieces;
+  const boardPathSide = (humanSide === "hounds") ? boardPathHounds : boardPathJackals;
+
+  for (let i = 0; i < ownPieces.length; i++) {
+    const pos = ownPieces[i];
+
+    // Skip pieces that finished
+    if (pos === 29) continue;
+
+    // For off-board pieces, let user click the tray instead
+    if (pos === -1) continue;
+
+    const label = boardPathSide[pos];
+    const sq = boardSquares[label];
+    const dx = mx - sq.x;
+    const dy = my - sq.y;
+
+    // Check if click is within piece (radius increased for easier click)
+    if (Math.sqrt(dx * dx + dy * dy) <= 24) {
+      tryMovePiece(i, humanSide);
+      return;
     }
+  }
+}
+
 
 function tryMovePiece(pieceIndex, color) {
   if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled || color !== currentTurn) {
