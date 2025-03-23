@@ -694,13 +694,36 @@ function updateTrays() {
   const jackalsTray = document.getElementById("jackalsTray");
   houndsTray.innerHTML = "";
   jackalsTray.innerHTML = "";
-
+  
   for (let i = 0; i < NUM_PIECES; i++) {
+    // Create a larger container for the hound piece
+    const hContainer = document.createElement("div");
+    hContainer.style.width = "70px";
+    hContainer.style.height = "70px";
+    hContainer.style.display = "inline-block";
+    hContainer.style.padding = "10px";
+    hContainer.style.margin = "5px";
+    hContainer.style.cursor = "pointer";
+    // Optionally add a light transparent background for testing:
+    // hContainer.style.backgroundColor = "rgba(0,0,0,0.05)";
+    hContainer.onclick = () => offBoardClick(i, "hounds");
     hTrayImages[i].style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
-    houndsTray.appendChild(hTrayImages[i]);
-
+    hContainer.appendChild(hTrayImages[i]);
+    houndsTray.appendChild(hContainer);
+    
+    // Create a similar container for the jackal piece
+    const jContainer = document.createElement("div");
+    jContainer.style.width = "70px";
+    jContainer.style.height = "70px";
+    jContainer.style.display = "inline-block";
+    jContainer.style.padding = "10px";
+    jContainer.style.margin = "5px";
+    jContainer.style.cursor = "pointer";
+    // jContainer.style.backgroundColor = "rgba(0,0,0,0.05)";
+    jContainer.onclick = () => offBoardClick(i, "jackals");
     jTrayImages[i].style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
-    jackalsTray.appendChild(jTrayImages[i]);
+    jContainer.appendChild(jTrayImages[i]);
+    jackalsTray.appendChild(jContainer);
   }
 }
 
