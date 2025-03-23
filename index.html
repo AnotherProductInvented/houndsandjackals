@@ -625,23 +625,45 @@ function updateTrays() {
   jackalsTray.innerHTML = "";
 
   for (let i = 0; i < NUM_PIECES; i++) {
+    // Hounds Tray
     const hImg = document.createElement("img");
     hImg.src = houndsImg.src;
     hImg.alt = "Hound";
-    hImg.style.width = "50px";  // Slightly bigger
+    hImg.style.width = "50px";
     hImg.style.height = "50px";
     hImg.style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
     hImg.style.transition = "opacity 0.3s ease";
-    hImg.dataset.index = i;
     hImg.style.cursor = "pointer";
+    hImg.dataset.index = i;
 
     const hContainer = document.createElement("div");
-    hContainer.style.padding = "10px"; // Generous clickable padding
+    hContainer.style.padding = "10px";
     hContainer.style.margin = "5px";
     hContainer.appendChild(hImg);
-    hContainer.onclick = () => tryMovePiece(i, "hounds");
+    
+    hContainer.onclick = () => {
+      if (currentTurn !== humanSide) {
+        showTemporaryMessage("It's not your turn yet!");
+        return;
+      }
+      if (!diceRolled) {
+        showTemporaryMessage("Roll the dice first!");
+        return;
+      }
+      if (currentDiceRoll !== 6) {
+        showTemporaryMessage("You need a 6 to enter a new piece!");
+        return;
+      }
+      if (houndsPieces[i] !== -1) {
+        showTemporaryMessage("This piece is already on the board!");
+        return;
+      }
+      tryMovePiece(i, "hounds");
+    };
+
     houndsTray.appendChild(hContainer);
 
+    // Jackals Tray (if needed)
     const jImg = document.createElement("img");
     jImg.src = jackalsImg.src;
     jImg.alt = "Jackal";
@@ -649,14 +671,34 @@ function updateTrays() {
     jImg.style.height = "50px";
     jImg.style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
     jImg.style.transition = "opacity 0.3s ease";
-    jImg.dataset.index = i;
     jImg.style.cursor = "pointer";
+    jImg.dataset.index = i;
 
     const jContainer = document.createElement("div");
-    jContainer.style.padding = "10px"; // Generous clickable padding
+    jContainer.style.padding = "10px";
     jContainer.style.margin = "5px";
     jContainer.appendChild(jImg);
-    jContainer.onclick = () => tryMovePiece(i, "jackals");
+    
+    jContainer.onclick = () => {
+      if (currentTurn !== "jackals") {
+        showTemporaryMessage("It's not Jackals' turn!");
+        return;
+      }
+      if (!diceRolled) {
+        showTemporaryMessage("Dice hasn't been rolled yet!");
+        return;
+      }
+      if (currentDiceRoll !== 6) {
+        showTemporaryMessage("A 6 is required to enter this piece!");
+        return;
+      }
+      if (jackalsPieces[i] !== -1) {
+        showTemporaryMessage("This Jackal is already on the board!");
+        return;
+      }
+      tryMovePiece(i, "jackals");
+    };
+
     jackalsTray.appendChild(jContainer);
   }
 }
