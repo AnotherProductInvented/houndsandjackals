@@ -153,7 +153,7 @@
       <input type="number" id="customDiceInput" min="1" max="6" placeholder="Set Dice (1-6)">
       <button id="setCustomDiceBtn">Use Custom Dice</button>
       <div id="releaseControls">
-        <!-- Releasing a hound now requires you to have rolled a 6 -->
+        <!-- Releasing a hound now requires a roll of 6 -->
         <button id="releaseHoundBtn">Release Hound (Roll a 6 First)</button>
       </div>
       <div id="offBoardCounts">
@@ -198,7 +198,7 @@
   </div>
   <img id="logo" src="logo.png" alt="Logo">
   <script>
-    // --- Utility: removeWhiteBackground ---
+    // === Utility: removeWhiteBackground ===
     function removeWhiteBackground(image, callback) {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = image.width;
@@ -266,6 +266,7 @@
     /***********************************
      * 2) Game State Variables
      ***********************************/
+    // Pieces with position >= 25 are finished (and unmovable)
     let gameState = "menu", humanSide = null, aiDifficulty = "medium",
         currentTurn = null, currentDiceRoll = 0, diceRolled = false,
         extraTurn = false, nextPlayer = null, NUM_PIECES = 5,
@@ -308,9 +309,9 @@
       • When using an extra roll, the opponent first attempts to use that roll (if possible) and then rolls normally.<br>
       • Only one extra roll is kept; unused extra rolls are discarded.`,
       `⚡ <strong>Page 3 – Special Spaces</strong><br><br>
-      • <strong>Circles</strong>: Landing on a circle gives you another roll.<br>
+      • <strong>Circles</strong>: Landing on a circle gives you an extra turn.<br>
       • <strong>Connections</strong>: Landing on a connecting space teleports your piece.<br>
-      • Moves are logged simply as "slid" (normal move) or "teleported" (if moved via connection).<br>
+      • Moves are logged as "slid" (normal move) or "teleported" (if via connection).<br>
       • Press <strong>[M]</strong> anytime to return to the Main Menu.`
     ];
     let currentInstructionsPage = 0;
@@ -383,7 +384,7 @@
         ctx.lineWidth = 3;
         ctx.stroke();
       });
-      // Special circle slots
+      // Special circle slots (extra-turn spaces)
       ["A5","A15","D5","D15","E5"].forEach(label => {
         const sq = boardSquares[label];
         ctx.beginPath();
@@ -432,12 +433,14 @@
       drawArrowhead(to.x, to.y, angleEnd);
     }
     function drawPieces() {
+      // Draw hounds; finished pieces (pos >= 25) are drawn but not movable.
       houndsPieces.forEach((pos, i) => {
         if (pos === -1) return;
         const label = boardPathHounds[pos];
         const sq = boardSquares[label];
         ctx.drawImage(houndsImg, sq.x - 20, sq.y - 20, 40, 40);
       });
+      // Draw jackals
       jackalsPieces.forEach((pos, i) => {
         if (pos === -1) return;
         const label = boardPathJackals[pos];
@@ -484,7 +487,7 @@
           hImg.style.height = "50px";
           hImg.style.cursor = "pointer";
           hImg.dataset.index = i;
-          // Off‑board pieces in the tray are not clickable
+          // Off-board pieces in tray are not clickable.
           hImg.onclick = () => { showTemporaryMessage("Use the 'Release Hound' button to enter a piece."); };
           hTrayImages.push(hImg);
         }
@@ -639,8 +642,7 @@
     /***********************************
      * 10) Turn Management
      ***********************************/
-    // This function now checks for an extra roll. If one exists and it's your turn, it displays a message
-    // and sets the dice so you can use it. After you use it (or if you have no legal moves), the extra roll is discarded.
+    // Only one extra roll is carried over. If a player cannot move, their roll is passed.
     function endTurn(isHumanTurn) {
       diceRolled = false;
       currentDiceRoll = 0;
@@ -650,10 +652,10 @@
       }
       setTimeout(() => {
         currentTurn = nextPlayer;
+        // If there's a pending extra roll on your turn, use it:
         if (pendingExtraRoll > 0) {
           if (currentTurn === humanSide) {
-            // For human: notify extra roll available and allow a move
-            let opts = getMoveOptions(pendingExtraRoll, currentTurn);
+            const opts = getMoveOptions(pendingExtraRoll, currentTurn);
             if (opts.length > 0) {
               currentDiceRoll = pendingExtraRoll;
               diceRolled = true;
@@ -661,16 +663,16 @@
               addMoveToHistory(`Use opponent's unused roll: ${pendingExtraRoll}`);
               redrawPlayScreen();
               pendingExtraRoll = 0;
-              return; // Wait for the player to choose a move.
+              return; // Wait for player to move using extra roll.
             } else {
               showTemporaryMessage(`Opponent's unused roll (${pendingExtraRoll}) discarded`);
               addMoveToHistory(`Opponent's unused roll (${pendingExtraRoll}) discarded`);
               pendingExtraRoll = 0;
             }
-          } else { // AI turn: auto‑use extra roll
-            let opts = getMoveOptions(pendingExtraRoll, currentTurn);
+          } else {
+            const opts = getMoveOptions(pendingExtraRoll, currentTurn);
             if (opts.length > 0) {
-              let pick = opts[Math.floor(Math.random() * opts.length)];
+              const pick = opts[Math.floor(Math.random() * opts.length)];
               executeMove(pick.pieceIndex, pick.toPos, currentTurn);
               addMoveToHistory(`${currentTurn} used opponent's extra roll (${pendingExtraRoll})`);
               redrawPlayScreen();
@@ -680,7 +682,7 @@
             pendingExtraRoll = 0;
           }
         }
-        // Now prompt for a normal roll.
+        // Prompt for a normal roll.
         diceRolled = false;
         currentDiceRoll = 0;
         addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
@@ -720,7 +722,7 @@
       const boardPathSide = (humanSide === "hounds") ? boardPathHounds : boardPathJackals;
       for (let i = 0; i < ownPieces.length; i++) {
         const pos = ownPieces[i];
-        if (pos === -1) continue; // Off-board pieces are not clickable here.
+        if (pos === -1) continue; // Off-board pieces must be released via button.
         const sq = boardSquares[boardPathSide[pos]];
         if (mx >= sq.x - 25 && mx <= sq.x + 25 && my >= sq.y - 25 && my <= sq.y + 25) {
           tryMovePiece(i, humanSide);
@@ -745,7 +747,6 @@
         addMoveToHistory(`${color} slid`);
         diceRolled = false;
         currentDiceRoll = 0;
-        // Normal turn end:
         nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
         endTurn(true);
         redrawPlayScreen();
@@ -799,8 +800,7 @@
         nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
         diceRolled = false;
         currentDiceRoll = 0;
-        if (callback) callback();
-        else endTurn(false);
+        if (callback) callback(); else endTurn(false);
         return;
       }
       let pick;
@@ -811,9 +811,8 @@
           let opp = (currentTurn === "hounds") ? jackalsPieces : houndsPieces;
           return opp.includes(o.toPos);
         });
-        pick = captureMoves.length > 0
-          ? captureMoves[Math.floor(Math.random() * captureMoves.length)]
-          : opts[Math.floor(Math.random() * opts.length)];
+        pick = captureMoves.length > 0 ? captureMoves[Math.floor(Math.random() * captureMoves.length)]
+                                      : opts[Math.floor(Math.random() * opts.length)];
       } else if (aiDifficulty === "hard") {
         let captureMoves = opts.filter(o => {
           let opp = (currentTurn === "hounds") ? jackalsPieces : houndsPieces;
@@ -864,10 +863,31 @@
       difficultyScreen.style.display = "none";
       gameOverScreen.style.display = "none";
     }
-    function showMenu() { hideAllScreens(); gameState = "menu"; menuScreen.style.display = "flex"; debugLog("Showing Menu."); }
-    function showInstructions() { hideAllScreens(); gameState = "instructions"; instructionsScreen.style.display = "flex"; currentInstructionsPage = 0; updateInstructions(); debugLog("Showing Instructions."); }
-    function showDifficultyScreen() { hideAllScreens(); gameState = "selectDifficulty"; difficultyScreen.style.display = "flex"; debugLog("Showing Difficulty Screen."); }
-    function setDifficulty(d) { aiDifficulty = d; startPlaying(); debugLog("Difficulty set to " + d); }
+    function showMenu() {
+      hideAllScreens();
+      gameState = "menu";
+      menuScreen.style.display = "flex";
+      debugLog("Showing Menu.");
+    }
+    function showInstructions() {
+      hideAllScreens();
+      gameState = "instructions";
+      instructionsScreen.style.display = "flex";
+      currentInstructionsPage = 0;
+      updateInstructions();
+      debugLog("Showing Instructions.");
+    }
+    function showDifficultyScreen() {
+      hideAllScreens();
+      gameState = "selectDifficulty";
+      difficultyScreen.style.display = "flex";
+      debugLog("Showing Difficulty Screen.");
+    }
+    function setDifficulty(d) {
+      aiDifficulty = d;
+      startPlaying();
+      debugLog("Difficulty set to " + d);
+    }
     function startPlaying() {
       hideAllScreens();
       gameState = "playing";
@@ -909,7 +929,10 @@
     setCustomDiceBtn.addEventListener("click", () => {
       if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
       const customValue = parseInt(customDiceInput.value);
-      if (isNaN(customValue) || customValue < 1 || customValue > 6) { showTemporaryMessage("Invalid dice value!"); return; }
+      if (isNaN(customValue) || customValue < 1 || customValue > 6) {
+        showTemporaryMessage("Invalid dice value!");
+        return;
+      }
       currentDiceRoll = customValue;
       diceRolled = true;
       addMoveToHistory(`${humanSide} used custom dice ${currentDiceRoll}`);
