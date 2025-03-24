@@ -640,13 +640,12 @@
      * 10) Turn Management
      ***********************************/
     // Only one extra roll is carried over. If a player cannot move, their roll is passed.
- function endTurn(isHumanTurn) {
-  diceRolled = false;
-  currentDiceRoll = 0;
+function endTurn(isHumanTurn) {
+  diceRolled = false; currentDiceRoll = 0;
 
-  if (extraOpponentDice > 0) {
-    pendingExtraRoll = extraOpponentDice;
-    extraOpponentDice = 0;
+  if (extraOpponentDice > 0) { 
+    pendingExtraRoll = extraOpponentDice; 
+    extraOpponentDice = 0; 
   }
 
   setTimeout(() => {
@@ -654,42 +653,46 @@
 
     if (pendingExtraRoll > 0) {
       if (currentTurn === humanSide) {
-        currentDiceRoll = pendingExtraRoll;
-        diceRolled = true;
-        pendingExtraRoll = 0;
-
-        addMoveToHistory("Use your opponent's unused roll (" + currentDiceRoll + ")");
-        showTemporaryMessage("Use your opponent's unused roll (" + currentDiceRoll + "). Click a piece to move.");
-
-        redrawPlayScreen();
-
-        // Do NOT return here; diceRolled stays true until player moves
-      } else {
+        let opts = getMoveOptions(pendingExtraRoll, currentTurn);
+        if (opts.length > 0) {
+          currentDiceRoll = pendingExtraRoll;
+          diceRolled = true;
+          showTemporaryMessage(`Use opponent's unused roll: ${pendingExtraRoll}`);
+          addMoveToHistory(`Use opponent's unused roll: ${pendingExtraRoll}`);
+          redrawPlayScreen();
+          pendingExtraRoll = 0;
+          return; // Wait here, allow player to make move manually.
+        } else {
+          showTemporaryMessage(`Opponent's unused roll (${pendingExtraRoll}) discarded`);
+          addMoveToHistory(`Opponent's unused roll (${pendingExtraRoll}) discarded`);
+          pendingExtraRoll = 0;
+        }
+      } else { // AI's turn
         let opts = getMoveOptions(pendingExtraRoll, currentTurn);
         if (opts.length > 0) {
           let pick = opts[Math.floor(Math.random() * opts.length)];
           executeMove(pick.pieceIndex, pick.toPos, currentTurn);
-          addMoveToHistory(`${currentTurn} used extra roll`);
+          addMoveToHistory(`${currentTurn} used opponent's unused roll (${pendingExtraRoll})`);
+          redrawPlayScreen();
         } else {
-          addMoveToHistory(`${currentTurn}'s extra roll wasted`);
+          addMoveToHistory(`${currentTurn} discarded opponent's unused roll (${pendingExtraRoll})`);
         }
         pendingExtraRoll = 0;
-
-        addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
-        showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
-        redrawPlayScreen();
-        if (currentTurn !== humanSide) setTimeout(aiAutoRoll, 2000);
       }
-    } else {
-      addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
-      showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
-      redrawPlayScreen();
-      if (currentTurn !== humanSide) setTimeout(aiAutoRoll, 2000);
     }
+
+    // After handling extra roll, now proceed with normal roll prompt.
+    diceRolled = false; currentDiceRoll = 0;
+    addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+    showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+    redrawPlayScreen();
+    
+    if (currentTurn !== humanSide) { setTimeout(aiAutoRoll, 2000); }
 
     debugLog("Turn ended. Next turn: " + currentTurn);
   }, isHumanTurn ? 1000 : 2000);
 }
+
 
     /***********************************
      * 11) Human Interaction
