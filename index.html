@@ -227,6 +227,7 @@
      ***********************************/
     const boardPath = [];
     const boardSquares = {};
+    // Internal board path labels for hounds and jackals
     const boardPathHounds = ["E5","E6","E7","E8","E9","D15","D14","D13","D12","D11","D10","D9","D8","D7","D6","D5","D4","D3","D2","D1","C1","C2","C3","C4","C5","C6","C7","C8","C9","C10"];
     const boardPathJackals = ["E5","E4","E3","E2","E1","A15","A14","A13","A12","A11","A10","A9","A8","A7","A6","A5","A4","A3","A2","A1","B1","B2","B3","B4","B5","B6","B7","B8","B9","B10"];
     const SLOT_RADIUS = 7, SLOT_SPACING = 44, START_X = 40, START_Y = 100;
@@ -266,11 +267,12 @@
     /***********************************
      * 2) Game State Variables
      ***********************************/
+    // Pieces with position >= 25 are considered finished (and unmovable)
     let gameState = "menu", humanSide = null, aiDifficulty = "medium",
         currentTurn = null, currentDiceRoll = 0, diceRolled = false,
         extraTurn = false, nextPlayer = null, NUM_PIECES = 5,
         houndsPieces = [], jackalsPieces = [], moveHistory = [], lastMove = null,
-        extraOpponentDice = 0, pendingExtraRoll = 0;
+        extraOpponentDice = 0, pendingExtraRoll = 0, usingExtraRoll = false;
     debugLog("Game state variables initialized.");
 
     /***********************************
@@ -377,19 +379,19 @@
           grad.addColorStop(0, "#fcebbd");
           grad.addColorStop(1, "#b38b4d");
         }
-        ctx.fillStyle = grad;
+        ctx.fillStyle = grad; 
         ctx.fill();
-        ctx.strokeStyle = "#6b4e2e";
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#6b4e2e"; 
+        ctx.lineWidth = 3; 
         ctx.stroke();
       });
-      // Special circle slots
+      // Special thick circle slots
       ["A5","A15","D5","D15","E5"].forEach(label => {
         const sq = boardSquares[label];
         ctx.beginPath();
         ctx.arc(sq.x, sq.y, SLOT_RADIUS + 3, 0, Math.PI * 2);
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#8b0000";
+        ctx.lineWidth = 3; 
+        ctx.strokeStyle = "#8b0000"; 
         ctx.stroke();
       });
       // Connecting arrows
@@ -406,8 +408,8 @@
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       ctx.quadraticCurveTo(midX, midY, to.x, to.y);
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#000"; 
+      ctx.lineWidth = 2; 
       ctx.stroke();
       function drawArrowhead(x, y, angle) {
         const len = 10;
@@ -417,8 +419,8 @@
                    y - len * Math.sin(angle - Math.PI / 6));
         ctx.lineTo(x - len * Math.cos(angle + Math.PI / 6),
                    y - len * Math.sin(angle + Math.PI / 6));
-        ctx.closePath();
-        ctx.fillStyle = "#000";
+        ctx.closePath(); 
+        ctx.fillStyle = "#000"; 
         ctx.fill();
       }
       function getCurveAngle(x0, y0, cx, cy, x1, y1, t = 0.99) {
@@ -524,6 +526,7 @@
     /***********************************
      * Release Button Function
      ***********************************/
+    // Releasing a hound requires that you have rolled a 6.
     function releaseHound() {
       if (currentTurn !== "hounds") { showTemporaryMessage("Not your turn!"); return; }
       if (!diceRolled || currentDiceRoll !== 6) {
@@ -593,7 +596,15 @@
         else { addMoveToHistory(`${color} slid`); }
         lastMove = { fromPos, toPos, color, pieceIndex };
         extraTurn = false;
-        nextPlayer = (color === "hounds") ? "jackals" : "hounds";
+        // If we are using an opponent’s unused roll, do not pass the turn.
+        if (usingExtraRoll) {
+          usingExtraRoll = false;
+          addMoveToHistory("Extra roll used. Now roll your own dice!");
+          showTemporaryMessage("Extra roll used. Now roll your own dice!");
+          // Do not switch players; keep currentTurn.
+        } else {
+          nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+        }
         const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
         if (["A5","A15","D5","D15","E5"].includes(landedLabel)) {
           extraTurn = true;
@@ -639,35 +650,35 @@
     /***********************************
      * 10) Turn Management
      ***********************************/
-    // This function now checks for an extra roll. If one exists and it's your turn, it displays a message
-    // and sets the dice so you can use it. After you use it (or if you have no legal moves), the extra roll is discarded.
+    // Only one extra roll is carried over. If a player cannot move, their roll is passed.
     function endTurn(isHumanTurn) {
       diceRolled = false;
       currentDiceRoll = 0;
-      if (extraOpponentDice > 0) {
+      if (extraOpponentDice > 0) { 
         pendingExtraRoll = extraOpponentDice;
         extraOpponentDice = 0;
       }
       setTimeout(() => {
         currentTurn = nextPlayer;
+        // Handle pending extra roll:
         if (pendingExtraRoll > 0) {
           if (currentTurn === humanSide) {
-            // For human: notify extra roll available and allow a move
             let opts = getMoveOptions(pendingExtraRoll, currentTurn);
             if (opts.length > 0) {
               currentDiceRoll = pendingExtraRoll;
               diceRolled = true;
+              usingExtraRoll = true; // Set flag so that after the move, turn remains with you.
               showTemporaryMessage(`Use opponent's unused roll: ${pendingExtraRoll}`);
               addMoveToHistory(`Use opponent's unused roll: ${pendingExtraRoll}`);
               redrawPlayScreen();
               pendingExtraRoll = 0;
-              return; // Wait for the player to choose a move.
+              return; // Wait for the human to choose a move using the extra roll.
             } else {
               showTemporaryMessage(`Opponent's unused roll (${pendingExtraRoll}) discarded`);
               addMoveToHistory(`Opponent's unused roll (${pendingExtraRoll}) discarded`);
               pendingExtraRoll = 0;
             }
-          } else { // AI turn: auto‑use extra roll
+          } else { // AI's turn auto‑uses extra roll.
             let opts = getMoveOptions(pendingExtraRoll, currentTurn);
             if (opts.length > 0) {
               let pick = opts[Math.floor(Math.random() * opts.length)];
@@ -680,7 +691,7 @@
             pendingExtraRoll = 0;
           }
         }
-        // Now prompt for a normal roll.
+        // After handling the extra roll, prompt for a normal roll.
         diceRolled = false;
         currentDiceRoll = 0;
         addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
@@ -745,7 +756,16 @@
         addMoveToHistory(`${color} slid`);
         diceRolled = false;
         currentDiceRoll = 0;
-        // Normal turn end:
+        // If the move was made using an extra roll, then allow the player to roll normally again.
+        if (usingExtraRoll) {
+          usingExtraRoll = false;
+          addMoveToHistory("Extra roll used. Now roll your own dice!");
+          showTemporaryMessage("Extra roll used. Now roll your own dice!");
+          // Remain on the same turn; do not switch players.
+          redrawPlayScreen();
+          return;
+        }
+        // Otherwise, pass the turn.
         nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
         endTurn(true);
         redrawPlayScreen();
@@ -799,8 +819,7 @@
         nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
         diceRolled = false;
         currentDiceRoll = 0;
-        if (callback) callback();
-        else endTurn(false);
+        if (callback) callback(); else endTurn(false);
         return;
       }
       let pick;
@@ -839,9 +858,7 @@
         diceRolled = false;
         currentDiceRoll = 0;
         aiAutoRoll();
-      } else {
-        endTurn(false);
-      }
+      } else { endTurn(false); }
     }
 
     /***********************************
@@ -886,12 +903,7 @@
       }
       debugLog("Game started.");
     }
-    function showGameOver() {
-      hideAllScreens();
-      gameState = "gameover";
-      gameOverScreen.style.display = "flex";
-      debugLog("Game Over.");
-    }
+    function showGameOver() { hideAllScreens(); gameState = "gameover"; gameOverScreen.style.display = "flex"; debugLog("Game Over."); }
 
     /***********************************
      * 15) Buttons & Keyboard
