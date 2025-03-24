@@ -522,18 +522,33 @@
     /***********************************
      * Release Button Functions
      ***********************************/
-    function releaseHound() {
-      if (currentTurn !== "hounds") { showTemporaryMessage("Not your turn!"); return; }
-      // For manual release, ignore dice roll requirement.
-      const index = houndsPieces.findIndex(p => p === -1);
-      if (index === -1) { showTemporaryMessage("No off-board hounds left!"); return; }
-      // Attempt to place the hound on the starting square (index 0) if available.
-      if (!canLandOn(0, "hounds")) { showTemporaryMessage("Starting square is blocked!"); return; }
-      // Execute move without dice check.
-      executeMove(index, 0, "hounds");
-      addMoveToHistory("Hounds released onto board.");
-      redrawPlayScreen();
-    }
+function releaseHound() {
+  if (currentTurn !== "hounds") {
+    showTemporaryMessage("Not your turn!");
+    return;
+  }
+  // Require that a dice roll has been made and that it is a 6.
+  if (!diceRolled || currentDiceRoll !== 6) {
+    showTemporaryMessage("Roll a 6 to release a hound!");
+    return;
+  }
+  const index = houndsPieces.findIndex(p => p === -1);
+  if (index === -1) {
+    showTemporaryMessage("No off-board hounds left!");
+    return;
+  }
+  if (!canLandOn(0, "hounds")) {
+    showTemporaryMessage("Starting square is blocked!");
+    return;
+  }
+  executeMove(index, 0, "hounds");
+  addMoveToHistory("Hounds released onto board.");
+  // Reset dice roll after releasing
+  diceRolled = false;
+  currentDiceRoll = 0;
+  redrawPlayScreen();
+}
+
     // (Release Jackal button removed)
 
     /***********************************
