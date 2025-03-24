@@ -637,21 +637,34 @@
     /***********************************
      * 10) Turn Management
      ***********************************/
-    function endTurn(isHumanTurn) {
-      diceRolled = false; currentDiceRoll = 0;
-      setTimeout(() => {
-        currentTurn = nextPlayer;
-        if (extraOpponentDice > 0) {
-          addMoveToHistory(`${currentTurn} received opponent's unused roll (${extraOpponentDice})`);
-          showTemporaryMessage(`${currentTurn} can use opponent's unused roll (${extraOpponentDice})`);
-        }
-        addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
-        showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
-        redrawPlayScreen();
-        if (currentTurn !== humanSide) { setTimeout(aiAutoRoll,2000); }
-        debugLog("Turn ended. Next turn: " + currentTurn);
-      }, isHumanTurn ? 1000 : 2000);
+   function endTurn(isHumanTurn) {
+  setTimeout(() => {
+    currentTurn = nextPlayer;
+
+    // If opponent has an unused dice, let the current player know.
+    if (extraOpponentDice > 0) {
+      addMoveToHistory(`${currentTurn} received opponent's unused roll (${extraOpponentDice})`);
+      showTemporaryMessage(`${currentTurn} can use opponent's unused roll (${extraOpponentDice})`);
+      currentDiceRoll = extraOpponentDice;
+      diceRolled = true;
+      extraOpponentDice = 0;
+    } else {
+      diceRolled = false;
+      currentDiceRoll = 0;
     }
+
+    addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+    showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+    redrawPlayScreen();
+
+    if (currentTurn !== humanSide) {
+      setTimeout(aiAutoRoll, 2000);
+    }
+
+    debugLog("Turn ended. Next turn: " + currentTurn);
+  }, isHumanTurn ? 1000 : 2000);
+}
+
 
     /***********************************
      * 11) Human Interaction
