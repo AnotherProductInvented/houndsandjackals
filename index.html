@@ -672,6 +672,7 @@ function prepareTrayImages(callback) {
 }
 
 function offBoardClick(i, color) {
+  console.log("offBoardClick: currentTurn =", currentTurn, "diceRolled =", diceRolled, "currentDiceRoll =", currentDiceRoll);
   console.log("offBoardClick triggered for", color, "piece", i, "Current dice:", currentDiceRoll);
   if (currentTurn !== color) {
     showTemporaryMessage("It's not your turn yet!");
@@ -817,10 +818,12 @@ if ((color === "hounds" && ["B6", "B7", "B8", "B9", "B10"].includes(label)) ||
       return opts;
     }
 function executeMove(pieceIndex, toPos, color) {
+  console.log("executeMove called for", color, "piece", pieceIndex, "toPos", toPos);
   try {
     let own = (color === "hounds") ? houndsPieces : jackalsPieces;
     let fromPos = own[pieceIndex];
-    
+    console.log("executeMove successful for", color, "piece", pieceIndex, "new position", toPos);
+
     // Teleportation mapping
     const teleportPairs = {
       "A10": "B5", "B5": "A10",
@@ -992,6 +995,7 @@ function handleBoardClick(e) {
 
 
 function tryMovePiece(pieceIndex, color) {
+  console.log("tryMovePiece called for", color, "piece", pieceIndex);
   console.log("tryMovePiece called for", color, "piece", pieceIndex);
   if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled || color !== currentTurn) {
     showTemporaryMessage("Can't move right now!");
