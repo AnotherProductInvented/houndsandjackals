@@ -645,23 +645,18 @@
       if (extraOpponentDice > 0) { pendingExtraRoll = extraOpponentDice; extraOpponentDice = 0; }
       setTimeout(() => {
         currentTurn = nextPlayer;
-        if (pendingExtraRoll > 0) {
-          debugLog("Pending extra roll: " + pendingExtraRoll + " for " + currentTurn);
-          // Only allow AI to auto‑use the extra roll.
-          if (currentTurn !== humanSide) {
-            let opts = getMoveOptions(pendingExtraRoll, currentTurn);
-            if (opts.length > 0) {
-              let pick = opts[Math.floor(Math.random()*opts.length)];
-              executeMove(pick.pieceIndex, pick.toPos, currentTurn);
-              addMoveToHistory(`${currentTurn} used extra roll`);
-            } else {
-              addMoveToHistory(`${currentTurn}'s extra roll wasted`);
-            }
-          } else {
-            addMoveToHistory("Extra roll given to opponent and cannot be used.");
-          }
-          pendingExtraRoll = 0;
-        }
+if (pendingExtraRoll > 0) {
+  let opts = getMoveOptions(pendingExtraRoll, currentTurn);
+  if (opts.length > 0) {
+    let pick = opts[Math.floor(Math.random() * opts.length)];
+    executeMove(pick.pieceIndex, pick.toPos, currentTurn);
+    addMoveToHistory(`${currentTurn} used extra roll`);
+  } else {
+    addMoveToHistory(`${currentTurn}'s extra roll wasted`);
+  }
+  pendingExtraRoll = 0;
+}
+
         addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
         showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
         redrawPlayScreen();
