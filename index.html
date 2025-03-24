@@ -153,7 +153,6 @@
       <input type="number" id="customDiceInput" min="1" max="6" placeholder="Set Dice (1-6)">
       <button id="setCustomDiceBtn">Use Custom Dice</button>
       <div id="releaseControls">
-        <!-- Releasing a hound now requires that you have rolled a 6 -->
         <button id="releaseHoundBtn">Release Hound (Roll a 6 First)</button>
       </div>
       <div id="offBoardCounts">
@@ -227,7 +226,6 @@
      ***********************************/
     const boardPath = [];
     const boardSquares = {};
-    // Internal board path labels for hounds and jackals
     const boardPathHounds = ["E5","E6","E7","E8","E9","D15","D14","D13","D12","D11","D10","D9","D8","D7","D6","D5","D4","D3","D2","D1","C1","C2","C3","C4","C5","C6","C7","C8","C9","C10"];
     const boardPathJackals = ["E5","E4","E3","E2","E1","A15","A14","A13","A12","A11","A10","A9","A8","A7","A6","A5","A4","A3","A2","A1","B1","B2","B3","B4","B5","B6","B7","B8","B9","B10"];
     const SLOT_RADIUS = 7, SLOT_SPACING = 44, START_X = 40, START_Y = 100;
@@ -267,7 +265,7 @@
     /***********************************
      * 2) Game State Variables
      ***********************************/
-    // Pieces with position >= 25 are finished (unmovable)
+    // Pieces with position >= 25 are finished (and unmovable)
     let gameState = "menu", humanSide = null, aiDifficulty = "medium",
         currentTurn = null, currentDiceRoll = 0, diceRolled = false,
         extraTurn = false, nextPlayer = null, NUM_PIECES = 5,
@@ -379,15 +377,20 @@
           grad.addColorStop(0, "#fcebbd");
           grad.addColorStop(1, "#b38b4d");
         }
-        ctx.fillStyle = grad; ctx.fill();
-        ctx.strokeStyle = "#6b4e2e"; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.strokeStyle = "#6b4e2e";
+        ctx.lineWidth = 3;
+        ctx.stroke();
       });
       // Extra-turn squares ("circles")
       ["A5","A15","D5","D15","E5"].forEach(label => {
         const sq = boardSquares[label];
         ctx.beginPath();
         ctx.arc(sq.x, sq.y, SLOT_RADIUS + 3, 0, Math.PI * 2);
-        ctx.lineWidth = 3; ctx.strokeStyle = "#8b0000"; ctx.stroke();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#8b0000";
+        ctx.stroke();
       });
       // Connecting arrows
       drawDoubleArrow(boardSquares["A10"], boardSquares["B5"], "between");
@@ -403,7 +406,9 @@
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       ctx.quadraticCurveTo(midX, midY, to.x, to.y);
-      ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.stroke();
       function drawArrowhead(x, y, angle) {
         const len = 10;
         ctx.beginPath();
@@ -412,7 +417,9 @@
                    y - len * Math.sin(angle - Math.PI / 6));
         ctx.lineTo(x - len * Math.cos(angle + Math.PI / 6),
                    y - len * Math.sin(angle + Math.PI / 6));
-        ctx.closePath(); ctx.fillStyle = "#000"; ctx.fill();
+        ctx.closePath();
+        ctx.fillStyle = "#000";
+        ctx.fill();
       }
       function getCurveAngle(x0, y0, cx, cy, x1, y1, t = 0.99) {
         const dx = 2 * (1 - t) * (cx - x0) + 2 * t * (x1 - cx);
@@ -477,7 +484,6 @@
           hImg.style.height = "50px";
           hImg.style.cursor = "pointer";
           hImg.dataset.index = i;
-          // Off‑board pieces in tray are not clickable.
           hImg.onclick = () => { showTemporaryMessage("Use the 'Release Hound' button to enter a piece."); };
           hTrayImages.push(hImg);
         }
@@ -585,16 +591,11 @@
         if (fromPos === -1) { addMoveToHistory(`${color} released`); }
         else { addMoveToHistory(`${color} slid`); }
         lastMove = { fromPos, toPos, color, pieceIndex };
-        // If extraTurn is flagged (from landing on a circle), do not pass turn.
-        if (extraTurn) {
-          addMoveToHistory(`${color} got an extra turn`);
-          showTemporaryMessage(`${color} got an extra turn. Roll your dice!`);
-          extraTurn = false;
-          // Do not change turn; player remains.
-        } else if (!usingExtraRoll) {
-          nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+        // If landed on an extra-turn square:
+        const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
+        if (["A5","A15","D5","D15","E5"].includes(landedLabel)) {
+          extraTurn = true;
         }
-        updateOffBoardCounts();
         return true;
       } catch (error) {
         console.error("Error in executeMove:", error);
@@ -626,7 +627,6 @@
     /***********************************
      * Turn Management
      ***********************************/
-    // Only one extra roll is carried over. If a player cannot move, their roll is passed.
     function endTurn(isHumanTurn) {
       diceRolled = false;
       currentDiceRoll = 0;
@@ -707,7 +707,7 @@
       const boardPathSide = (humanSide === "hounds") ? boardPathHounds : boardPathJackals;
       for (let i = 0; i < ownPieces.length; i++) {
         const pos = ownPieces[i];
-        if (pos === -1) continue; // Off-board pieces are released via the button.
+        if (pos === -1) continue;
         const sq = boardSquares[boardPathSide[pos]];
         if (mx >= sq.x - 25 && mx <= sq.x + 25 && my >= sq.y - 25 && my <= sq.y + 25) {
           tryMovePiece(i, humanSide);
@@ -729,10 +729,9 @@
       let moveOpt = opts.find(o => o.pieceIndex === pieceIndex);
       if (moveOpt) {
         executeMove(pieceIndex, moveOpt.toPos, color);
-        // Clear dice after a move.
         diceRolled = false;
         currentDiceRoll = 0;
-        // If the move was made using an extra roll, show message and allow a normal roll.
+        // If move was made using an extra roll, notify and allow a normal roll afterward.
         if (usingExtraRoll) {
           usingExtraRoll = false;
           addMoveToHistory("Extra roll used. Now roll your own dice!");
@@ -740,12 +739,12 @@
           redrawPlayScreen();
           return;
         }
-        // If an extra-turn (circle) was earned, keep the turn.
+        // If an extra turn was earned from landing on a circle, keep the turn.
         if (extraTurn) {
           addMoveToHistory(`${currentTurn} got an extra turn`);
           showTemporaryMessage(`${currentTurn} got an extra turn. Roll dice!`);
-          extraTurn = false; // Clear the flag after using it.
-          // Do not change turn; player remains.
+          extraTurn = false;
+          // Do not pass turn.
         } else {
           nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
         }
