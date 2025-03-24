@@ -740,6 +740,7 @@ function updateTrays() {
 }
 
 function placeOffBoardPiece(i, color) {
+  console.log("placeOffBoardPiece called for index", i, "color", color);
   if (currentTurn !== color) {
     showTemporaryMessage("It's not your turn yet!");
     return;
