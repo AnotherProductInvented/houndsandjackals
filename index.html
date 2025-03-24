@@ -5,7 +5,10 @@
   <title>Another Product Invented: Hounds and Jackals</title>
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   <style>
-    #houndsTray, #jackalsTray { position: relative; z-index: 100; }
+    #houndsTray, #jackalsTray {
+      position: relative;
+      z-index: 100; /* Ensure trays appear above the canvas */
+    }
     /* Global Reset */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -33,6 +36,7 @@
       flex-direction: column;
       align-items: center;
     }
+    /* New Release Controls */
     #releaseControls {
       margin-top: 15px;
     }
@@ -168,7 +172,7 @@
       <button id="setCustomDiceBtn">Use Custom Dice</button>
       <div id="releaseControls">
         <button id="releaseHoundBtn">Release Hound</button>
-        <button id="releaseJackalBtn">Release Jackal</button>
+        <!-- Removed Release Jackal button per request -->
       </div>
       <div id="offBoardCounts">
         <span id="houndsCount">Hounds Off-board: 5</span><br>
@@ -222,9 +226,7 @@
       const imgData = tempCtx.getImageData(0, 0, image.width, image.height);
       const data = imgData.data;
       for (let i = 0; i < data.length; i += 4) {
-        if (data[i] > 230 && data[i+1] > 230 && data[i+2] > 230) {
-          data[i+3] = 0;
-        }
+        if (data[i] > 230 && data[i+1] > 230 && data[i+2] > 230) { data[i+3] = 0; }
       }
       tempCtx.putImageData(imgData, 0, 0);
       const newImage = new Image();
@@ -371,9 +373,10 @@
      * 8) Drawing Functions
      ***********************************/
     function drawBoard() {
-      ctx.clearRect(0,0,canvas.width, canvas.height);
+      ctx.clearRect(0,0,canvas.width,canvas.height);
       Object.entries(boardSquares).forEach(([label,sq]) => {
-        ctx.beginPath(); ctx.arc(sq.x,sq.y,SLOT_RADIUS,0,Math.PI*2);
+        ctx.beginPath();
+        ctx.arc(sq.x,sq.y,SLOT_RADIUS,0,Math.PI*2);
         let grad;
         if (["B6","B7","B8","B9","B10"].includes(label)) {
           grad = ctx.createRadialGradient(sq.x,sq.y,5,sq.x,sq.y,SLOT_RADIUS);
@@ -462,6 +465,7 @@
     function updateMoveHistoryDisplay() {
       moveHistoryDiv.innerHTML = "Moves:<br>" + moveHistory.join("<br>");
     }
+
     /***********************************
      * Off-board Controls & Tray Updates
      ***********************************/
@@ -480,8 +484,7 @@
           hImg.style.height = "50px";
           hImg.style.cursor = "pointer";
           hImg.dataset.index = i;
-          // (Tray clicks still work if needed)
-          hImg.onclick = () => { debugLog("Tray clicked: hounds " + i); tryMovePiece(i, "hounds"); };
+          hImg.onclick = () => { debugLog("Tray clicked: hounds piece " + i); tryMovePiece(i, "hounds"); };
           hTrayImages.push(hImg);
         }
         checkReady();
@@ -496,7 +499,7 @@
           jImg.style.height = "50px";
           jImg.style.cursor = "pointer";
           jImg.dataset.index = i;
-          jImg.onclick = () => { debugLog("Tray clicked: jackals " + i); tryMovePiece(i, "jackals"); };
+          jImg.onclick = () => { debugLog("Tray clicked: jackals piece " + i); tryMovePiece(i, "jackals"); };
           jTrayImages.push(jImg);
         }
         checkReady();
@@ -507,35 +510,27 @@
       const houndsTray = document.getElementById("houndsTray");
       const jackalsTray = document.getElementById("jackalsTray");
       houndsTray.innerHTML = ""; jackalsTray.innerHTML = "";
-      // (Tray images are still maintained, but now we also update off-board counts)
       updateOffBoardCounts();
     }
     function updateOffBoardCounts() {
-      const hCount = houndsPieces.filter(p => p === -1).length;
-      const jCount = jackalsPieces.filter(p => p === -1).length;
+      const hCount = houndsPieces.filter(p => p===-1).length;
+      const jCount = jackalsPieces.filter(p => p===-1).length;
       document.getElementById("houndsCount").textContent = "Hounds Off-board: " + hCount;
       document.getElementById("jackalsCount").textContent = "Jackals Off-board: " + jCount;
     }
+
     /***********************************
      * Release Button Functions
      ***********************************/
     function releaseHound() {
       if (currentTurn !== "hounds") { showTemporaryMessage("Not your turn!"); return; }
       if (!diceRolled || currentDiceRoll !== 6) { showTemporaryMessage("Must roll a 6 to release!"); return; }
-      // Find first off-board hound
       const index = houndsPieces.findIndex(p => p === -1);
       if (index === -1) { showTemporaryMessage("No off-board hounds left!"); return; }
       debugLog("Release Hound: releasing piece index " + index);
       tryMovePiece(index, "hounds");
     }
-    function releaseJackal() {
-      if (currentTurn !== "jackals") { showTemporaryMessage("Not your turn!"); return; }
-      if (!diceRolled || currentDiceRoll !== 6) { showTemporaryMessage("Must roll a 6 to release!"); return; }
-      const index = jackalsPieces.findIndex(p => p === -1);
-      if (index === -1) { showTemporaryMessage("No off-board jackals left!"); return; }
-      debugLog("Release Jackal: releasing piece index " + index);
-      tryMovePiece(index, "jackals");
-    }
+    // (Release Jackal button removed as requested.)
 
     /***********************************
      * 9) Movement & Rules Functions
@@ -548,15 +543,15 @@
       return target;
     }
     function canLandOn(pos, color) {
-      let own = (color === "hounds") ? houndsPieces : jackalsPieces;
+      let own = (color==="hounds") ? houndsPieces : jackalsPieces;
       return !own.includes(pos);
     }
     function getMoveOptions(diceValue, color) {
       let opts = [];
-      let own = (color === "hounds") ? houndsPieces : jackalsPieces;
+      let own = (color==="hounds") ? houndsPieces : jackalsPieces;
       for (let i = 0; i < own.length; i++) {
         let pos = own[i];
-        let label = (color === "hounds") ? boardPathHounds[pos] : boardPathJackals[pos];
+        let label = (color==="hounds") ? boardPathHounds[pos] : boardPathJackals[pos];
         if ((color==="hounds" && ["B6","B7","B8","B9","B10"].includes(label)) ||
             (color==="jackals" && ["C6","C7","C8","C9","C10"].includes(label))) {
           continue;
@@ -653,7 +648,7 @@
         addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
         showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
         redrawPlayScreen();
-        if (currentTurn !== humanSide) { setTimeout(aiAutoRoll, 2000); }
+        if (currentTurn !== humanSide) { setTimeout(aiAutoRoll,2000); }
         debugLog("Turn ended. Next turn: " + currentTurn);
       }, isHumanTurn ? 1000 : 2000);
     }
@@ -668,18 +663,15 @@
       addMoveToHistory(`${humanSide} rolled ${currentDiceRoll}`);
       showTemporaryMessage(`${humanSide} rolled ${currentDiceRoll}`);
       redrawPlayScreen();
-      // If dice is 6, auto-release is possible via the Release button.
-      if (currentDiceRoll !== 6) {
-        // If no valid moves exist, pass the dice.
-        const opts = getMoveOptions(currentDiceRoll, humanSide);
-        if (opts.length === 0) {
-          showTemporaryMessage("No legal moves. Passing dice...");
-          addMoveToHistory(`No legal moves. Opponent gets your dice (${currentDiceRoll})`);
-          extraOpponentDice = currentDiceRoll;
-          diceRolled = false; currentDiceRoll = 0;
-          nextPlayer = (currentTurn==="hounds") ? "jackals" : "hounds";
-          endTurn(true);
-        }
+      // (Removed auto‑placement for hounds upon rolling a 6)
+      const opts = getMoveOptions(currentDiceRoll, humanSide);
+      if (opts.length === 0) {
+        showTemporaryMessage("No legal moves. Passing dice...");
+        addMoveToHistory(`No legal moves. Opponent gets your dice (${currentDiceRoll})`);
+        extraOpponentDice = currentDiceRoll;
+        diceRolled = false; currentDiceRoll = 0;
+        nextPlayer = (currentTurn==="hounds") ? "jackals" : "hounds";
+        endTurn(true);
       }
     }
     function handleBoardClick(e) {
@@ -688,11 +680,13 @@
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
       const ownPieces = (humanSide==="hounds") ? houndsPieces : jackalsPieces;
       const boardPathSide = (humanSide==="hounds") ? boardPathHounds : boardPathJackals;
-      for (let i=0;i<ownPieces.length;i++) {
+      // Expanded clickable area: using 25px margin (instead of 20)
+      for (let i = 0; i < ownPieces.length; i++) {
         const pos = ownPieces[i];
-        if (pos===-1 || pos===29) continue;
-        const label = boardPathSide[pos], sq = boardSquares[label];
-        if (mx>=sq.x-20 && mx<=sq.x+20 && my>=sq.y-20 && my<=sq.y+20) {
+        if (pos === -1 || pos === 29) continue;
+        const label = boardPathSide[pos];
+        const sq = boardSquares[label];
+        if (mx >= sq.x - 25 && mx <= sq.x + 25 && my >= sq.y - 25 && my <= sq.y + 25) {
           tryMovePiece(i, humanSide);
           return;
         }
@@ -700,7 +694,7 @@
     }
     function tryMovePiece(pieceIndex, color) {
       console.log("tryMovePiece called for", color, "piece", pieceIndex);
-      if (gameState !== "playing" || currentTurn!==humanSide || !diceRolled || color!==currentTurn) {
+      if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled || color !== currentTurn) {
         showTemporaryMessage("Can't move right now!"); return;
       }
       const pieces = (color==="hounds") ? houndsPieces : jackalsPieces;
@@ -741,7 +735,7 @@
      * 12) AI Turn
      ***********************************/
     function aiAutoRoll() {
-      if (gameState !== "playing" || currentTurn===humanSide) return;
+      if (gameState !== "playing" || currentTurn === humanSide) return;
       if (extraOpponentDice > 0) {
         currentDiceRoll = extraOpponentDice; extraOpponentDice = 0;
         addMoveToHistory(`${currentTurn} uses opponent's extra dice: ${currentDiceRoll}`);
@@ -854,12 +848,9 @@
       showTemporaryMessage("Hounds Turn! Roll dice...");
       if (imagesReady) {
         redrawPlayScreen();
-        if (currentTurn !== humanSide) { setTimeout(aiAutoRoll, 2000); }
+        if (currentTurn !== humanSide) { setTimeout(aiAutoRoll,2000); }
       } else {
-        prepareTrayImages(() => {
-          redrawPlayScreen();
-          if (currentTurn !== humanSide) { setTimeout(aiAutoRoll, 2000); }
-        });
+        prepareTrayImages(() => { redrawPlayScreen(); if (currentTurn !== humanSide) { setTimeout(aiAutoRoll,2000); } });
       }
       debugLog("Game started.");
     }
@@ -888,12 +879,7 @@
       showTemporaryMessage(`${humanSide} used custom dice ${currentDiceRoll}`);
       redrawPlayScreen();
       if (currentDiceRoll === 6) {
-        const opts = getMoveOptions(currentDiceRoll, currentTurn);
-        if (opts.length > 0 && opts.every(o => o.fromPos === -1)) {
-          debugLog("Auto-placing first off-board piece (custom dice).");
-          tryMovePiece(opts[0].pieceIndex, humanSide);
-          return;
-        }
+        // (Auto-placement removed for custom dice roll.)
       }
       let opts = getMoveOptions(currentDiceRoll, currentTurn);
       if (opts.length === 0) {
@@ -906,7 +892,7 @@
       }
     });
     document.getElementById("releaseHoundBtn").onclick = releaseHound;
-    document.getElementById("releaseJackalBtn").onclick = releaseJackal;
+    // (Release Jackal button removed)
     document.addEventListener("keydown", (e) => {
       let key = e.key.toLowerCase();
       if (gameState === "selectDifficulty") {
