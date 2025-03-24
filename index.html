@@ -5,6 +5,10 @@
   <title>Another Product Invented: Hounds and Jackals</title>
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   <style>
+    #houndsTray, #jackalsTray {
+  position: relative;
+  z-index: 100; /* Make sure trays appear above the canvas if necessary */
+}
     /* Global Reset */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -668,6 +672,7 @@ function prepareTrayImages(callback) {
 }
 
 function offBoardClick(i, color) {
+  console.log("offBoardClick triggered for", color, "piece", i, "Current dice:", currentDiceRoll);
   if (currentTurn !== color) {
     showTemporaryMessage("It's not your turn yet!");
     return;
@@ -694,9 +699,9 @@ function updateTrays() {
   const jackalsTray = document.getElementById("jackalsTray");
   houndsTray.innerHTML = "";
   jackalsTray.innerHTML = "";
-  
+
   for (let i = 0; i < NUM_PIECES; i++) {
-    // Create a larger container for the hound piece
+    // Create container for hound tray item
     const hContainer = document.createElement("div");
     hContainer.style.width = "70px";
     hContainer.style.height = "70px";
@@ -704,14 +709,17 @@ function updateTrays() {
     hContainer.style.padding = "10px";
     hContainer.style.margin = "5px";
     hContainer.style.cursor = "pointer";
-    // Optionally add a light transparent background for testing:
-    // hContainer.style.backgroundColor = "rgba(0,0,0,0.05)";
-    hContainer.onclick = () => offBoardClick(i, "hounds");
+    // When off-board, call our dedicated function
+    hContainer.onclick = () => {
+      if (houndsPieces[i] === -1) {
+        placeOffBoardPiece(i, "hounds");
+      }
+    };
     hTrayImages[i].style.opacity = houndsPieces[i] === -1 ? "1" : "0.3";
     hContainer.appendChild(hTrayImages[i]);
     houndsTray.appendChild(hContainer);
-    
-    // Create a similar container for the jackal piece
+
+    // Create container for jackal tray item
     const jContainer = document.createElement("div");
     jContainer.style.width = "70px";
     jContainer.style.height = "70px";
@@ -719,12 +727,53 @@ function updateTrays() {
     jContainer.style.padding = "10px";
     jContainer.style.margin = "5px";
     jContainer.style.cursor = "pointer";
-    // jContainer.style.backgroundColor = "rgba(0,0,0,0.05)";
-    jContainer.onclick = () => offBoardClick(i, "jackals");
+    jContainer.onclick = () => {
+      if (jackalsPieces[i] === -1) {
+        placeOffBoardPiece(i, "jackals");
+      }
+    };
     jTrayImages[i].style.opacity = jackalsPieces[i] === -1 ? "1" : "0.3";
     jContainer.appendChild(jTrayImages[i]);
     jackalsTray.appendChild(jContainer);
   }
+}
+
+function placeOffBoardPiece(i, color) {
+  if (currentTurn !== color) {
+    showTemporaryMessage("It's not your turn yet!");
+    return;
+  }
+  if (!diceRolled) {
+    showTemporaryMessage("Roll the dice first!");
+    return;
+  }
+  if (currentDiceRoll !== 6) {
+    showTemporaryMessage("You need a 6 to enter!");
+    return;
+  }
+  const pieces = color === "hounds" ? houndsPieces : jackalsPieces;
+  if (pieces[i] !== -1) {
+    showTemporaryMessage("Piece already on board!");
+    return;
+  }
+  // Ensure the starting square (index 0) is available:
+  if (!canLandOn(0, color)) {
+    showTemporaryMessage("Starting square is blocked!");
+    return;
+  }
+  // Place the piece:
+  executeMove(i, 0, color);
+  addMoveToHistory(`${color} placed piece on board.`);
+  diceRolled = false;
+  currentDiceRoll = 0;
+  if (extraTurn) {
+    addMoveToHistory(`${currentTurn} gets another turn!`);
+    showTemporaryMessage(`${currentTurn} gets another turn!`);
+  } else {
+    nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+    endTurn(true);
+  }
+  redrawPlayScreen();
 }
 
 
@@ -935,6 +984,7 @@ function handleBoardClick(e) {
 
 
 function tryMovePiece(pieceIndex, color) {
+  console.log("tryMovePiece called for", color, "piece", pieceIndex);
   if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled || color !== currentTurn) {
     showTemporaryMessage("Can't move right now!");
     return;
