@@ -762,13 +762,17 @@
     }
     function aiMakeMove(callback = null) {
       let opts = getMoveOptions(currentDiceRoll, currentTurn);
-      if (opts.length === 0) {
-        showTemporaryMessage("AI has no moves. Passing turn...");
-        nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
-        diceRolled = false; currentDiceRoll = 0;
-        if (callback) callback(); else endTurn(false);
-        return;
-      }
+if (opts.length === 0) {
+  showTemporaryMessage("AI has no moves. Passing roll...");
+  addMoveToHistory(`No legal moves. Opponent gets your roll (${currentDiceRoll})`);
+  extraOpponentDice = currentDiceRoll; // <-- Set the extra roll here
+  nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+  diceRolled = false; 
+  currentDiceRoll = 0;
+  if (callback) callback(); else endTurn(false);
+  return;
+}
+
       let pick;
       if (aiDifficulty === "easy") {
         pick = opts[Math.floor(Math.random() * opts.length)];
