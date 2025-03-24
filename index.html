@@ -640,43 +640,56 @@
      * 10) Turn Management
      ***********************************/
     // Only one extra roll is carried over. If a player cannot move, their roll is passed.
-    function endTurn(isHumanTurn) {
-      diceRolled = false; currentDiceRoll = 0;
-      if (extraOpponentDice > 0) { pendingExtraRoll = extraOpponentDice; extraOpponentDice = 0; }
-      setTimeout(() => {
-        currentTurn = nextPlayer;
-if (pendingExtraRoll > 0) {
-  if (currentTurn === humanSide) {
-    // For the human, display the extra roll and let them choose a move manually.
-    addMoveToHistory("Extra roll available: " + pendingExtraRoll);
-    showTemporaryMessage("Extra roll available: " + pendingExtraRoll + ". Click a piece to move using it.");
-    currentDiceRoll = pendingExtraRoll;
-    diceRolled = true;
-    pendingExtraRoll = 0;
-    // Return immediately so that the human can use this roll.
-    return;
-  } else {
-    // For AI, auto‑use the extra roll.
-    let opts = getMoveOptions(pendingExtraRoll, currentTurn);
-    if (opts.length > 0) {
-      let pick = opts[Math.floor(Math.random() * opts.length)];
-      executeMove(pick.pieceIndex, pick.toPos, currentTurn);
-      addMoveToHistory(`${currentTurn} used extra roll`);
-    } else {
-      addMoveToHistory(`${currentTurn}'s extra roll wasted`);
-    }
-    pendingExtraRoll = 0;
-  }
-}
+ function endTurn(isHumanTurn) {
+  diceRolled = false;
+  currentDiceRoll = 0;
 
+  if (extraOpponentDice > 0) {
+    pendingExtraRoll = extraOpponentDice;
+    extraOpponentDice = 0;
+  }
+
+  setTimeout(() => {
+    currentTurn = nextPlayer;
+
+    if (pendingExtraRoll > 0) {
+      if (currentTurn === humanSide) {
+        currentDiceRoll = pendingExtraRoll;
+        diceRolled = true;
+        pendingExtraRoll = 0;
+
+        addMoveToHistory("Use your opponent's unused roll (" + currentDiceRoll + ")");
+        showTemporaryMessage("Use your opponent's unused roll (" + currentDiceRoll + "). Click a piece to move.");
+
+        redrawPlayScreen();
+
+        // Do NOT return here; diceRolled stays true until player moves
+      } else {
+        let opts = getMoveOptions(pendingExtraRoll, currentTurn);
+        if (opts.length > 0) {
+          let pick = opts[Math.floor(Math.random() * opts.length)];
+          executeMove(pick.pieceIndex, pick.toPos, currentTurn);
+          addMoveToHistory(`${currentTurn} used extra roll`);
+        } else {
+          addMoveToHistory(`${currentTurn}'s extra roll wasted`);
+        }
+        pendingExtraRoll = 0;
 
         addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
         showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
         redrawPlayScreen();
-        if (currentTurn !== humanSide) { setTimeout(aiAutoRoll, 2000); }
-        debugLog("Turn ended. Next turn: " + currentTurn);
-      }, isHumanTurn ? 1000 : 2000);
+        if (currentTurn !== humanSide) setTimeout(aiAutoRoll, 2000);
+      }
+    } else {
+      addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+      showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+      redrawPlayScreen();
+      if (currentTurn !== humanSide) setTimeout(aiAutoRoll, 2000);
     }
+
+    debugLog("Turn ended. Next turn: " + currentTurn);
+  }, isHumanTurn ? 1000 : 2000);
+}
 
     /***********************************
      * 11) Human Interaction
@@ -732,6 +745,21 @@ if (pendingExtraRoll > 0) {
         executeMove(pieceIndex, normalMove.toPos, color);
         addMoveToHistory(`${color} slid`);
         diceRolled = false; currentDiceRoll = 0;
+
+// Check if this move was the opponent's unused roll
+if (pendingExtraRoll === 0 && extraTurn === false) {
+  nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+  endTurn(true);
+} else if (extraTurn === true) {
+  addMoveToHistory(`${currentTurn} got an extra turn`);
+  showTemporaryMessage(`${currentTurn} got an extra turn`);
+} else {
+  addMoveToHistory("Now roll your own dice!");
+  showTemporaryMessage("Now roll your own dice!");
+  diceRolled = false;
+  currentDiceRoll = 0;
+}
+
         if (extraTurn) {
           addMoveToHistory(`${currentTurn} got an extra turn`);
           showTemporaryMessage(`${currentTurn} got an extra turn`);
