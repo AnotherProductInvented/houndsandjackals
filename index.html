@@ -816,17 +816,63 @@ if ((color === "hounds" && ["B6", "B7", "B8", "B9", "B10"].includes(label)) ||
       debugLog(`${color} move options: ${JSON.stringify(opts)}`);
       return opts;
     }
-    function executeMove(pieceIndex, toPos, color) {
-      let own = (color === "hounds") ? houndsPieces : jackalsPieces;
-      let opp = (color === "hounds") ? jackalsPieces : houndsPieces;
-      let fromPos = own[pieceIndex];
-// Teleportation mapping (two-way)
-const teleportPairs = {
-  "A10": "B5", "B5": "A10",
-  "D10": "C5", "C5": "D10",
-  "B1": "B3", "B3": "B1",
-  "C1": "C3", "C3": "C1"
-};
+function executeMove(pieceIndex, toPos, color) {
+  try {
+    let own = (color === "hounds") ? houndsPieces : jackalsPieces;
+    let fromPos = own[pieceIndex];
+    
+    // Teleportation mapping
+    const teleportPairs = {
+      "A10": "B5", "B5": "A10",
+      "D10": "C5", "C5": "D10",
+      "B1": "B3", "B3": "B1",
+      "C1": "C3", "C3": "C1"
+    };
+
+    // Execute the move
+    own[pieceIndex] = toPos;
+    
+    // Check for teleportation
+    let currentLabel = (color === "hounds" ? boardPathHounds[toPos] : boardPathJackals[toPos]);
+    if (teleportPairs[currentLabel]) {
+      let targetLabel = teleportPairs[currentLabel];
+      let targetIndex = (color === "hounds" ? boardPathHounds : boardPathJackals).indexOf(targetLabel);
+      if (targetIndex !== -1 && canLandOn(targetIndex, color)) {
+        own[pieceIndex] = targetIndex;
+        addMoveToHistory(`${color} teleported from ${currentLabel} to ${targetLabel}`);
+        showTemporaryMessage(`${color} teleported to ${targetLabel}`);
+        toPos = targetIndex;
+      }
+    }
+    
+    addMoveToHistory(`${color} moved piece #${pieceIndex + 1} from ${fromPos === -1 ? "off-board" : fromPos + 1} to ${toPos + 1}`);
+    lastMove = { fromPos, toPos, color, pieceIndex };
+    extraTurn = false;
+    nextPlayer = (color === "hounds") ? "jackals" : "hounds";
+
+    const landedLabel = (color === "hounds" ? boardPathHounds[toPos] : boardPathJackals[toPos]);
+    if (["A5", "A15", "D5", "D15", "E5"].includes(landedLabel)) {
+      extraTurn = true;
+      addMoveToHistory(`${color} landed on ${landedLabel}, gets another turn!`);
+      showTemporaryMessage(`${color} gets another turn!`);
+    }
+
+    let finished = own.filter(p => p === 29).length;
+    if (finished === NUM_PIECES) {
+      if (checkSpecialVictoryCondition()) return true;
+      gameOverText.textContent = (color === humanSide) ? "You Win!" : "You Lose!";
+      addMoveToHistory(`${color} wins the game!`);
+      showGameOver();
+    }
+    debugLog(`${color} executed move for piece ${pieceIndex} to ${toPos}`);
+    return true;  // Move was successful
+  } catch (error) {
+    console.error("Error in executeMove:", error);
+    return false; // Move failed due to an error
+  }
+}
+
+
 
 
       function checkSpecialVictoryCondition() {
@@ -854,45 +900,7 @@ const teleportPairs = {
   return false;
 }
 
-      own[pieceIndex] = toPos;
-
-      // Check if landed square has teleport
-let currentLabel = (color === "hounds" ? boardPathHounds[toPos] : boardPathJackals[toPos]);
-if (teleportPairs[currentLabel]) {
-  let targetLabel = teleportPairs[currentLabel];
-  let targetIndex = (color === "hounds" ? boardPathHounds : boardPathJackals).indexOf(targetLabel);
-  if (targetIndex !== -1 && canLandOn(targetIndex, color)) {
-    own[pieceIndex] = targetIndex;
-    addMoveToHistory(`${color} teleported from ${currentLabel} to ${targetLabel}`);
-    showTemporaryMessage(`${color} teleported to ${targetLabel}`);
-    toPos = targetIndex;
-  }
-}
-
-      addMoveToHistory(`${color} moved piece #${pieceIndex+1} from ${fromPos===-1?"off-board":fromPos+1} to ${toPos+1}`);
-      lastMove = { fromPos, toPos, color, pieceIndex };
-extraTurn = false;
-nextPlayer = (color === "hounds") ? "jackals" : "hounds";
-
-const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
-if (["A5", "A15", "D5", "D15", "E5"].includes(landedLabel)) {
-  extraTurn = true;
-  addMoveToHistory(`${color} landed on ${landedLabel}, gets another turn!`);
-  showTemporaryMessage(`${color} gets another turn!`);
-}
-
-
-
-      let finished = own.filter(p => p === 29).length;
-      if (finished === NUM_PIECES) {
-        if (checkSpecialVictoryCondition()) return;
-        gameOverText.textContent = (color === humanSide) ? "You Win!" : "You Lose!";
-        addMoveToHistory(`${color} wins the game!`);
-        showGameOver();
-      }
-      debugLog(`${color} executed move for piece ${pieceIndex} to ${toPos}`);
-    }
-
+   
     /***********************************
      * 10) Turn Management
      ***********************************/
@@ -1127,7 +1135,7 @@ function aiMakeMove(callback = null) {
     diceRolled = false;
     currentDiceRoll = 0;
     endTurn(false);
-    return;
+    return true;
   }
 
   aiMoved = true;
