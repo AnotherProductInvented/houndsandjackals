@@ -510,8 +510,15 @@
       if (!imagesReady) return;
       const houndsTray = document.getElementById("houndsTray");
       const jackalsTray = document.getElementById("jackalsTray");
-      houndsTray.innerHTML = "";
-      jackalsTray.innerHTML = "";
+houndsTray.innerHTML = "";
+jackalsTray.innerHTML = "";
+hTrayImages.forEach((img, i) => {
+  if (houndsPieces[i] === -1) houndsTray.appendChild(img);
+});
+jTrayImages.forEach((img, i) => {
+  if (jackalsPieces[i] === -1) jackalsTray.appendChild(img);
+});
+
       updateOffBoardCounts();
     }
     function updateOffBoardCounts() {
@@ -595,11 +602,17 @@
         extraTurn = false;
         nextPlayer = (color === "hounds") ? "jackals" : "hounds";
         const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
-        if (["A5","A15","D5","D15","E5"].includes(landedLabel)) {
-          extraTurn = true;
-          addMoveToHistory(`${color} got an extra turn`);
-          showTemporaryMessage(`${color} got an extra turn`);
-        }
+const circles = ["A5", "A15", "D5", "D15", "E5"];
+const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
+
+if (circles.includes(landedLabel)) {
+  extraTurn = true;
+  addMoveToHistory(`${color} got an extra turn`);
+  showTemporaryMessage(`${color} got an extra turn`);
+} else {
+  extraTurn = false; // explicitly reset extraTurn
+}
+
         let finished = own.filter(p => p >= 25).length;
         if (finished === NUM_PIECES) {
           if (checkSpecialVictoryCondition()) return true;
