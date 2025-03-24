@@ -637,33 +637,52 @@
     /***********************************
      * 10) Turn Management
      ***********************************/
-   function endTurn(isHumanTurn) {
+  function endTurn(isHumanTurn) {
   setTimeout(() => {
     currentTurn = nextPlayer;
 
-    // If opponent has an unused dice, let the current player know.
     if (extraOpponentDice > 0) {
-      addMoveToHistory(`${currentTurn} received opponent's unused roll (${extraOpponentDice})`);
-      showTemporaryMessage(`${currentTurn} can use opponent's unused roll (${extraOpponentDice})`);
       currentDiceRoll = extraOpponentDice;
       diceRolled = true;
       extraOpponentDice = 0;
+      addMoveToHistory(`${currentTurn} received opponent's unused roll (${currentDiceRoll})`);
+      showTemporaryMessage(`${currentTurn} uses opponent's unused roll (${currentDiceRoll})`);
+      redrawPlayScreen();
+
+      if (currentTurn !== humanSide) {
+        setTimeout(() => aiMakeMove(() => {
+          diceRolled = false;
+          currentDiceRoll = 0;
+          // After using the opponent’s dice, AI takes its normal turn
+          setTimeout(aiAutoRoll, 1500);
+        }), 1500);
+      } else {
+        // After human uses the opponent’s dice, allow normal roll afterward
+        diceRolled = false;
+        currentDiceRoll = 0;
+        setTimeout(() => {
+          addMoveToHistory(`${currentTurn}'s normal turn. Roll dice...`);
+          showTemporaryMessage(`${currentTurn}, roll dice for your normal turn.`);
+          redrawPlayScreen();
+        }, 1500);
+      }
+
     } else {
       diceRolled = false;
       currentDiceRoll = 0;
-    }
+      addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+      showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+      redrawPlayScreen();
 
-    addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
-    showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
-    redrawPlayScreen();
-
-    if (currentTurn !== humanSide) {
-      setTimeout(aiAutoRoll, 2000);
+      if (currentTurn !== humanSide) {
+        setTimeout(aiAutoRoll, 2000);
+      }
     }
 
     debugLog("Turn ended. Next turn: " + currentTurn);
   }, isHumanTurn ? 1000 : 2000);
 }
+
 
 
     /***********************************
