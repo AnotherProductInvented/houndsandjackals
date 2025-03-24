@@ -216,6 +216,26 @@
   <img id="logo" src="logo.png" alt="Logo">
 
   <script>
+    // Add the missing removeWhiteBackground function
+    function removeWhiteBackground(image, callback) {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = image.width;
+      tempCanvas.height = image.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(image, 0, 0);
+      const imgData = tempCtx.getImageData(0, 0, image.width, image.height);
+      const data = imgData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i] > 230 && data[i+1] > 230 && data[i+2] > 230) {
+          data[i+3] = 0;
+        }
+      }
+      tempCtx.putImageData(imgData, 0, 0);
+      const newImage = new Image();
+      newImage.src = tempCanvas.toDataURL();
+      newImage.onload = () => callback(newImage);
+    }
+
     'use strict';
     const debugMode = true;
     function debugLog(msg) {
@@ -233,19 +253,19 @@
     const boardPathJackals = ["E5","E4","E3","E2","E1","A15","A14","A13","A12","A11","A10","A9","A8","A7","A6","A5","A4","A3","A2","A1","B1","B2","B3","B4","B5","B6","B7","B8","B9","B10"];
     const SLOT_RADIUS = 7, SLOT_SPACING = 44, START_X = 40, START_Y = 100;
     for (let i = 1; i <= 15; i++) {
-      boardSquares[`A${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y };
+      boardSquares[`A${i}`] = { x: START_X + (i-1) * SLOT_SPACING, y: START_Y };
       boardPath.push(`A${i}`);
     }
     for (let i = 1; i <= 15; i++) {
-      boardSquares[`D${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 3.6 };
+      boardSquares[`D${i}`] = { x: START_X + (i-1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 3.6 };
       boardPath.push(`D${i}`);
     }
     for (let i = 1; i <= 10; i++) {
-      boardSquares[`B${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 1.2 };
+      boardSquares[`B${i}`] = { x: START_X + (i-1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 1.2 };
       boardPath.push(`B${i}`);
     }
     for (let i = 1; i <= 10; i++) {
-      boardSquares[`C${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 2.4 };
+      boardSquares[`C${i}`] = { x: START_X + (i-1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 2.4 };
       boardPath.push(`C${i}`);
     }
     const archCenters = [
@@ -257,11 +277,12 @@
       { x: boardSquares["A15"].x + SLOT_SPACING * 2.6,  y: boardSquares["A15"].y + SLOT_SPACING * 2.6 },
       { x: boardSquares["A15"].x + SLOT_SPACING * 2.0,  y: boardSquares["A15"].y + SLOT_SPACING * 3.1 },
       { x: boardSquares["A15"].x + SLOT_SPACING * 1.3,  y: boardSquares["A15"].y + SLOT_SPACING * 3.4 },
-      { x: (boardSquares["D15"].x + boardSquares["A15"].x + SLOT_SPACING * 1.3) / 2, y: (boardSquares["D15"].y + boardSquares["A15"].y + SLOT_SPACING * 3.4) / 2 }
+      { x: (boardSquares["D15"].x + boardSquares["A15"].x + SLOT_SPACING * 1.3) / 2,
+        y: (boardSquares["D15"].y + boardSquares["A15"].y + SLOT_SPACING * 3.4) / 2 }
     ];
     for (let i = 0; i < 9; i++) {
-      boardSquares[`E${i + 1}`] = archCenters[i];
-      boardPath.push(`E${i + 1}`);
+      boardSquares[`E${i+1}`] = archCenters[i];
+      boardPath.push(`E${i+1}`);
     }
 
     /***********************************
@@ -335,9 +356,9 @@
      * 5) External Images for Pieces
      ***********************************/
     let houndsImg = new Image(), jackalsImg = new Image();
-    houndsImg.src = "hounds.png";  
+    houndsImg.src = "hounds.png";
     houndsImg.crossOrigin = "anonymous";
-    jackalsImg.src = "jackals.png"; 
+    jackalsImg.src = "jackals.png";
     jackalsImg.crossOrigin = "anonymous";
     houndsImg.onload = () => {
       removeWhiteBackground(houndsImg, (cleaned) => {
@@ -440,18 +461,16 @@
         const len = 10;
         ctx.beginPath();
         ctx.moveTo(x, y);
-        ctx.lineTo(x - len * Math.cos(angle - Math.PI/6),
-                   y - len * Math.sin(angle - Math.PI/6));
-        ctx.lineTo(x - len * Math.cos(angle + Math.PI/6),
-                   y - len * Math.sin(angle + Math.PI/6));
+        ctx.lineTo(x - len * Math.cos(angle - Math.PI/6), y - len * Math.sin(angle - Math.PI/6));
+        ctx.lineTo(x - len * Math.cos(angle + Math.PI/6), y - len * Math.sin(angle + Math.PI/6));
         ctx.closePath();
         ctx.fillStyle = "#000";
         ctx.fill();
       }
-      function getCurveAngle(x0,y0,cx,cy,x1,y1,t=0.99) {
+      function getCurveAngle(x0, y0, cx, cy, x1, y1, t = 0.99) {
         const dx = 2*(1-t)*(cx-x0) + 2*t*(x1-cx);
         const dy = 2*(1-t)*(cy-y0) + 2*t*(y1-cy);
-        return Math.atan2(dy,dx);
+        return Math.atan2(dy, dx);
       }
       const angleStart = getCurveAngle(to.x, to.y, midX, midY, from.x, from.y);
       drawArrowhead(from.x, from.y, angleStart);
@@ -546,7 +565,7 @@
     }
 
     function offBoardClick(i, color) {
-      console.log("offBoardClick:", {currentTurn, diceRolled, currentDiceRoll});
+      console.log("offBoardClick:", { currentTurn, diceRolled, currentDiceRoll });
       if (currentTurn !== color) {
         showTemporaryMessage("It's not your turn yet!");
         return;
@@ -581,9 +600,7 @@
         hContainer.style.padding = "10px";
         hContainer.style.margin = "5px";
         hContainer.style.cursor = "pointer";
-        hContainer.onclick = () => {
-          if (houndsPieces[i] === -1) placeOffBoardPiece(i, "hounds");
-        };
+        hContainer.onclick = () => { if (houndsPieces[i] === -1) placeOffBoardPiece(i, "hounds"); };
         hTrayImages[i].style.opacity = (houndsPieces[i] === -1) ? "1" : "0.3";
         hContainer.appendChild(hTrayImages[i]);
         houndsTray.appendChild(hContainer);
@@ -595,9 +612,7 @@
         jContainer.style.padding = "10px";
         jContainer.style.margin = "5px";
         jContainer.style.cursor = "pointer";
-        jContainer.onclick = () => {
-          if (jackalsPieces[i] === -1) placeOffBoardPiece(i, "jackals");
-        };
+        jContainer.onclick = () => { if (jackalsPieces[i] === -1) placeOffBoardPiece(i, "jackals"); };
         jTrayImages[i].style.opacity = (jackalsPieces[i] === -1) ? "1" : "0.3";
         jContainer.appendChild(jTrayImages[i]);
         jackalsTray.appendChild(jContainer);
@@ -605,7 +620,7 @@
     }
 
     function placeOffBoardPiece(i, color) {
-      console.log("placeOffBoardPiece called for", i, color);
+      console.log("placeOffBoardPiece called for index", i, "color", color);
       if (currentTurn !== color) {
         showTemporaryMessage("It's not your turn yet!");
         return;
@@ -1046,7 +1061,7 @@
     humanSide = "hounds";
     document.getElementById("newGameBtn").onclick = () => showDifficultyScreen();
     document.getElementById("instructionsBtn").onclick = () => showInstructions();
-    if(document.getElementById("gameOverNewGameBtn"))
+    if (document.getElementById("gameOverNewGameBtn"))
       document.getElementById("gameOverNewGameBtn").onclick = () => showDifficultyScreen();
     rollDiceBtn.addEventListener("click", humanRollDice);
     canvas.addEventListener("mousedown", handleBoardClick);
@@ -1076,7 +1091,6 @@
         endTurn(true);
       }
     });
-
     document.addEventListener("keydown", (e) => {
       let key = e.key.toLowerCase();
       if (gameState === "selectDifficulty") {
@@ -1097,7 +1111,6 @@
         }
       }
     });
-
     /***********************************
      * 16) Main Loop
      ***********************************/
