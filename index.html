@@ -48,7 +48,6 @@
       position: relative;
       width: 100%;
       max-width: 900px;
-      height: auto;
       padding: 20px 20px 80px 20px; /* extra bottom padding */
       background: linear-gradient(to bottom, #f5e6ca, #ecd8b5);
       border: 10px double #8b4513;
@@ -151,7 +150,6 @@
     <h2>Another Product Invented</h2>
     <h1>Hounds and Jackals</h1>
   </div>
-
   <div id="gameWrapper">
     <!-- Left Panel: Dice Controls -->
     <div id="leftPanel">
@@ -160,7 +158,6 @@
       <input type="number" id="customDiceInput" min="1" max="6" placeholder="Set Dice (1-6)">
       <button id="setCustomDiceBtn">Use Custom Dice</button>
     </div>
-
     <!-- Center Panel: Game Container -->
     <div id="gameContainer">
       <!-- Temporary Message Overlay -->
@@ -196,17 +193,14 @@
       <!-- Hounds Tray BELOW canvas -->
       <div id="houndsTray" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;"></div>
     </div>
-
     <!-- Right Panel: Move History -->
     <div id="rightPanel">
       <div id="moveHistory">Moves:<br></div>
     </div>
   </div>
-
   <img id="logo" src="logo.png" alt="Logo">
-
   <script>
-    // --- Missing removeWhiteBackground function ---
+    // Define removeWhiteBackground so images load properly.
     function removeWhiteBackground(image, callback) {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = image.width;
@@ -228,9 +222,7 @@
 
     'use strict';
     const debugMode = true;
-    function debugLog(msg) {
-      if (debugMode) console.log("[DEBUG]", msg);
-    }
+    function debugLog(msg) { if (debugMode) console.log("[DEBUG]", msg); }
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
@@ -243,32 +235,32 @@
     const boardPathJackals = ["E5","E4","E3","E2","E1","A15","A14","A13","A12","A11","A10","A9","A8","A7","A6","A5","A4","A3","A2","A1","B1","B2","B3","B4","B5","B6","B7","B8","B9","B10"];
     const SLOT_RADIUS = 7, SLOT_SPACING = 44, START_X = 40, START_Y = 100;
     for (let i = 1; i <= 15; i++) {
-      boardSquares[`A${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y };
+      boardSquares[`A${i}`] = { x: START_X + (i-1)*SLOT_SPACING, y: START_Y };
       boardPath.push(`A${i}`);
     }
     for (let i = 1; i <= 15; i++) {
-      boardSquares[`D${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 3.6 };
+      boardSquares[`D${i}`] = { x: START_X + (i-1)*SLOT_SPACING, y: START_Y + SLOT_SPACING*3.6 };
       boardPath.push(`D${i}`);
     }
     for (let i = 1; i <= 10; i++) {
-      boardSquares[`B${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 1.2 };
+      boardSquares[`B${i}`] = { x: START_X + (i-1)*SLOT_SPACING, y: START_Y + SLOT_SPACING*1.2 };
       boardPath.push(`B${i}`);
     }
     for (let i = 1; i <= 10; i++) {
-      boardSquares[`C${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + SLOT_SPACING * 2.4 };
+      boardSquares[`C${i}`] = { x: START_X + (i-1)*SLOT_SPACING, y: START_Y + SLOT_SPACING*2.4 };
       boardPath.push(`C${i}`);
     }
     const archCenters = [
-      { x: boardSquares["A15"].x + SLOT_SPACING * 0.65, y: boardSquares["A15"].y + SLOT_SPACING * 0.2 },
-      { x: boardSquares["A15"].x + SLOT_SPACING * 1.3,  y: boardSquares["A15"].y + SLOT_SPACING * 0.4 },
-      { x: boardSquares["A15"].x + SLOT_SPACING * 2.0,  y: boardSquares["A15"].y + SLOT_SPACING * 0.7 },
-      { x: boardSquares["A15"].x + SLOT_SPACING * 2.6,  y: boardSquares["A15"].y + SLOT_SPACING * 1.2 },
-      { x: boardSquares["A15"].x + SLOT_SPACING * 3.2,  y: boardSquares["A15"].y + SLOT_SPACING * 1.9 },
-      { x: boardSquares["A15"].x + SLOT_SPACING * 2.6,  y: boardSquares["A15"].y + SLOT_SPACING * 2.6 },
-      { x: boardSquares["A15"].x + SLOT_SPACING * 2.0,  y: boardSquares["A15"].y + SLOT_SPACING * 3.1 },
-      { x: boardSquares["A15"].x + SLOT_SPACING * 1.3,  y: boardSquares["A15"].y + SLOT_SPACING * 3.4 },
-      { x: (boardSquares["D15"].x + boardSquares["A15"].x + SLOT_SPACING * 1.3) / 2,
-        y: (boardSquares["D15"].y + boardSquares["A15"].y + SLOT_SPACING * 3.4) / 2 }
+      { x: boardSquares["A15"].x + SLOT_SPACING*0.65, y: boardSquares["A15"].y + SLOT_SPACING*0.2 },
+      { x: boardSquares["A15"].x + SLOT_SPACING*1.3,  y: boardSquares["A15"].y + SLOT_SPACING*0.4 },
+      { x: boardSquares["A15"].x + SLOT_SPACING*2.0,  y: boardSquares["A15"].y + SLOT_SPACING*0.7 },
+      { x: boardSquares["A15"].x + SLOT_SPACING*2.6,  y: boardSquares["A15"].y + SLOT_SPACING*1.2 },
+      { x: boardSquares["A15"].x + SLOT_SPACING*3.2,  y: boardSquares["A15"].y + SLOT_SPACING*1.9 },
+      { x: boardSquares["A15"].x + SLOT_SPACING*2.6,  y: boardSquares["A15"].y + SLOT_SPACING*2.6 },
+      { x: boardSquares["A15"].x + SLOT_SPACING*2.0,  y: boardSquares["A15"].y + SLOT_SPACING*3.1 },
+      { x: boardSquares["A15"].x + SLOT_SPACING*1.3,  y: boardSquares["A15"].y + SLOT_SPACING*3.4 },
+      { x: (boardSquares["D15"].x + boardSquares["A15"].x + SLOT_SPACING*1.3) / 2,
+        y: (boardSquares["D15"].y + boardSquares["A15"].y + SLOT_SPACING*3.4) / 2 }
     ];
     for (let i = 0; i < 9; i++) {
       boardSquares[`E${i+1}`] = archCenters[i];
@@ -329,18 +321,8 @@
       instructionsNextBtn.style.display = (currentInstructionsPage === instructionsPages.length - 1) ? "none" : "inline-block";
       debugLog("Instructions updated to page " + (currentInstructionsPage + 1));
     }
-    instructionsPrevBtn.onclick = () => {
-      if (currentInstructionsPage > 0) {
-        currentInstructionsPage--;
-        updateInstructions();
-      }
-    };
-    instructionsNextBtn.onclick = () => {
-      if (currentInstructionsPage < instructionsPages.length - 1) {
-        currentInstructionsPage++;
-        updateInstructions();
-      }
-    };
+    instructionsPrevBtn.onclick = () => { if (currentInstructionsPage > 0) { currentInstructionsPage--; updateInstructions(); } };
+    instructionsNextBtn.onclick = () => { if (currentInstructionsPage < instructionsPages.length - 1) { currentInstructionsPage++; updateInstructions(); } };
 
     /***********************************
      * 5) External Images for Pieces
@@ -393,60 +375,42 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       Object.entries(boardSquares).forEach(([label, sq]) => {
         ctx.beginPath();
-        ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
+        ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI*2);
         let grad;
         if (["B6","B7","B8","B9","B10"].includes(label)) {
           grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-          grad.addColorStop(0, "#aad4ff");
-          grad.addColorStop(1, "#005fa3");
+          grad.addColorStop(0, "#aad4ff"); grad.addColorStop(1, "#005fa3");
         } else if (["C6","C7","C8","C9","C10"].includes(label)) {
           grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-          grad.addColorStop(0, "#aaf0aa");
-          grad.addColorStop(1, "#007a3d");
+          grad.addColorStop(0, "#aaf0aa"); grad.addColorStop(1, "#007a3d");
         } else {
           grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-          grad.addColorStop(0, "#fcebbd");
-          grad.addColorStop(1, "#b38b4d");
+          grad.addColorStop(0, "#fcebbd"); grad.addColorStop(1, "#b38b4d");
         }
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.strokeStyle = "#6b4e2e";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.fillStyle = "#000";
-        ctx.font = "12px Arial";
+        ctx.fillStyle = grad; ctx.fill();
+        ctx.strokeStyle = "#6b4e2e"; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = "#000"; ctx.font = "12px Arial";
         ctx.fillText(label, sq.x, sq.y - 18);
       });
       ["A5","A15","D5","D15","E5"].forEach(label => {
         const sq = boardSquares[label];
         ctx.beginPath();
-        ctx.arc(sq.x, sq.y, SLOT_RADIUS + 3, 0, Math.PI * 2);
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#8b0000";
-        ctx.stroke();
+        ctx.arc(sq.x, sq.y, SLOT_RADIUS+3, 0, Math.PI*2);
+        ctx.lineWidth = 3; ctx.strokeStyle = "#8b0000"; ctx.stroke();
       });
       drawDoubleArrow(boardSquares["A10"], boardSquares["B5"], "between");
       drawDoubleArrow(boardSquares["D10"], boardSquares["C5"], "between");
       drawDoubleArrow(boardSquares["B1"], boardSquares["B3"]);
       drawDoubleArrow(boardSquares["C1"], boardSquares["C3"], "below");
     }
-
     function drawDoubleArrow(from, to, direction = "above") {
-      let midX = (from.x + to.x) / 2, midY;
-      if (direction === "above") {
-        midY = (from.y + to.y) / 2 - SLOT_SPACING * 0.75;
-      } else if (direction === "below") {
-        midY = (from.y + to.y) / 2 + SLOT_SPACING * 0.75;
-      } else if (direction === "between") {
-        midY = (from.y + to.y) / 2;
-        midX += (from.x < to.x ? SLOT_SPACING * 0.9 : -SLOT_SPACING * 0.9);
-      }
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
+      let midX = (from.x+to.x)/2, midY;
+      if (direction === "above") { midY = (from.y+to.y)/2 - SLOT_SPACING*0.75; }
+      else if (direction === "below") { midY = (from.y+to.y)/2 + SLOT_SPACING*0.75; }
+      else if (direction === "between") { midY = (from.y+to.y)/2; midX += (from.x<to.x ? SLOT_SPACING*0.9 : -SLOT_SPACING*0.9); }
+      ctx.beginPath(); ctx.moveTo(from.x, from.y);
       ctx.quadraticCurveTo(midX, midY, to.x, to.y);
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.stroke();
       function drawArrowhead(x, y, angle) {
         const len = 10;
         ctx.beginPath();
@@ -455,36 +419,32 @@
                    y - len * Math.sin(angle - Math.PI/6));
         ctx.lineTo(x - len * Math.cos(angle + Math.PI/6),
                    y - len * Math.sin(angle + Math.PI/6));
-        ctx.closePath();
-        ctx.fillStyle = "#000";
-        ctx.fill();
+        ctx.closePath(); ctx.fillStyle = "#000"; ctx.fill();
       }
-      function getCurveAngle(x0, y0, cx, cy, x1, y1, t = 0.99) {
-        const dx = 2*(1-t)*(cx-x0) + 2*t*(x1-cx);
-        const dy = 2*(1-t)*(cy-y0) + 2*t*(y1-cy);
-        return Math.atan2(dy, dx);
+      function getCurveAngle(x0, y0, cx, cy, x1, y1, t=0.99) {
+        const dx = 2*(1-t)*(cx-x0)+2*t*(x1-cx);
+        const dy = 2*(1-t)*(cy-y0)+2*t*(y1-cy);
+        return Math.atan2(dy,dx);
       }
       const angleStart = getCurveAngle(to.x, to.y, midX, midY, from.x, from.y);
       drawArrowhead(from.x, from.y, angleStart);
       const angleEnd = getCurveAngle(from.x, from.y, midX, midY, to.x, to.y);
       drawArrowhead(to.x, to.y, angleEnd);
     }
-
     function drawPieces() {
       houndsPieces.forEach((pos, i) => {
         if (pos === -1 || pos === 29) return;
         const label = boardPathHounds[pos];
         const sq = boardSquares[label];
-        ctx.drawImage(houndsImg, sq.x - 20, sq.y - 20, 40, 40);
+        ctx.drawImage(houndsImg, sq.x-20, sq.y-20, 40, 40);
       });
       jackalsPieces.forEach((pos, i) => {
         if (pos === -1 || pos === 29) return;
         const label = boardPathJackals[pos];
         const sq = boardSquares[label];
-        ctx.drawImage(jackalsImg, sq.x - 20, sq.y - 20, 40, 40);
+        ctx.drawImage(jackalsImg, sq.x-20, sq.y-20, 40, 40);
       });
     }
-
     function redrawPlayScreen() {
       drawBoard();
       drawPieces();
@@ -493,7 +453,6 @@
       updateTrays();
       debugLog("Play screen redrawn.");
     }
-
     function updateDiceRollDisplay() {
       diceRollDisplay.textContent = `Dice: ${currentDiceRoll || "-"}`;
     }
@@ -513,10 +472,7 @@
       let readyCount = 0;
       function checkReady() {
         readyCount++;
-        if (readyCount === 2) {
-          imagesReady = true;
-          callback();
-        }
+        if (readyCount === 2) { imagesReady = true; callback(); }
       }
       removeWhiteBackground(houndsImg, (cleaned) => {
         houndsImg = cleaned;
@@ -528,10 +484,7 @@
           hImg.style.height = "50px";
           hImg.style.cursor = "pointer";
           hImg.dataset.index = i;
-          hImg.onclick = () => {
-            debugLog("Tray clicked: hounds piece " + i);
-            offBoardClick(i, "hounds");
-          };
+          hImg.onclick = () => { debugLog("Tray clicked: hounds piece " + i); offBoardClick(i, "hounds"); };
           hTrayImages.push(hImg);
         }
         checkReady();
@@ -546,10 +499,7 @@
           jImg.style.height = "50px";
           jImg.style.cursor = "pointer";
           jImg.dataset.index = i;
-          jImg.onclick = () => {
-            debugLog("Tray clicked: jackals piece " + i);
-            offBoardClick(i, "jackals");
-          };
+          jImg.onclick = () => { debugLog("Tray clicked: jackals piece " + i); offBoardClick(i, "jackals"); };
           jTrayImages.push(jImg);
         }
         checkReady();
@@ -558,23 +508,11 @@
 
     function offBoardClick(i, color) {
       debugLog("offBoardClick: currentTurn = " + currentTurn + ", diceRolled = " + diceRolled + ", currentDiceRoll = " + currentDiceRoll);
-      if (currentTurn !== color) {
-        showTemporaryMessage("It's not your turn yet!");
-        return;
-      }
-      if (!diceRolled) {
-        showTemporaryMessage("Roll the dice first!");
-        return;
-      }
-      if (currentDiceRoll !== 6) {
-        showTemporaryMessage("You need a 6 to enter!");
-        return;
-      }
+      if (currentTurn !== color) { showTemporaryMessage("It's not your turn yet!"); return; }
+      if (!diceRolled) { showTemporaryMessage("Roll the dice first!"); return; }
+      if (currentDiceRoll !== 6) { showTemporaryMessage("You need a 6 to enter!"); return; }
       const pieces = (color === "hounds") ? houndsPieces : jackalsPieces;
-      if (pieces[i] !== -1) {
-        showTemporaryMessage("Piece already on board!");
-        return;
-      }
+      if (pieces[i] !== -1) { showTemporaryMessage("Piece already on board!"); return; }
       tryMovePiece(i, color);
     }
 
@@ -596,7 +534,6 @@
         hTrayImages[i].style.opacity = (houndsPieces[i] === -1) ? "1" : "0.3";
         hContainer.appendChild(hTrayImages[i]);
         houndsTray.appendChild(hContainer);
-        
         const jContainer = document.createElement("div");
         jContainer.style.width = "70px";
         jContainer.style.height = "70px";
@@ -613,31 +550,15 @@
 
     function placeOffBoardPiece(i, color) {
       debugLog("placeOffBoardPiece called for index " + i + ", color " + color);
-      if (currentTurn !== color) {
-        showTemporaryMessage("It's not your turn yet!");
-        return;
-      }
-      if (!diceRolled) {
-        showTemporaryMessage("Roll the dice first!");
-        return;
-      }
-      if (currentDiceRoll !== 6) {
-        showTemporaryMessage("You need a 6 to enter!");
-        return;
-      }
+      if (currentTurn !== color) { showTemporaryMessage("It's not your turn yet!"); return; }
+      if (!diceRolled) { showTemporaryMessage("Roll the dice first!"); return; }
+      if (currentDiceRoll !== 6) { showTemporaryMessage("You need a 6 to enter!"); return; }
       const pieces = (color === "hounds") ? houndsPieces : jackalsPieces;
-      if (pieces[i] !== -1) {
-        showTemporaryMessage("Piece already on board!");
-        return;
-      }
-      if (!canLandOn(0, color)) {
-        showTemporaryMessage("Starting square is blocked!");
-        return;
-      }
+      if (pieces[i] !== -1) { showTemporaryMessage("Piece already on board!"); return; }
+      if (!canLandOn(0, color)) { showTemporaryMessage("Starting square is blocked!"); return; }
       executeMove(i, 0, color);
       addMoveToHistory(`${color} placed piece on board.`);
-      diceRolled = false;
-      currentDiceRoll = 0;
+      diceRolled = false; currentDiceRoll = 0;
       if (extraTurn) {
         addMoveToHistory(`${currentTurn} gets another turn!`);
         showTemporaryMessage(`${currentTurn} gets another turn!`);
@@ -687,7 +608,7 @@
       try {
         let own = (color === "hounds") ? houndsPieces : jackalsPieces;
         let fromPos = own[pieceIndex];
-        console.log("executeMove successful for", color, "piece", pieceIndex, "new position", toPos);
+        console.log("executeMove: moving", color, "piece", pieceIndex, "from", fromPos, "to", toPos);
         const teleportPairs = {
           "A10": "B5", "B5": "A10",
           "D10": "C5", "C5": "D10",
@@ -706,7 +627,7 @@
             toPos = targetIndex;
           }
         }
-        addMoveToHistory(`${color} moved piece #${pieceIndex+1} from ${fromPos === -1 ? "off-board" : fromPos+1} to ${toPos+1}`);
+        addMoveToHistory(`${color} moved piece #${pieceIndex+1} from ${fromPos===-1 ? "off-board" : fromPos+1} to ${toPos+1}`);
         lastMove = { fromPos, toPos, color, pieceIndex };
         extraTurn = false;
         nextPlayer = (color === "hounds") ? "jackals" : "hounds";
@@ -784,18 +705,15 @@
       addMoveToHistory(`${humanSide} rolled ${currentDiceRoll}`);
       showTemporaryMessage(`${humanSide} rolled ${currentDiceRoll}`);
       redrawPlayScreen();
-
-      // Auto-place an off-board piece if dice is 6 and there is a valid off-board move.
+      // If dice is 6, auto-place the first off-board piece if available.
       if (currentDiceRoll === 6) {
         const opts = getMoveOptions(currentDiceRoll, humanSide);
-        // If all options are off-board (fromPos === -1), auto-place the first one.
         if (opts.length > 0 && opts.every(o => o.fromPos === -1)) {
           debugLog("Auto-placing first off-board piece.");
           tryMovePiece(opts[0].pieceIndex, humanSide);
           return;
         }
       }
-
       if (extraOpponentDice > 0) {
         const extraOpts = getMoveOptions(extraOpponentDice, humanSide);
         if (extraOpts.length > 0) {
@@ -807,7 +725,6 @@
           extraOpponentDice = 0;
         }
       }
-
       const opts = getMoveOptions(currentDiceRoll, humanSide);
       if (opts.length === 0) {
         showTemporaryMessage("No moves with normal dice. Passing dice...");
@@ -819,7 +736,6 @@
         endTurn(true);
       }
     }
-
     function handleBoardClick(e) {
       if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled) return;
       const rect = canvas.getBoundingClientRect();
@@ -838,7 +754,6 @@
         }
       }
     }
-
     function tryMovePiece(pieceIndex, color) {
       console.log("tryMovePiece called for", color, "piece", pieceIndex);
       if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled || color !== currentTurn) {
@@ -914,11 +829,8 @@
             redrawPlayScreen();
             setTimeout(() => aiMakeMove(() => endTurn(false)), 2000);
           } else {
-            if (extraTurn) {
-              setTimeout(aiAutoRoll, 1500);
-            } else {
-              endTurn(false);
-            }
+            if (extraTurn) { setTimeout(aiAutoRoll, 1500); }
+            else { endTurn(false); }
           }
         }, 1500);
       } else {
@@ -1040,15 +952,11 @@
       showTemporaryMessage("Hounds Turn! Roll dice...");
       if (imagesReady) {
         redrawPlayScreen();
-        if (currentTurn !== humanSide) {
-          setTimeout(aiAutoRoll, 2000);
-        }
+        if (currentTurn !== humanSide) { setTimeout(aiAutoRoll, 2000); }
       } else {
         prepareTrayImages(() => {
           redrawPlayScreen();
-          if (currentTurn !== humanSide) {
-            setTimeout(aiAutoRoll, 2000);
-          }
+          if (currentTurn !== humanSide) { setTimeout(aiAutoRoll, 2000); }
         });
       }
       debugLog("Game started.");
@@ -1085,6 +993,15 @@
       addMoveToHistory(`${humanSide} used custom dice ${currentDiceRoll}`);
       showTemporaryMessage(`${humanSide} used custom dice ${currentDiceRoll}`);
       redrawPlayScreen();
+      // Auto-place if dice is 6
+      if (currentDiceRoll === 6) {
+        const opts = getMoveOptions(currentDiceRoll, currentTurn);
+        if (opts.length > 0 && opts.every(o => o.fromPos === -1)) {
+          debugLog("Auto-placing first off-board piece (custom dice).");
+          tryMovePiece(opts[0].pieceIndex, humanSide);
+          return;
+        }
+      }
       let opts = getMoveOptions(currentDiceRoll, currentTurn);
       if (opts.length === 0) {
         showTemporaryMessage("No legal moves. Opponent gets your dice!");
@@ -1103,17 +1020,10 @@
         else if (key === "m") setDifficulty("medium");
         else if (key === "h") setDifficulty("hard");
       } else if (gameState === "playing") {
-        if (key === "r" && currentTurn === humanSide && !diceRolled) {
-          humanRollDice();
-        } else if (key === "m") {
-          initPieces();
-          showMenu();
-        }
+        if (key === "r" && currentTurn === humanSide && !diceRolled) { humanRollDice(); }
+        else if (key === "m") { initPieces(); showMenu(); }
       } else if (gameState === "instructions" || gameState === "gameover") {
-        if (key === "m") {
-          initPieces();
-          showMenu();
-        }
+        if (key === "m") { initPieces(); showMenu(); }
       }
     });
     /***********************************
