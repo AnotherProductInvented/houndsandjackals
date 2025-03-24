@@ -379,20 +379,15 @@
           grad.addColorStop(0, "#fcebbd");
           grad.addColorStop(1, "#b38b4d");
         }
-        ctx.fillStyle = grad; 
-        ctx.fill();
-        ctx.strokeStyle = "#6b4e2e"; 
-        ctx.lineWidth = 3; 
-        ctx.stroke();
+        ctx.fillStyle = grad; ctx.fill();
+        ctx.strokeStyle = "#6b4e2e"; ctx.lineWidth = 3; ctx.stroke();
       });
-      // Special thick circle slots
+      // Special thick circle slots (our extra-turn spaces)
       ["A5","A15","D5","D15","E5"].forEach(label => {
         const sq = boardSquares[label];
         ctx.beginPath();
         ctx.arc(sq.x, sq.y, SLOT_RADIUS + 3, 0, Math.PI * 2);
-        ctx.lineWidth = 3; 
-        ctx.strokeStyle = "#8b0000"; 
-        ctx.stroke();
+        ctx.lineWidth = 3; ctx.strokeStyle = "#8b0000"; ctx.stroke();
       });
       // Connecting arrows
       drawDoubleArrow(boardSquares["A10"], boardSquares["B5"], "between");
@@ -408,9 +403,7 @@
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       ctx.quadraticCurveTo(midX, midY, to.x, to.y);
-      ctx.strokeStyle = "#000"; 
-      ctx.lineWidth = 2; 
-      ctx.stroke();
+      ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.stroke();
       function drawArrowhead(x, y, angle) {
         const len = 10;
         ctx.beginPath();
@@ -419,9 +412,7 @@
                    y - len * Math.sin(angle - Math.PI / 6));
         ctx.lineTo(x - len * Math.cos(angle + Math.PI / 6),
                    y - len * Math.sin(angle + Math.PI / 6));
-        ctx.closePath(); 
-        ctx.fillStyle = "#000"; 
-        ctx.fill();
+        ctx.closePath(); ctx.fillStyle = "#000"; ctx.fill();
       }
       function getCurveAngle(x0, y0, cx, cy, x1, y1, t = 0.99) {
         const dx = 2 * (1 - t) * (cx - x0) + 2 * t * (x1 - cx);
@@ -526,7 +517,7 @@
     /***********************************
      * Release Button Function
      ***********************************/
-    // Releasing a hound requires that you have rolled a 6.
+    // Releasing a hound requires a 6.
     function releaseHound() {
       if (currentTurn !== "hounds") { showTemporaryMessage("Not your turn!"); return; }
       if (!diceRolled || currentDiceRoll !== 6) {
@@ -596,15 +587,15 @@
         else { addMoveToHistory(`${color} slid`); }
         lastMove = { fromPos, toPos, color, pieceIndex };
         extraTurn = false;
-        // If we are using an opponent’s unused roll, do not pass the turn.
+        // If using an opponent’s unused roll, do not pass turn.
         if (usingExtraRoll) {
           usingExtraRoll = false;
           addMoveToHistory("Extra roll used. Now roll your own dice!");
           showTemporaryMessage("Extra roll used. Now roll your own dice!");
-          // Do not switch players; keep currentTurn.
         } else {
           nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
         }
+        // Check extra-turn (circle) squares:
         const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
         if (["A5","A15","D5","D15","E5"].includes(landedLabel)) {
           extraTurn = true;
@@ -667,18 +658,18 @@
             if (opts.length > 0) {
               currentDiceRoll = pendingExtraRoll;
               diceRolled = true;
-              usingExtraRoll = true; // Set flag so that after the move, turn remains with you.
+              usingExtraRoll = true;
               showTemporaryMessage(`Use opponent's unused roll: ${pendingExtraRoll}`);
               addMoveToHistory(`Use opponent's unused roll: ${pendingExtraRoll}`);
               redrawPlayScreen();
               pendingExtraRoll = 0;
-              return; // Wait for the human to choose a move using the extra roll.
+              return; // Wait for human move
             } else {
               showTemporaryMessage(`Opponent's unused roll (${pendingExtraRoll}) discarded`);
               addMoveToHistory(`Opponent's unused roll (${pendingExtraRoll}) discarded`);
               pendingExtraRoll = 0;
             }
-          } else { // AI's turn auto‑uses extra roll.
+          } else { // AI uses extra roll automatically.
             let opts = getMoveOptions(pendingExtraRoll, currentTurn);
             if (opts.length > 0) {
               let pick = opts[Math.floor(Math.random() * opts.length)];
@@ -691,7 +682,7 @@
             pendingExtraRoll = 0;
           }
         }
-        // After handling the extra roll, prompt for a normal roll.
+        // After extra roll handling, prompt for a normal roll.
         diceRolled = false;
         currentDiceRoll = 0;
         addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
@@ -712,7 +703,7 @@
       addMoveToHistory(`${humanSide} rolled ${currentDiceRoll}`);
       showTemporaryMessage(`${humanSide} rolled ${currentDiceRoll}`);
       redrawPlayScreen();
-      const opts = getMoveOptions(currentDiceRoll, humanSide);
+      let opts = getMoveOptions(currentDiceRoll, humanSide);
       if (opts.length === 0) {
         showTemporaryMessage("No legal moves. Passing roll...");
         addMoveToHistory(`No legal moves. Opponent gets your roll (${currentDiceRoll})`);
@@ -753,19 +744,17 @@
       let moveOpt = opts.find(o => o.pieceIndex === pieceIndex);
       if (moveOpt) {
         executeMove(pieceIndex, moveOpt.toPos, color);
-        addMoveToHistory(`${color} slid`);
+        // Clear dice regardless
         diceRolled = false;
         currentDiceRoll = 0;
-        // If the move was made using an extra roll, then allow the player to roll normally again.
+        // If the move was made using an extra roll, remain on your turn
         if (usingExtraRoll) {
           usingExtraRoll = false;
           addMoveToHistory("Extra roll used. Now roll your own dice!");
           showTemporaryMessage("Extra roll used. Now roll your own dice!");
-          // Remain on the same turn; do not switch players.
           redrawPlayScreen();
           return;
         }
-        // Otherwise, pass the turn.
         nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
         endTurn(true);
         redrawPlayScreen();
@@ -858,7 +847,9 @@
         diceRolled = false;
         currentDiceRoll = 0;
         aiAutoRoll();
-      } else { endTurn(false); }
+      } else { 
+        endTurn(false); 
+      }
     }
 
     /***********************************
@@ -921,7 +912,10 @@
     setCustomDiceBtn.addEventListener("click", () => {
       if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
       const customValue = parseInt(customDiceInput.value);
-      if (isNaN(customValue) || customValue < 1 || customValue > 6) { showTemporaryMessage("Invalid dice value!"); return; }
+      if (isNaN(customValue) || customValue < 1 || customValue > 6) { 
+        showTemporaryMessage("Invalid dice value!"); 
+        return; 
+      }
       currentDiceRoll = customValue;
       diceRolled = true;
       addMoveToHistory(`${humanSide} used custom dice ${currentDiceRoll}`);
@@ -933,8 +927,7 @@
         addMoveToHistory(`No legal moves. Opponent gets your roll (${currentDiceRoll})`);
         extraOpponentDice = currentDiceRoll;
         nextPlayer = (currentTurn==="hounds") ? "jackals" : "hounds";
-        diceRolled = false;
-        currentDiceRoll = 0;
+        diceRolled = false; currentDiceRoll = 0;
         endTurn(true);
       }
     });
