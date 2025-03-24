@@ -603,7 +603,8 @@ jTrayImages.forEach((img, i) => {
         nextPlayer = (color === "hounds") ? "jackals" : "hounds";
         const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
 const circles = ["A5", "A15", "D5", "D15", "E5"];
-const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
+landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
+
 
 if (circles.includes(landedLabel)) {
   extraTurn = true;
