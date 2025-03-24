@@ -7,7 +7,7 @@
   <style>
     #houndsTray, #jackalsTray {
       position: relative;
-      z-index: 100; /* Ensure trays appear above the canvas if necessary */
+      z-index: 100; /* Ensure trays appear above the canvas */
     }
     /* Global Reset */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,10 +19,7 @@
       align-items: center;
       padding: 10px;
     }
-    h1, h2, p {
-      text-align: center;
-      color: #8b4513;
-    }
+    h1, h2, p { text-align: center; color: #8b4513; }
     /* Layout Wrapper */
     #gameWrapper {
       display: flex;
@@ -84,17 +81,10 @@
       z-index: 10;
       overflow-y: auto;
     }
-    .overlayScreen.active {
-      display: flex;
-    }
-    /* Instructions overlay additional buttons */
-    #instructionsContent {
-      font-size: 20px;
-      margin: 10px;
-    }
-    #instructionsNav {
-      margin-top: 10px;
-    }
+    .overlayScreen.active { display: flex; }
+    /* Instructions Overlay */
+    #instructionsContent { font-size: 20px; margin: 10px; }
+    #instructionsNav { margin-top: 10px; }
     /* Buttons */
     button {
       font-size: 18px;
@@ -129,7 +119,7 @@
       width: 200px;
       text-align: left;
     }
-    /* Temporary message overlay */
+    /* Temporary Message Overlay */
     #diceMessageOverlay {
       position: absolute;
       left: 50%;
@@ -216,7 +206,7 @@
   <img id="logo" src="logo.png" alt="Logo">
 
   <script>
-    // --- removeWhiteBackground function ---
+    // --- Missing removeWhiteBackground function ---
     function removeWhiteBackground(image, callback) {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = image.width;
@@ -539,9 +529,7 @@
           hImg.style.cursor = "pointer";
           hImg.dataset.index = i;
           hImg.onclick = () => {
-            console.log("Tray clicked: hounds piece", i);
-            // For testing, show an alert (remove later)
-            // alert("Tray clicked: hounds piece " + i);
+            debugLog("Tray clicked: hounds piece " + i);
             offBoardClick(i, "hounds");
           };
           hTrayImages.push(hImg);
@@ -559,7 +547,7 @@
           jImg.style.cursor = "pointer";
           jImg.dataset.index = i;
           jImg.onclick = () => {
-            console.log("Tray clicked: jackals piece", i);
+            debugLog("Tray clicked: jackals piece " + i);
             offBoardClick(i, "jackals");
           };
           jTrayImages.push(jImg);
@@ -569,7 +557,7 @@
     }
 
     function offBoardClick(i, color) {
-      console.log("offBoardClick:", { currentTurn, diceRolled, currentDiceRoll });
+      debugLog("offBoardClick: currentTurn = " + currentTurn + ", diceRolled = " + diceRolled + ", currentDiceRoll = " + currentDiceRoll);
       if (currentTurn !== color) {
         showTemporaryMessage("It's not your turn yet!");
         return;
@@ -624,7 +612,7 @@
     }
 
     function placeOffBoardPiece(i, color) {
-      console.log("placeOffBoardPiece called for index", i, "color", color);
+      debugLog("placeOffBoardPiece called for index " + i + ", color " + color);
       if (currentTurn !== color) {
         showTemporaryMessage("It's not your turn yet!");
         return;
@@ -796,6 +784,18 @@
       addMoveToHistory(`${humanSide} rolled ${currentDiceRoll}`);
       showTemporaryMessage(`${humanSide} rolled ${currentDiceRoll}`);
       redrawPlayScreen();
+
+      // Auto-place an off-board piece if dice is 6 and there is a valid off-board move.
+      if (currentDiceRoll === 6) {
+        const opts = getMoveOptions(currentDiceRoll, humanSide);
+        // If all options are off-board (fromPos === -1), auto-place the first one.
+        if (opts.length > 0 && opts.every(o => o.fromPos === -1)) {
+          debugLog("Auto-placing first off-board piece.");
+          tryMovePiece(opts[0].pieceIndex, humanSide);
+          return;
+        }
+      }
+
       if (extraOpponentDice > 0) {
         const extraOpts = getMoveOptions(extraOpponentDice, humanSide);
         if (extraOpts.length > 0) {
@@ -807,6 +807,7 @@
           extraOpponentDice = 0;
         }
       }
+
       const opts = getMoveOptions(currentDiceRoll, humanSide);
       if (opts.length === 0) {
         showTemporaryMessage("No moves with normal dice. Passing dice...");
