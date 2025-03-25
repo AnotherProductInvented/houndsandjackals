@@ -637,46 +637,25 @@
     /***********************************
      * 10) Turn Management
      ***********************************/
-  function endTurn(isHumanTurn) {
+function endTurn(isHumanTurn) {
   setTimeout(() => {
     currentTurn = nextPlayer;
 
+    diceRolled = false;  // Always reset diceRolled clearly here.
+    currentDiceRoll = 0;
+
     if (extraOpponentDice > 0) {
-      currentDiceRoll = extraOpponentDice;
-      diceRolled = true;
-      extraOpponentDice = 0;
-      addMoveToHistory(`${currentTurn} received opponent's unused roll (${currentDiceRoll})`);
-      showTemporaryMessage(`${currentTurn} uses opponent's unused roll (${currentDiceRoll})`);
-      redrawPlayScreen();
-
-      if (currentTurn !== humanSide) {
-        setTimeout(() => aiMakeMove(() => {
-          diceRolled = false;
-          currentDiceRoll = 0;
-          // After using the opponent’s dice, AI takes its normal turn
-          setTimeout(aiAutoRoll, 1500);
-        }), 1500);
-      } else {
-        // After human uses the opponent’s dice, allow normal roll afterward
-        diceRolled = false;
-        currentDiceRoll = 0;
-        setTimeout(() => {
-          addMoveToHistory(`${currentTurn}'s normal turn. Roll dice...`);
-          showTemporaryMessage(`${currentTurn}, roll dice for your normal turn.`);
-          redrawPlayScreen();
-        }, 1500);
-      }
-
+      addMoveToHistory(`${currentTurn} received opponent's unused roll (${extraOpponentDice})`);
+      showTemporaryMessage(`${currentTurn} received opponent's unused roll (${extraOpponentDice})`);
     } else {
-      diceRolled = false;
-      currentDiceRoll = 0;
       addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
       showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
-      redrawPlayScreen();
+    }
 
-      if (currentTurn !== humanSide) {
-        setTimeout(aiAutoRoll, 2000);
-      }
+    redrawPlayScreen();
+
+    if (currentTurn !== humanSide) {
+      setTimeout(aiAutoRoll, 2000);
     }
 
     debugLog("Turn ended. Next turn: " + currentTurn);
@@ -688,24 +667,36 @@
     /***********************************
      * 11) Human Interaction
      ***********************************/
-    function humanRollDice() {
-      if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
-      currentDiceRoll = rollDice();
-      diceRolled = true;
-      addMoveToHistory(`${humanSide} rolled ${currentDiceRoll}`);
-      showTemporaryMessage(`${humanSide} rolled ${currentDiceRoll}`);
-      redrawPlayScreen();
-      // (Removed auto‑placement for hounds upon rolling a 6)
-      const opts = getMoveOptions(currentDiceRoll, humanSide);
-      if (opts.length === 0) {
-        showTemporaryMessage("No legal moves. Passing dice...");
-        addMoveToHistory(`No legal moves. Opponent gets your dice (${currentDiceRoll})`);
-        extraOpponentDice = currentDiceRoll;
-        diceRolled = false; currentDiceRoll = 0;
-        nextPlayer = (currentTurn==="hounds") ? "jackals" : "hounds";
-        endTurn(true);
-      }
-    }
+function humanRollDice() {
+  if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
+
+  if (extraOpponentDice > 0) {
+    currentDiceRoll = extraOpponentDice;
+    extraOpponentDice = 0;
+    diceRolled = true;
+    addMoveToHistory(`${humanSide} uses opponent's unused roll (${currentDiceRoll})`);
+    showTemporaryMessage(`${humanSide} uses opponent's unused roll (${currentDiceRoll})`);
+  } else {
+    currentDiceRoll = rollDice();
+    diceRolled = true;
+    addMoveToHistory(`${humanSide} rolled ${currentDiceRoll}`);
+    showTemporaryMessage(`${humanSide} rolled ${currentDiceRoll}`);
+  }
+
+  redrawPlayScreen();
+
+  const opts = getMoveOptions(currentDiceRoll, humanSide);
+  if (opts.length === 0) {
+    showTemporaryMessage("No legal moves. Passing dice...");
+    addMoveToHistory(`No legal moves. Opponent gets your dice (${currentDiceRoll})`);
+    extraOpponentDice = currentDiceRoll;
+    diceRolled = false;
+    currentDiceRoll = 0;
+    nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+    endTurn(true);
+  }
+}
+
     function handleBoardClick(e) {
       if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled) return;
       const rect = canvas.getBoundingClientRect();
