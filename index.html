@@ -75,7 +75,7 @@
       box-shadow: 0 0 15px rgba(0,0,0,0.2);
     }
     
-    /* Overlay Screens */
+    /* Overlays */
     .overlayScreen {
       position: absolute;
       top: 0; left: 0;
@@ -169,6 +169,7 @@
     <h2>Another Product Invented</h2>
     <h1>Hounds and Jackals</h1>
   </div>
+  
   <div id="gameWrapper">
     <!-- Left Panel -->
     <div id="leftPanel">
@@ -184,6 +185,7 @@
         <span id="jackalsCount">Jackals Off-board: 5</span>
       </div>
     </div>
+    
     <!-- Center Panel -->
     <div id="gameContainer">
       <div id="diceMessageOverlay"></div>
@@ -214,6 +216,7 @@
       <canvas id="gameCanvas" width="820" height="320" style="width: 100%; height: auto;"></canvas>
       <div id="houndsTray" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;"></div>
     </div>
+    
     <!-- Right Panel -->
     <div id="rightPanel">
       <div id="moveHistory">Moves:<br></div>
@@ -221,27 +224,32 @@
   </div>
   <img id="logo" src="logo.png" alt="Logo">
   
-  <!-- Script Block: All code is enclosed in the window load event -->
+  <!-- All Script Code Below Runs After the Page Is Fully Loaded -->
   <script>
     window.addEventListener("load", function() {
+      // --- Debug Function ---
+      const debugMode = true;
+      function debugLog(msg) {
+        if (debugMode) {
+          console.log("[DEBUG]", msg);
+        }
+      }
       debugLog("Window loaded. Initializing game...");
 
-      // Canvas and context declaration – now available because the DOM is loaded.
+      // --- Canvas Setup ---
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
-      
-      /***********************************
-       * Global Debug Function (already defined above)
-       ***********************************/
-      // (debugLog already defined in the <script> block above)
+      debugLog("Canvas initialized.");
 
-      /***********************************
-       * 1) Board & Canvas Setup
-       ***********************************/
+      // --- Board Variables ---
       const boardPath = [];
       const boardSquares = {};
-      const boardPathHounds = ["E5","E6","E7","E8","E9","D15","D14","D13","D12","D11","D10","D9","D8","D7","D6","D5","D4","D3","D2","D1","C1","C2","C3","C4","C5","C6","C7","C8","C9","C10"];
-      const boardPathJackals = ["E5","E4","E3","E2","E1","A15","A14","A13","A12","A11","A10","A9","A8","A7","A6","A5","A4","A3","A2","A1","B1","B2","B3","B4","B5","B6","B7","B8","B9","B10"];
+      const boardPathHounds = ["E5","E6","E7","E8","E9",
+                               "D15","D14","D13","D12","D11","D10","D9","D8","D7","D6","D5","D4","D3","D2","D1",
+                               "C1","C2","C3","C4","C5","C6","C7","C8","C9","C10"];
+      const boardPathJackals = ["E5","E4","E3","E2","E1",
+                                "A15","A14","A13","A12","A11","A10","A9","A8","A7","A6","A5","A4","A3","A2","A1",
+                                "B1","B2","B3","B4","B5","B6","B7","B8","B9","B10"];
       const SLOT_RADIUS = 7, SLOT_SPACING = 44, START_X = 40, START_Y = 100;
       debugLog("Setting up boardSquares and boardPath.");
       for (let i = 1; i <= 15; i++) {
@@ -278,19 +286,25 @@
       }
       debugLog("Board setup complete.");
 
-      /***********************************
-       * 2) Game State Variables
-       ***********************************/
-      let gameState = "menu", humanSide = null, aiDifficulty = "medium",
-          currentTurn = null, currentDiceRoll = 0, diceRolled = false,
-          extraTurn = false, nextPlayer = null, NUM_PIECES = 5,
-          houndsPieces = [], jackalsPieces = [], moveHistory = [], lastMove = null,
-          extraOpponentDice = 0, extraFrom = null;
+      // --- Game State Variables ---
+      let gameState = "menu",
+          humanSide = "hounds",
+          aiDifficulty = "medium",
+          currentTurn = null,
+          currentDiceRoll = 0,
+          diceRolled = false,
+          extraTurn = false,
+          nextPlayer = null,
+          NUM_PIECES = 5,
+          houndsPieces = [],
+          jackalsPieces = [],
+          moveHistory = [],
+          lastMove = null,
+          extraOpponentDice = 0,
+          extraFrom = null;
       debugLog("Game state variables initialized.");
 
-      /***********************************
-       * 3) DOM Elements & Overlays
-       ***********************************/
+      // --- DOM Elements & Overlays ---
       const diceRollDisplayEl = document.getElementById("diceRollDisplay"),
             rollDiceBtn = document.getElementById("rollDiceBtn"),
             moveHistoryDiv = document.getElementById("moveHistory"),
@@ -306,9 +320,7 @@
             setCustomDiceBtn = document.getElementById("setCustomDiceBtn");
       debugLog("DOM elements loaded.");
 
-      /***********************************
-       * 4) Instructions
-       ***********************************/
+      // --- Instructions ---
       const instructionsPages = [
         `📜 <strong>Page 1 – Game Objective & Overview</strong><br><br>
          • Each player has <strong>5 pieces</strong> (Hounds or Jackals).<br>
@@ -331,47 +343,43 @@
         instructionsPrevBtn.style.display = (currentInstructionsPage === 0) ? "none" : "inline-block";
         instructionsNextBtn.style.display = (currentInstructionsPage === instructionsPages.length - 1) ? "none" : "inline-block";
       }
-      instructionsPrevBtn.onclick = () => { 
-        if (currentInstructionsPage > 0) { 
-          currentInstructionsPage--; 
-          updateInstructions(); 
+      instructionsPrevBtn.onclick = () => {
+        if (currentInstructionsPage > 0) {
+          currentInstructionsPage--;
+          updateInstructions();
           debugLog("instructionsPrevBtn clicked, current page = " + currentInstructionsPage);
         }
       };
-      instructionsNextBtn.onclick = () => { 
-        if (currentInstructionsPage < instructionsPages.length - 1) { 
-          currentInstructionsPage++; 
-          updateInstructions(); 
+      instructionsNextBtn.onclick = () => {
+        if (currentInstructionsPage < instructionsPages.length - 1) {
+          currentInstructionsPage++;
+          updateInstructions();
           debugLog("instructionsNextBtn clicked, current page = " + currentInstructionsPage);
         }
       };
 
-      /***********************************
-       * 5) External Images for Pieces
-       ***********************************/
+      // --- External Images for Pieces ---
       let houndsImg = new Image(), jackalsImg = new Image();
       houndsImg.src = "hounds.png";
       houndsImg.crossOrigin = "anonymous";
       jackalsImg.src = "jackals.png";
       jackalsImg.crossOrigin = "anonymous";
-      houndsImg.onload = () => { 
+      houndsImg.onload = () => {
         debugLog("houndsImg loaded; cleaning...");
-        removeWhiteBackground(houndsImg, (cleaned) => { 
-          houndsImg = cleaned; 
+        removeWhiteBackground(houndsImg, (cleaned) => {
+          houndsImg = cleaned;
           debugLog("houndsImg cleaned.");
         });
       };
-      jackalsImg.onload = () => { 
+      jackalsImg.onload = () => {
         debugLog("jackalsImg loaded; cleaning...");
-        removeWhiteBackground(jackalsImg, (cleaned) => { 
-          jackalsImg = cleaned; 
+        removeWhiteBackground(jackalsImg, (cleaned) => {
+          jackalsImg = cleaned;
           debugLog("jackalsImg cleaned.");
         });
       };
 
-      /***********************************
-       * 6) Initialization of Pieces
-       ***********************************/
+      // --- Initialization of Pieces ---
       function initPieces() {
         debugLog("initPieces: called");
         houndsPieces = Array(NUM_PIECES).fill(-1);
@@ -380,17 +388,15 @@
         moveHistory = [];
         updateMoveHistoryDisplay();
         updateTrays();
-        prepareTrayImages(() => { 
-          redrawPlayScreen(); 
+        prepareTrayImages(() => {
+          redrawPlayScreen();
           debugLog("initPieces: tray images prepared.");
         });
         debugLog("initPieces: Pieces initialized.");
         updateOffBoardCounts();
       }
 
-      /***********************************
-       * 7) Dice Functions
-       ***********************************/
+      // --- Dice Functions ---
       function rollDice() {
         const roll = Math.floor(Math.random() * 6) + 1;
         debugLog("rollDice: rolled " + roll);
@@ -418,9 +424,7 @@
         }
       }
 
-      /***********************************
-       * 8) Drawing Functions
-       ***********************************/
+      // --- Drawing Functions ---
       function drawBoard() {
         debugLog("drawBoard: starting");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -428,27 +432,35 @@
           ctx.beginPath();
           ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
           let grad;
-          if (["B6","B7","B8","B9","B10"].includes(label)) {
+          if (["B6", "B7", "B8", "B9", "B10"].includes(label)) {
             grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-            grad.addColorStop(0, "#aad4ff"); grad.addColorStop(1, "#005fa3");
-          } else if (["C6","C7","C8","C9","C10"].includes(label)) {
+            grad.addColorStop(0, "#aad4ff");
+            grad.addColorStop(1, "#005fa3");
+          } else if (["C6", "C7", "C8", "C9", "C10"].includes(label)) {
             grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-            grad.addColorStop(0, "#aaf0aa"); grad.addColorStop(1, "#007a3d");
+            grad.addColorStop(0, "#aaf0aa");
+            grad.addColorStop(1, "#007a3d");
           } else {
             grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-            grad.addColorStop(0, "#fcebbd"); grad.addColorStop(1, "#b38b4d");
+            grad.addColorStop(0, "#fcebbd");
+            grad.addColorStop(1, "#b38b4d");
           }
-          ctx.fillStyle = grad; 
+          ctx.fillStyle = grad;
           ctx.fill();
-          ctx.strokeStyle = "#6b4e2e"; ctx.lineWidth = 3; ctx.stroke();
-          ctx.fillStyle = "#000"; ctx.font = "12px Arial";
+          ctx.strokeStyle = "#6b4e2e";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.fillStyle = "#000";
+          ctx.font = "12px Arial";
           ctx.fillText(label, sq.x, sq.y - 18);
         });
         ["A5", "A15", "D5", "D15", "E5"].forEach(label => {
           const sq = boardSquares[label];
-          ctx.beginPath(); 
+          ctx.beginPath();
           ctx.arc(sq.x, sq.y, SLOT_RADIUS + 3, 0, Math.PI * 2);
-          ctx.lineWidth = 3; ctx.strokeStyle = "#8b0000"; ctx.stroke();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = "#8b0000";
+          ctx.stroke();
         });
         drawDoubleArrow(boardSquares["A10"], boardSquares["B5"], "between");
         drawDoubleArrow(boardSquares["D10"], boardSquares["C5"], "between");
@@ -459,29 +471,29 @@
       function drawDoubleArrow(from, to, direction = "above") {
         debugLog(`drawDoubleArrow: from (${from.x},${from.y}) to (${to.x},${to.y}), direction=${direction}`);
         let midX = (from.x + to.x) / 2, midY;
-        if (direction === "above") { 
-          midY = (from.y + to.y) / 2 - SLOT_SPACING * 0.75; 
-        } else if (direction === "below") { 
-          midY = (from.y + to.y) / 2 + SLOT_SPACING * 0.75; 
-        } else if (direction === "between") { 
-          midY = (from.y + to.y) / 2; 
-          midX += (from.x < to.x ? SLOT_SPACING * 0.9 : -SLOT_SPACING * 0.9); 
+        if (direction === "above") {
+          midY = (from.y + to.y) / 2 - SLOT_SPACING * 0.75;
+        } else if (direction === "below") {
+          midY = (from.y + to.y) / 2 + SLOT_SPACING * 0.75;
+        } else if (direction === "between") {
+          midY = (from.y + to.y) / 2;
+          midX += (from.x < to.x ? SLOT_SPACING * 0.9 : -SLOT_SPACING * 0.9);
         }
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
         ctx.quadraticCurveTo(midX, midY, to.x, to.y);
-        ctx.strokeStyle = "#000"; 
-        ctx.lineWidth = 2; 
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
         ctx.stroke();
-
+        
         function drawArrowhead(x, y, angle) {
           const len = 10;
           ctx.beginPath();
           ctx.moveTo(x, y);
-          ctx.lineTo(x - len * Math.cos(angle - Math.PI/6),
-                     y - len * Math.sin(angle - Math.PI/6));
-          ctx.lineTo(x - len * Math.cos(angle + Math.PI/6),
-                     y - len * Math.sin(angle + Math.PI/6));
+          ctx.lineTo(x - len * Math.cos(angle - Math.PI / 6),
+                     y - len * Math.sin(angle - Math.PI / 6));
+          ctx.lineTo(x - len * Math.cos(angle + Math.PI / 6),
+                     y - len * Math.sin(angle + Math.PI / 6));
           ctx.closePath();
           ctx.fillStyle = "#000";
           ctx.fill();
@@ -537,21 +549,21 @@
       }
 
       /***********************************
-       * Off-board Controls & Tray Updates
+       * Off-board & Tray Updates
        ***********************************/
-      let hTrayImages = [], jTrayImages = [];
       let imagesReady = false;
       function prepareTrayImages(callback) {
         debugLog("prepareTrayImages: starting");
         let readyCount = 0;
-        function checkReady() { 
+        function checkReady() {
           readyCount++;
-          if (readyCount === 2) { 
-            imagesReady = true; 
+          if (readyCount === 2) {
+            imagesReady = true;
             debugLog("prepareTrayImages: images ready");
             callback();
           }
         }
+        // Prepare hounds tray images
         removeWhiteBackground(houndsImg, (cleaned) => {
           houndsImg = cleaned;
           for (let i = 0; i < NUM_PIECES; i++) {
@@ -566,10 +578,12 @@
               debugLog("Tray clicked: hounds piece " + i);
               tryMovePiece(i, "hounds");
             };
-            hTrayImages.push(hImg);
+            // Optionally, append these to the tray container
+            // document.getElementById("houndsTray").appendChild(hImg);
           }
           checkReady();
         });
+        // Prepare jackals tray images
         removeWhiteBackground(jackalsImg, (cleaned) => {
           jackalsImg = cleaned;
           for (let i = 0; i < NUM_PIECES; i++) {
@@ -584,7 +598,8 @@
               debugLog("Tray clicked: jackals piece " + i);
               tryMovePiece(i, "jackals");
             };
-            jTrayImages.push(jImg);
+            // Optionally, append these to the tray container
+            // document.getElementById("jackalsTray").appendChild(jImg);
           }
           checkReady();
         });
@@ -608,7 +623,7 @@
       }
 
       /***********************************
-       * Release Button Functions
+       * Release Button Function
        ***********************************/
       function releaseHound() {
         debugLog("releaseHound: called");
@@ -649,14 +664,14 @@
         return !own.includes(pos);
       }
       function getMoveOptions(diceValue, color) {
-        debugLog(`getMoveOptions: calculating move options for ${color} with dice ${diceValue}`);
+        debugLog(`getMoveOptions: calculating options for ${color} with dice ${diceValue}`);
         let opts = [];
         let own = (color === "hounds") ? houndsPieces : jackalsPieces;
         for (let i = 0; i < own.length; i++) {
           let pos = own[i];
           let label = (color === "hounds") ? boardPathHounds[pos] : boardPathJackals[pos];
-          if ((color === "hounds" && ["B6", "B7", "B8", "B9", "B10"].includes(label)) ||
-              (color === "jackals" && ["C6", "C7", "C8", "C9", "C10"].includes(label))) {
+          if ((color === "hounds" && ["B6","B7","B8","B9","B10"].includes(label)) ||
+              (color === "jackals" && ["C6","C7","C8","C9","C10"].includes(label))) {
             continue;
           }
           let newPos = getValidMove(pos, diceValue, color);
@@ -717,10 +732,10 @@
       }
       function checkSpecialVictoryCondition() {
         debugLog("checkSpecialVictoryCondition: starting");
-        const houndsSpecialOccupied = ["B6", "B7", "B8", "B9", "B10"].every(label =>
+        const houndsSpecialOccupied = ["B6","B7","B8","B9","B10"].every(label =>
           houndsPieces.some(pos => boardPathHounds[pos] === label)
         );
-        const jackalsSpecialOccupied = ["C6", "C7", "C8", "C9", "C10"].every(label =>
+        const jackalsSpecialOccupied = ["C6","C7","C8","C9","C10"].every(label =>
           jackalsPieces.some(pos => boardPathJackals[pos] === label)
         );
         if (houndsSpecialOccupied) {
@@ -742,8 +757,6 @@
       /***********************************
        * Turn Management
        ***********************************/
-      // endTurn sets the new currentTurn. If there is an extra roll available from the opponent,
-      // it is offered to the current player.
       function endTurn() {
         debugLog("endTurn: starting");
         currentTurn = nextPlayer;
@@ -751,7 +764,6 @@
         if (extraOpponentDice > 0 && currentTurn !== extraFrom) {
           addMoveToHistory(`${currentTurn}'s Turn! Extra roll of ${extraOpponentDice} available. Click on a piece to use it or click "Roll Dice" to ignore it.`);
           showTemporaryMessage(`${currentTurn}'s Turn! Extra roll available: ${extraOpponentDice}.`);
-          // Leave diceRolled false and currentDiceRoll at 0 so tryMovePiece() uses the extra roll.
           debugLog("endTurn: extraOpponentDice available = " + extraOpponentDice);
         } else {
           currentDiceRoll = 0;
@@ -772,7 +784,6 @@
       /***********************************
        * Human Interaction
        ***********************************/
-      // When "Roll Dice" is clicked, if an extra roll is available it is discarded.
       function humanRollDice() {
         debugLog("humanRollDice: clicked");
         if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) {
@@ -788,8 +799,6 @@
         const rollValue = rollDice();
         processDiceRoll(rollValue);
       }
-
-      // When the board or tray is clicked, try to move a piece.
       function handleBoardClick(e) {
         debugLog("handleBoardClick: event triggered");
         if (gameState !== "playing" || currentTurn !== humanSide || ((!diceRolled) && extraOpponentDice === 0)) {
@@ -813,8 +822,6 @@
         }
         debugLog("handleBoardClick: no valid piece clicked");
       }
-
-      // tryMovePiece uses the extra roll if available. If a legal move is made using it, the extra roll is cleared.
       function tryMovePiece(pieceIndex, color) {
         debugLog("tryMovePiece: called for " + color + " piece " + pieceIndex);
         if (gameState !== "playing" || currentTurn !== humanSide || ((!diceRolled) && extraOpponentDice === 0) || color !== currentTurn) {
@@ -827,7 +834,6 @@
         debugLog("tryMovePiece: using roll = " + rollUsed + (usingExtra ? " (extra)" : " (normal)"));
         const pieces = (color === "hounds") ? houndsPieces : jackalsPieces;
         if (pieces[pieceIndex] === -1) {
-          // Release move for off-board piece.
           if (rollUsed === 6 && canLandOn(0, color)) {
             debugLog("tryMovePiece: legal release move for piece " + pieceIndex);
             executeMove(pieceIndex, 0, color);
@@ -835,7 +841,7 @@
             diceRolled = false;
             currentDiceRoll = 0;
             if (usingExtra) {
-              debugLog("tryMovePiece: extra roll used for release; clearing extra roll.");
+              debugLog("tryMovePiece: clearing extra roll after release move.");
               extraOpponentDice = 0;
               extraFrom = null;
             }
@@ -877,7 +883,6 @@
         } else {
           showTemporaryMessage("Illegal move with this roll!");
           debugLog("tryMovePiece: selected piece cannot move with roll " + rollUsed);
-          // Extra roll is not cleared so user may try a different piece.
         }
       }
 
@@ -890,7 +895,6 @@
           debugLog("aiAutoRoll: conditions not met");
           return;
         }
-        // If an extra roll exists from the opponent, use it automatically for the AI.
         if (extraOpponentDice > 0 && currentTurn !== extraFrom) {
           debugLog("aiAutoRoll: using extra opponent roll " + extraOpponentDice);
           currentDiceRoll = extraOpponentDice;
@@ -903,7 +907,7 @@
             let opts = getMoveOptions(currentDiceRoll, currentTurn);
             if (opts.length > 0) {
               let pick = opts[Math.floor(Math.random() * opts.length)];
-              debugLog("aiAutoRoll: executing move using extra roll");
+              debugLog("aiAutoRoll: executing move using extra roll.");
               executeMove(pick.pieceIndex, pick.toPos, currentTurn);
               redrawPlayScreen();
             } else {
@@ -1060,23 +1064,8 @@
       }
 
       /***********************************
-       * Global Variables for Game State
-       ***********************************/
-      // These variables are declared inside the load event so they are in scope for our functions.
-      let moveHistory = [];
-      // We already declared boardPath, boardSquares, etc.
-      // Game state variables:
-      let currentTurn, currentDiceRoll = 0, diceRolled = false, extraTurn = false;
-      let nextPlayer, NUM_PIECES = 5;
-      let houndsPieces = [], jackalsPieces = [], lastMove = null;
-      let extraOpponentDice = 0, extraFrom = null;
-      // Also, a variable to indicate if tray images are ready:
-      let imagesReady = false;
-      
-      /***********************************
        * Event Listeners for Buttons & Keyboard
        ***********************************/
-      humanSide = "hounds";
       document.getElementById("newGameBtn").onclick = () => showDifficultyScreen();
       document.getElementById("instructionsBtn").onclick = () => showInstructions();
       const gameOverNewGameBtn = document.getElementById("gameOverNewGameBtn");
@@ -1091,8 +1080,8 @@
       setCustomDiceBtn.addEventListener("click", () => {
         if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
         const customValue = parseInt(customDiceInput.value);
-        if (isNaN(customValue) || customValue < 1 || customValue > 6) { 
-          showTemporaryMessage("Invalid dice value!"); 
+        if (isNaN(customValue) || customValue < 1 || customValue > 6) {
+          showTemporaryMessage("Invalid dice value!");
           debugLog("Custom dice input invalid");
           return;
         }
@@ -1132,7 +1121,7 @@
       });
 
       /***********************************
-       *  Main Loop
+       * Main Loop
        ***********************************/
       function mainLoop() {
         if (gameState === "playing") {
