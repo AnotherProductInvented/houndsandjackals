@@ -637,17 +637,26 @@
     /***********************************
      * 10) Turn Management
      ***********************************/
-    // Modified endTurn: extra roll is automatically applied at turn start.
+    // Modified endTurn: as soon as a turn starts, check for opponent's unused roll.
     function endTurn(isHumanTurn) {
       setTimeout(() => {
         currentTurn = nextPlayer;
-        // If an opponent’s extra dice roll is pending, auto-apply it
         if (extraOpponentDice > 0) {
+          // Apply the extra roll immediately.
           currentDiceRoll = extraOpponentDice;
           diceRolled = true;
           extraOpponentDice = 0;
-          addMoveToHistory(`${currentTurn} auto-applies the opponent's extra dice roll (${currentDiceRoll})`);
-          showTemporaryMessage(`${currentTurn} auto-applies extra roll (${currentDiceRoll})`);
+          // Check if the extra roll yields any legal moves.
+          let opts = getMoveOptions(currentDiceRoll, currentTurn);
+          if (opts.length > 0) {
+            addMoveToHistory(`${currentTurn} auto-applies extra roll (${currentDiceRoll})`);
+            showTemporaryMessage(`${currentTurn} auto-applies extra roll (${currentDiceRoll})`);
+          } else {
+            addMoveToHistory(`Extra roll (${currentDiceRoll}) unusable. Lost.`);
+            showTemporaryMessage(`Extra roll (${currentDiceRoll}) unusable. Please roll dice.`);
+            diceRolled = false;
+            currentDiceRoll = 0;
+          }
         } else {
           diceRolled = false;
           currentDiceRoll = 0;
@@ -668,7 +677,7 @@
     function humanRollDice() {
       if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
 
-      // If an opponent's extra roll was carried over, use it automatically.
+      // If somehow an extra roll is pending, it should already have been auto-applied.
       if (extraOpponentDice > 0) {
         currentDiceRoll = extraOpponentDice;
         extraOpponentDice = 0;
