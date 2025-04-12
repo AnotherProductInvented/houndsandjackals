@@ -370,6 +370,28 @@
     }
 
     /***********************************
+     * 7.1 Dice Processing Helper
+     ***********************************/
+    // This function is called from both the normal roll and custom dice.
+    function processDiceRoll(diceValue) {
+      currentDiceRoll = diceValue;
+      diceRolled = true;
+      addMoveToHistory(`${currentTurn} rolled ${currentDiceRoll}`);
+      showTemporaryMessage(`${currentTurn} rolled ${currentDiceRoll}`);
+      redrawPlayScreen();
+      // Check if there are legal moves. If none, pass the dice.
+      let opts = getMoveOptions(currentDiceRoll, currentTurn);
+      if (opts.length === 0) {
+        showTemporaryMessage("No legal moves. Passing dice...");
+        addMoveToHistory(`No legal moves. Opponent gets your dice (${currentDiceRoll})`);
+        extraOpponentDice = currentDiceRoll;
+        diceRolled = false; currentDiceRoll = 0;
+        nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+        endTurn();
+      }
+    }
+
+    /***********************************
      * 8) Drawing Functions
      ***********************************/
     function drawBoard() {
@@ -637,75 +659,49 @@
     /***********************************
      * 10) Turn Management
      ***********************************/
-    // Modified endTurn: as soon as a turn starts, check for opponent's unused roll.
-    function endTurn(isHumanTurn) {
-      setTimeout(() => {
-        currentTurn = nextPlayer;
-        if (extraOpponentDice > 0) {
-          // Apply the extra roll immediately.
-          currentDiceRoll = extraOpponentDice;
+    // Modified endTurn: as soon as a turn starts, check for an extra roll.
+    function endTurn() {
+      currentTurn = nextPlayer;
+      // Immediately check for an opponent’s unused roll.
+      if (extraOpponentDice > 0) {
+        let candidate = extraOpponentDice;
+        extraOpponentDice = 0;
+        let opts = getMoveOptions(candidate, currentTurn);
+        if (opts.length > 0) {
+          currentDiceRoll = candidate;
           diceRolled = true;
-          extraOpponentDice = 0;
-          // Check if the extra roll yields any legal moves.
-          let opts = getMoveOptions(currentDiceRoll, currentTurn);
-          if (opts.length > 0) {
-            addMoveToHistory(`${currentTurn} auto-applies extra roll (${currentDiceRoll})`);
-            showTemporaryMessage(`${currentTurn} auto-applies extra roll (${currentDiceRoll})`);
-          } else {
-            addMoveToHistory(`Extra roll (${currentDiceRoll}) unusable. Lost.`);
-            showTemporaryMessage(`Extra roll (${currentDiceRoll}) unusable. Please roll dice.`);
-            diceRolled = false;
-            currentDiceRoll = 0;
-          }
+          addMoveToHistory(`${currentTurn} auto-applies extra roll (${currentDiceRoll})`);
+          showTemporaryMessage(`${currentTurn} auto-applies extra roll (${currentDiceRoll})`);
         } else {
-          diceRolled = false;
+          addMoveToHistory(`Extra roll (${candidate}) unusable. Lost.`);
+          showTemporaryMessage(`Extra roll (${candidate}) unusable. Please roll dice.`);
           currentDiceRoll = 0;
-          addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
-          showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+          diceRolled = false;
         }
-        redrawPlayScreen();
-        if (currentTurn !== humanSide) {
-          setTimeout(aiAutoRoll, 2000);
-        }
-        debugLog("Turn ended. Next turn: " + currentTurn);
-      }, isHumanTurn ? 1000 : 2000);
+      } else {
+        currentDiceRoll = 0;
+        diceRolled = false;
+        addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+        showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+      }
+      redrawPlayScreen();
+      // If it's the AI's turn, automatically roll after a brief delay.
+      if (currentTurn !== humanSide) {
+        setTimeout(aiAutoRoll, 2000);
+      }
+      debugLog("Turn ended. Next turn: " + currentTurn);
     }
 
     /***********************************
      * 11) Human Interaction
      ***********************************/
+    // The normal dice roll now simply rolls a dice and processes it.
     function humanRollDice() {
       if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
-
-      // If somehow an extra roll is pending, it should already have been auto-applied.
-      if (extraOpponentDice > 0) {
-        currentDiceRoll = extraOpponentDice;
-        extraOpponentDice = 0;
-        diceRolled = true;
-        addMoveToHistory(`${humanSide} uses opponent's unused roll (${currentDiceRoll})`);
-        showTemporaryMessage(`${humanSide} uses opponent's unused roll (${currentDiceRoll})`);
-      } else {
-        currentDiceRoll = rollDice();
-        diceRolled = true;
-        addMoveToHistory(`${humanSide} rolled ${currentDiceRoll}`);
-        showTemporaryMessage(`${humanSide} rolled ${currentDiceRoll}`);
-      }
-
-      redrawPlayScreen();
-
-      const opts = getMoveOptions(currentDiceRoll, humanSide);
-      if (opts.length === 0) {
-        showTemporaryMessage("No legal moves. Passing dice...");
-        addMoveToHistory(`No legal moves. Opponent gets your dice (${currentDiceRoll})`);
-        extraOpponentDice = currentDiceRoll;
-        diceRolled = false;
-        currentDiceRoll = 0;
-        nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
-        endTurn(true);
-      }
+      processDiceRoll(rollDice());
     }
 
-    // Changed event type from "mousedown" to "click" for better accessibility.
+    // The canvas "click" event is used for selecting pieces.
     function handleBoardClick(e) {
       if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled) return;
       const rect = canvas.getBoundingClientRect();
@@ -739,7 +735,7 @@
             showTemporaryMessage(`${currentTurn} gets another turn!`);
           } else {
             nextPlayer = (currentTurn==="hounds") ? "jackals" : "hounds";
-            endTurn(true);
+            endTurn();
           }
           redrawPlayScreen();
         } else { showTemporaryMessage("Cannot place piece! Need a 6."); }
@@ -756,7 +752,7 @@
           showTemporaryMessage(`${currentTurn} gets another turn!`);
         } else {
           nextPlayer = (currentTurn==="hounds") ? "jackals" : "hounds";
-          endTurn(true);
+          endTurn();
         }
         redrawPlayScreen();
       } else { showTemporaryMessage("Illegal move!"); }
@@ -783,19 +779,13 @@
           }
           if (!movedWithExtra) {
             showTemporaryMessage("AI could not use extra dice. Rolling normally...");
-            currentDiceRoll = rollDice();
-            addMoveToHistory(`${currentTurn} rolled ${currentDiceRoll}`);
-            showTemporaryMessage(`${currentTurn} rolled ${currentDiceRoll}`);
-            redrawPlayScreen();
-            setTimeout(() => aiMakeMove(() => endTurn(false)),2000);
-          } else { if (extraTurn) { setTimeout(aiAutoRoll,1500); } else { endTurn(false); } }
+            processDiceRoll(rollDice());
+            setTimeout(() => aiMakeMove(() => endTurn()),2000);
+          } else { if (extraTurn) { setTimeout(aiAutoRoll,1500); } else { endTurn(); } }
         },1500);
       } else {
-        currentDiceRoll = rollDice(); diceRolled = true;
-        addMoveToHistory(`${currentTurn} rolled ${currentDiceRoll}`);
-        showTemporaryMessage(`${currentTurn} rolled ${currentDiceRoll}`);
-        redrawPlayScreen();
-        setTimeout(() => aiMakeMove(() => endTurn(false)),2000);
+        processDiceRoll(rollDice());
+        setTimeout(() => aiMakeMove(() => endTurn()),2000);
       }
     }
     function aiMakeMove(callback = null) {
@@ -805,7 +795,7 @@
         showTemporaryMessage("AI has no moves. Passing turn...");
         nextPlayer = (currentTurn==="hounds") ? "jackals" : "hounds";
         diceRolled = false; currentDiceRoll = 0;
-        if (callback) callback(); else endTurn(false);
+        if (callback) callback(); else endTurn();
         return;
       }
       let pick;
@@ -833,7 +823,7 @@
       if (!executeMove(pick.pieceIndex, pick.toPos, currentTurn)) {
         nextPlayer = (currentTurn==="hounds") ? "jackals" : "hounds";
         diceRolled = false; currentDiceRoll = 0;
-        endTurn(false);
+        endTurn();
         return true;
       }
       aiMoved = true;
@@ -842,7 +832,7 @@
         showTemporaryMessage(`${currentTurn} goes again!`);
         diceRolled = false; currentDiceRoll = 0;
         aiAutoRoll();
-      } else { endTurn(false); }
+      } else { endTurn(); }
     }
 
     /***********************************
@@ -896,25 +886,17 @@
     if (document.getElementById("gameOverNewGameBtn"))
       document.getElementById("gameOverNewGameBtn").onclick = () => showDifficultyScreen();
     rollDiceBtn.addEventListener("click", humanRollDice);
-    // Changed event from "mousedown" to "click" for board interaction.
+    // Use "click" for board interaction.
     canvas.addEventListener("click", handleBoardClick);
     document.getElementById("easyBtn").onclick = () => setDifficulty("easy");
     document.getElementById("mediumBtn").onclick = () => setDifficulty("medium");
     document.getElementById("hardBtn").onclick = () => setDifficulty("hard");
+    // Both normal and custom dice now use processDiceRoll().
     setCustomDiceBtn.addEventListener("click", () => {
-      // Prevent custom dice changes if an extra dice roll is pending.
-      if (extraOpponentDice > 0) {
-        showTemporaryMessage("Extra dice roll is pending—cannot override.");
-        return;
-      }
       if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
       const customValue = parseInt(customDiceInput.value);
       if (isNaN(customValue) || customValue < 1 || customValue > 6) { showTemporaryMessage("Invalid dice value!"); return; }
-      currentDiceRoll = customValue;
-      diceRolled = true;
-      addMoveToHistory(`${humanSide} used custom dice ${currentDiceRoll}`);
-      showTemporaryMessage(`${humanSide} used custom dice ${currentDiceRoll}`);
-      redrawPlayScreen();
+      processDiceRoll(customValue);
       let opts = getMoveOptions(currentDiceRoll, currentTurn);
       if (opts.length === 0) {
         showTemporaryMessage("No legal moves. Opponent gets your dice!");
@@ -922,7 +904,7 @@
         extraOpponentDice = currentDiceRoll;
         nextPlayer = (currentTurn==="hounds") ? "jackals" : "hounds";
         diceRolled = false; currentDiceRoll = 0;
-        endTurn(true);
+        endTurn();
       }
     });
     document.getElementById("releaseHoundBtn").onclick = releaseHound;
