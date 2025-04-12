@@ -164,15 +164,17 @@
     <h1>Hounds and Jackals</h1>
   </div>
   <div id="gameWrapper">
-    <!-- Left Panel: Dice Controls & Release Buttons -->
+    <!-- Left Panel: Dice Controls & Release Controls -->
     <div id="leftPanel">
       <div id="diceRollDisplay">Dice: -</div>
       <button id="rollDiceBtn">Roll Dice</button>
       <input type="number" id="customDiceInput" min="1" max="6" placeholder="Set Dice (1-6)">
       <button id="setCustomDiceBtn">Use Custom Dice</button>
+      <!-- New button for extra roll use; hidden by default -->
+      <button id="useExtraRollBtn" style="display:none;">Use Opponent's Extra Roll</button>
       <div id="releaseControls">
         <button id="releaseHoundBtn">Release Hound</button>
-        <!-- Removed Release Jackal button per request -->
+        <!-- Release Jackal button removed per request -->
       </div>
       <div id="offBoardCounts">
         <span id="houndsCount">Hounds Off-board: 5</span><br>
@@ -296,6 +298,7 @@
      ***********************************/
     const diceRollDisplay = document.getElementById("diceRollDisplay"),
           rollDiceBtn = document.getElementById("rollDiceBtn"),
+          useExtraRollBtn = document.getElementById("useExtraRollBtn"),
           moveHistoryDiv = document.getElementById("moveHistory"),
           menuScreen = document.getElementById("menuScreen"),
           instructionsScreen = document.getElementById("instructionsScreen"),
@@ -361,18 +364,14 @@
     }
 
     /***********************************
-     * 7) Dice Function
+     * 7) Dice Functions
      ***********************************/
     function rollDice() {
       const roll = Math.floor(Math.random()*6)+1;
       debugLog("Dice rolled: " + roll);
       return roll;
     }
-
-    /***********************************
-     * 7.1 Dice Processing Helper
-     ***********************************/
-    // This function is called from both the normal roll and custom dice.
+    // Unified dice processing – used by both normal and custom dice
     function processDiceRoll(diceValue) {
       currentDiceRoll = diceValue;
       diceRolled = true;
@@ -659,49 +658,43 @@
     /***********************************
      * 10) Turn Management
      ***********************************/
-    // Modified endTurn: as soon as a turn starts, check for an extra roll.
+    // endTurn now checks whether extraOpponentDice exists for human turns.
     function endTurn() {
       currentTurn = nextPlayer;
-      // Immediately check for an opponent’s unused roll.
-      if (extraOpponentDice > 0) {
-        let candidate = extraOpponentDice;
-        extraOpponentDice = 0;
-        let opts = getMoveOptions(candidate, currentTurn);
-        if (opts.length > 0) {
-          currentDiceRoll = candidate;
-          diceRolled = true;
-          addMoveToHistory(`${currentTurn} auto-applies extra roll (${currentDiceRoll})`);
-          showTemporaryMessage(`${currentTurn} auto-applies extra roll (${currentDiceRoll})`);
-        } else {
-          addMoveToHistory(`Extra roll (${candidate}) unusable. Lost.`);
-          showTemporaryMessage(`Extra roll (${candidate}) unusable. Please roll dice.`);
-          currentDiceRoll = 0;
-          diceRolled = false;
-        }
+      // For human turns: if there is an extra roll available, prompt the user
+      if (currentTurn === humanSide && extraOpponentDice > 0) {
+        showTemporaryMessage(`You have an extra roll of ${extraOpponentDice}. Click "Use Opponent's Extra Roll" to apply it, or roll normally to discard it.`);
+        useExtraRollBtn.style.display = "inline-block";
+        currentDiceRoll = 0;
+        diceRolled = false;
       } else {
+        // Normal turn prompt
         currentDiceRoll = 0;
         diceRolled = false;
         addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
         showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+        if (currentTurn !== humanSide) { setTimeout(aiAutoRoll, 2000); }
       }
       redrawPlayScreen();
-      // If it's the AI's turn, automatically roll after a brief delay.
-      if (currentTurn !== humanSide) {
-        setTimeout(aiAutoRoll, 2000);
-      }
       debugLog("Turn ended. Next turn: " + currentTurn);
     }
 
     /***********************************
      * 11) Human Interaction
      ***********************************/
-    // The normal dice roll now simply rolls a dice and processes it.
+    // When Roll Dice is clicked: if an extra roll is available, this discards it.
     function humanRollDice() {
       if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
+      // If extra dice is available and you click Roll Dice instead of using it, discard it.
+      if (extraOpponentDice > 0) {
+        extraOpponentDice = 0;
+        useExtraRollBtn.style.display = "none";
+        showTemporaryMessage("Extra roll discarded. Rolling normally...");
+      }
       processDiceRoll(rollDice());
     }
 
-    // The canvas "click" event is used for selecting pieces.
+    // The board click event remains for selecting pieces.
     function handleBoardClick(e) {
       if (gameState !== "playing" || currentTurn !== humanSide || !diceRolled) return;
       const rect = canvas.getBoundingClientRect();
@@ -906,6 +899,13 @@
         diceRolled = false; currentDiceRoll = 0;
         endTurn();
       }
+    });
+    // Extra roll button event – when clicked, use the extra roll.
+    useExtraRollBtn.addEventListener("click", () => {
+      if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
+      processDiceRoll(extraOpponentDice);
+      extraOpponentDice = 0;
+      useExtraRollBtn.style.display = "none";
     });
     document.getElementById("releaseHoundBtn").onclick = releaseHound;
     // (Release Jackal button removed)
