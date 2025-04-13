@@ -132,7 +132,7 @@
     /* Instructions */
     #instructionsContent { font-size: 20px; margin: 10px; }
     #instructionsNav { margin-top: 10px; }
-    /* Global Button Styles */
+    /* Button Styles */
     button {
       font-size: 18px;
       margin: 10px;
@@ -236,7 +236,7 @@
   </div>
   <img id="logo" src="logo.png" alt="Logo">
   <script>
-    /* Utility: Remove white background from an image */
+    // Utility: Remove white background from images.
     function removeWhiteBackground(image, callback) {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = image.width;
@@ -288,6 +288,9 @@
           .catch(err => { showTemporaryMessage("Failed to copy history!"); debugLog("Copy error: " + err); });
       });
 
+      /* -------------------------
+         Board Setup
+         ------------------------- */
       const boardPath = [];
       const boardSquares = {};
       const boardPathHounds = ["E5","E6","E7","E8","E9",
@@ -332,6 +335,9 @@
       }
       debugLog("Board setup complete.");
 
+      /* -------------------------
+         Game State Variables
+         ------------------------- */
       let gameState = "menu",
           humanSide = "hounds",
           aiDifficulty = "medium",
@@ -349,6 +355,9 @@
           unusedRollOwner = null;
       debugLog("Game state variables initialized.");
 
+      /* -------------------------
+         Load Piece Images
+         ------------------------- */
       let houndsImg = new Image(), jackalsImg = new Image();
       houndsImg.src = "hounds.png";
       houndsImg.crossOrigin = "anonymous";
@@ -363,6 +372,9 @@
         removeWhiteBackground(jackalsImg, (cleaned) => { jackalsImg = cleaned; debugLog("jackalsImg cleaned."); });
       };
 
+      /* -------------------------
+         Initialization Functions
+         ------------------------- */
       function initPieces() {
         debugLog("initPieces: called");
         houndsPieces = Array(NUM_PIECES).fill(-1);
@@ -376,6 +388,9 @@
         updateOffBoardCounts();
       }
 
+      /* -------------------------
+         Dice and Unused Roll Logic
+         ------------------------- */
       function rollDice() {
         const roll = Math.floor(Math.random() * 6) + 1;
         debugLog("rollDice: rolled " + roll);
@@ -383,8 +398,7 @@
       }
       function processDiceRoll(diceValue) {
         debugLog("processDiceRoll: starting with value " + diceValue);
-        // Preserve the roll value in a temporary variable.
-        const rollValue = diceValue;
+        const rollValue = diceValue;  // Preserve the roll value
         currentDiceRoll = rollValue;
         diceRolled = true;
         addMoveToHistory(`${currentTurn} rolled ${rollValue}`);
@@ -393,6 +407,7 @@
         let opts = getMoveOptions(rollValue, currentTurn);
         debugLog("processDiceRoll: legal moves count = " + opts.length);
         if (opts.length === 0) {
+          // If no legal moves, save the roll for the opponent.
           if (currentTurn === humanSide) {
             nextPlayer = "jackals";
             unusedRoll = rollValue;
@@ -412,6 +427,9 @@
         }
       }
 
+      /* -------------------------
+         Drawing Functions
+         ------------------------- */
       function drawBoard() {
         debugLog("drawBoard: starting");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -526,7 +544,12 @@
         debugLog("updateDiceRollDisplay: currentDiceRoll = " + currentDiceRoll);
       }
       function addMoveToHistory(txt) {
-        moveHistory.push(txt);
+        // Avoid duplicate turn messages:
+        if (moveHistory.length && moveHistory[moveHistory.length - 1] === `${currentTurn}'s Turn! Roll dice...`) {
+          // Skip adding duplicate
+        } else {
+          moveHistory.push(txt);
+        }
         updateMoveHistoryDisplay();
         debugLog("addMoveToHistory: " + txt);
       }
@@ -570,7 +593,10 @@
         currentDiceRoll = 0;
         diceRolled = false;
         updateUnusedRollButton();
-        addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+        // Avoid adding duplicate turn messages:
+        if (!moveHistory[moveHistory.length - 1] || !moveHistory[moveHistory.length - 1].includes(`${currentTurn}'s Turn!`)) {
+          addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+        }
         showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
         redrawPlayScreen();
         if (aiTimeout) clearTimeout(aiTimeout);
@@ -794,7 +820,7 @@
               unusedRoll = null;
               unusedRollOwner = null;
               updateUnusedRollButton();
-              updateTurn(); // Do not switch turn.
+              updateTurn();
             } else {
               completeMove(false);
             }
@@ -817,7 +843,7 @@
             unusedRoll = null;
             unusedRollOwner = null;
             updateUnusedRollButton();
-            updateTurn(); // Do not switch turn.
+            updateTurn();
           } else {
             completeMove(false);
           }
@@ -872,16 +898,12 @@
         if (aiDifficulty === "easy") {
           pick = opts[Math.floor(Math.random() * opts.length)];
         } else if (aiDifficulty === "medium") {
-          let captureMoves = opts.filter(o => {
-            return houndsPieces.includes(o.toPos);
-          });
+          let captureMoves = opts.filter(o => houndsPieces.includes(o.toPos));
           pick = (captureMoves.length > 0)
             ? captureMoves[Math.floor(Math.random() * captureMoves.length)]
             : opts[Math.floor(Math.random() * opts.length)];
         } else if (aiDifficulty === "hard") {
-          let captureMoves = opts.filter(o => {
-            return houndsPieces.includes(o.toPos);
-          });
+          let captureMoves = opts.filter(o => houndsPieces.includes(o.toPos));
           if (captureMoves.length > 0) {
             pick = captureMoves[Math.floor(Math.random() * captureMoves.length)];
           } else {
