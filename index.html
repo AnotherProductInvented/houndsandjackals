@@ -52,15 +52,14 @@
       font-family: "Papyrus", cursive, serif;
     }
 
-    /* Right Panel: Move History */
+    /* Right Panel: Move History and Copy Button */
     #rightPanel {
       min-width: 200px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    /* Moves History:
-       Marked contenteditable to ensure text is selectable and add extensive CSS */
+    /* Moves History container */
     #moveHistory {
       font-size: 16px;
       padding: 10px;
@@ -83,6 +82,20 @@
       z-index: 100;
       -webkit-user-drag: auto;
       -webkit-touch-callout: default;
+    }
+    /* Copy button */
+    #copyHistoryBtn {
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #ffcc00;
+      border: none;
+      border-radius: 6px;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+      color: #333;
+      font-family: "Papyrus", cursive, serif;
+      z-index: 100;
     }
 
     /* Game Container */
@@ -237,8 +250,9 @@
 
     <!-- Right Panel -->
     <div id="rightPanel">
-      <!-- Mark the move history editable to allow selection/copying -->
+      <!-- Make the move history contenteditable so you can select the text -->
       <div id="moveHistory" contenteditable="true">Moves:<br></div>
+      <button id="copyHistoryBtn">Copy History</button>
     </div>
   </div>
   <img id="logo" src="logo.png" alt="Logo">
@@ -353,8 +367,23 @@
             instructionsPrevBtn = document.getElementById("instructionsPrevBtn"),
             instructionsNextBtn = document.getElementById("instructionsNextBtn"),
             customDiceInput = document.getElementById("customDiceInput"),
-            setCustomDiceBtn = document.getElementById("setCustomDiceBtn");
+            setCustomDiceBtn = document.getElementById("setCustomDiceBtn"),
+            copyHistoryBtn = document.getElementById("copyHistoryBtn");
       debugLog("DOM elements loaded.");
+
+      // Add event listener for the copy history button.
+      copyHistoryBtn.addEventListener("click", () => {
+        const historyText = moveHistoryDiv.innerText;
+        navigator.clipboard.writeText(historyText)
+          .then(() => {
+            showTemporaryMessage("History copied to clipboard!");
+            debugLog("History copied to clipboard.");
+          })
+          .catch((err) => {
+            showTemporaryMessage("Failed to copy history!");
+            debugLog("Error copying history: " + err);
+          });
+      });
 
       const instructionsPages = [
         `📜 <strong>Page 1 – Game Objective & Overview</strong><br><br>
