@@ -59,7 +59,7 @@
       flex-direction: column;
       align-items: center;
     }
-    /* Moves History container (contenteditable for diagnosis) */
+    /* Moves History container (editable for diagnosis) */
     #moveHistory {
       font-size: 16px;
       padding: 10px;
@@ -256,9 +256,9 @@
   </div>
   <img id="logo" src="logo.png" alt="Logo">
 
-  <!-- All JavaScript is contained within this script tag -->
+  <!-- All JavaScript is placed in this script tag -->
   <script>
-    // Utility: Remove white background from an image.
+    // Utility: Remove white background from images.
     function removeWhiteBackground(image, callback) {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = image.width;
@@ -278,7 +278,10 @@
       newImage.onload = () => callback(newImage);
     }
 
-    // Main code—runs once page is loaded.
+    // Global variable to hold AI roll timeout.
+    let aiTimeout = null;
+
+    // Main code starts after the page loads.
     window.addEventListener("load", function() {
       const debugMode = true;
       function debugLog(msg) { if (debugMode) console.log("[DEBUG]", msg); }
@@ -303,7 +306,7 @@
       const setCustomDiceBtn = document.getElementById("setCustomDiceBtn");
       const copyHistoryBtn = document.getElementById("copyHistoryBtn");
 
-      // Copy History Button Event
+      // Copy History Button
       copyHistoryBtn.addEventListener("click", () => {
         const historyText = moveHistoryDiv.innerText;
         navigator.clipboard.writeText(historyText)
@@ -340,13 +343,13 @@
       }
       const archCenters = [
         { x: boardSquares["A15"].x + SLOT_SPACING * 0.65, y: boardSquares["A15"].y + SLOT_SPACING * 0.2 },
-        { x: boardSquares["A15"].x + SLOT_SPACING * 1.3, y: boardSquares["A15"].y + SLOT_SPACING * 0.4 },
-        { x: boardSquares["A15"].x + SLOT_SPACING * 2.0, y: boardSquares["A15"].y + SLOT_SPACING * 0.7 },
-        { x: boardSquares["A15"].x + SLOT_SPACING * 2.6, y: boardSquares["A15"].y + SLOT_SPACING * 1.2 },
-        { x: boardSquares["A15"].x + SLOT_SPACING * 3.2, y: boardSquares["A15"].y + SLOT_SPACING * 1.9 },
-        { x: boardSquares["A15"].x + SLOT_SPACING * 2.6, y: boardSquares["A15"].y + SLOT_SPACING * 2.6 },
-        { x: boardSquares["A15"].x + SLOT_SPACING * 2.0, y: boardSquares["A15"].y + SLOT_SPACING * 3.1 },
-        { x: boardSquares["A15"].x + SLOT_SPACING * 1.3, y: boardSquares["A15"].y + SLOT_SPACING * 3.4 },
+        { x: boardSquares["A15"].x + SLOT_SPACING * 1.3,  y: boardSquares["A15"].y + SLOT_SPACING * 0.4 },
+        { x: boardSquares["A15"].x + SLOT_SPACING * 2.0,  y: boardSquares["A15"].y + SLOT_SPACING * 0.7 },
+        { x: boardSquares["A15"].x + SLOT_SPACING * 2.6,  y: boardSquares["A15"].y + SLOT_SPACING * 1.2 },
+        { x: boardSquares["A15"].x + SLOT_SPACING * 3.2,  y: boardSquares["A15"].y + SLOT_SPACING * 1.9 },
+        { x: boardSquares["A15"].x + SLOT_SPACING * 2.6,  y: boardSquares["A15"].y + SLOT_SPACING * 2.6 },
+        { x: boardSquares["A15"].x + SLOT_SPACING * 2.0,  y: boardSquares["A15"].y + SLOT_SPACING * 3.1 },
+        { x: boardSquares["A15"].x + SLOT_SPACING * 1.3,  y: boardSquares["A15"].y + SLOT_SPACING * 3.4 },
         { x: (boardSquares["D15"].x + boardSquares["A15"].x + SLOT_SPACING * 1.3) / 2,
           y: (boardSquares["D15"].y + boardSquares["A15"].y + SLOT_SPACING * 3.4) / 2 }
       ];
@@ -370,7 +373,7 @@
           jackalsPieces = [],
           moveHistory = [],
           lastMove = null,
-          unusedRoll = null,  // Only for human; AI discards unused rolls.
+          unusedRoll = null,    // Only for human; AI discards unused rolls.
           unusedRollOwner = null;
       debugLog("Game state variables initialized.");
 
@@ -389,7 +392,7 @@
         removeWhiteBackground(jackalsImg, (cleaned) => { jackalsImg = cleaned; debugLog("jackalsImg cleaned."); });
       };
 
-      // Initialize Pieces
+      // Initialize Pieces on Board
       function initPieces() {
         debugLog("initPieces: called");
         houndsPieces = Array(NUM_PIECES).fill(-1);
@@ -420,24 +423,24 @@
         debugLog("processDiceRoll: legal moves count = " + opts.length);
         if (opts.length === 0) {
           if (currentTurn === humanSide) {
+            // For human, pass roll to opponent and allow unused roll usage.
             nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
             unusedRoll = currentDiceRoll;
             unusedRollOwner = nextPlayer;
             addMoveToHistory(`${currentTurn} has no legal moves; roll (${currentDiceRoll}) passed to ${nextPlayer}.`);
             diceRolled = false;
             currentDiceRoll = 0;
-            // If human’s roll is unused, keep turn with human.
-            // Otherwise, switch turn.
-            // (Here we pass the roll to the opponent for unused roll,
-            // but if the human later clicks "Use Unused Roll" the turn will remain.)
-            currentTurn = nextPlayer;
+            // Leave currentTurn unchanged so human may use the unused roll—
+            // but also updateTurn() to refresh the display.
+            updateTurn();
           } else {
+            // For AI, simply pass turn.
             addMoveToHistory(`${currentTurn} has no legal moves; turn passed.`);
             diceRolled = false;
             currentDiceRoll = 0;
             currentTurn = humanSide;
+            updateTurn();
           }
-          updateTurn();
           return;
         }
       }
@@ -503,6 +506,7 @@
         ctx.strokeStyle = "#000";
         ctx.lineWidth = 2;
         ctx.stroke();
+
         function drawArrowhead(x, y, angle) {
           const len = 10;
           ctx.beginPath();
@@ -579,7 +583,7 @@
         processDiceRoll(unusedRoll);
       });
 
-      // Turn Update Helper – this function resets the dice and displays the new turn message.
+      // Turn Updating – using aiTimeout to cancel previous pending AI roll calls.
       function updateTurn() {
         currentDiceRoll = 0;
         diceRolled = false;
@@ -587,27 +591,27 @@
         addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
         showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
         redrawPlayScreen();
+        if (aiTimeout) clearTimeout(aiTimeout);
         if (currentTurn !== humanSide) {
-          setTimeout(aiAutoRoll, 2000);
+          aiTimeout = setTimeout(aiAutoRoll, 2000);
         }
       }
 
-      // Instead of a separate finishMove(), we integrate the move–completion logic:
-      // If the move used an unused roll, do nothing (keep turn). Otherwise, if an extra turn was earned, leave the turn,
-      // else switch the turn.
+      // completeMove: Called after a successful move.
+      // If an unused roll was used, do not change turn; if extraTurn is active, do not switch; otherwise, switch turn.
       function completeMove(usingUnused) {
         if (usingUnused) {
           unusedRoll = null;
           unusedRollOwner = null;
           updateUnusedRollButton();
-          // Do not change currentTurn; simply update display.
+          // Leave currentTurn unchanged.
           updateTurn();
         } else {
           if (extraTurn) {
             extraTurn = false;
             addMoveToHistory(`${currentTurn} gets another turn!`);
             showTemporaryMessage(`${currentTurn} gets another turn!`);
-            // CurrentTurn stays the same.
+            // Keep currentTurn.
             updateTurn();
           } else {
             currentTurn = (currentTurn === "hounds") ? "jackals" : "hounds";
@@ -616,7 +620,7 @@
         }
       }
 
-      // Tray and Off-Board Updates
+      // Tray and Off-board Updates
       let imagesReady = false;
       function prepareTrayImages(callback) {
         debugLog("prepareTrayImages: starting");
@@ -666,7 +670,8 @@
           let pos = own[i];
           let label = (color === "hounds") ? boardPathHounds[pos] : boardPathJackals[pos];
           if ((color === "hounds" && ["B6","B7","B8","B9","B10"].includes(label)) ||
-              (color === "jackals" && ["C6","C7","C8","C9"].includes(label))) continue;
+              (color === "jackals" && ["C6","C7","C8","C9"].includes(label)))
+            continue;
           let newPos = getValidMove(pos, diceValue, color);
           if (newPos === null || !canLandOn(newPos, color)) continue;
           opts.push({ pieceIndex: i, fromPos: pos, toPos: newPos });
@@ -745,7 +750,7 @@
         return false;
       }
 
-      // Human Roll
+      // Human Roll Dice
       function humanRollDice() {
         debugLog("humanRollDice: clicked");
         if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) {
@@ -762,7 +767,7 @@
         processDiceRoll(rollValue);
       }
 
-      // Handle Board Click for Human Moves
+      // Handle Board Click (human moves)
       function handleBoardClick(e) {
         debugLog("handleBoardClick: event triggered");
         if (gameState !== "playing" || currentTurn !== humanSide || ((!diceRolled) && unusedRoll === null)) {
@@ -787,7 +792,7 @@
         debugLog("handleBoardClick: no valid piece clicked");
       }
 
-      // tryMovePiece for Human
+      // tryMovePiece (human)
       function tryMovePiece(pieceIndex, color) {
         debugLog("tryMovePiece: called for " + color + " piece " + pieceIndex);
         if (gameState !== "playing" || currentTurn !== humanSide || ((!diceRolled) && unusedRoll === null) || color !== currentTurn) {
@@ -810,8 +815,7 @@
               unusedRoll = null;
               unusedRollOwner = null;
               updateUnusedRollButton();
-              // Do not switch turn when using an unused roll.
-              updateTurn();
+              updateTurn(); // Do not switch turn.
             } else {
               completeMove(false);
             }
@@ -983,7 +987,7 @@
         debugLog("showGameOver: Game over shown");
       }
 
-      // Event Listeners for UI Controls
+      // Event Listeners
       document.getElementById("newGameBtn").onclick = () => showDifficultyScreen();
       document.getElementById("instructionsBtn").onclick = () => showInstructions();
       const gameOverNewGameBtn = document.getElementById("gameOverNewGameBtn");
@@ -1041,7 +1045,7 @@
         }
       });
 
-      // Release Hound function
+      // Release Hound Function
       function releaseHound() {
         debugLog("releaseHound: called");
         if (currentTurn !== "hounds") {
