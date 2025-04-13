@@ -45,6 +45,20 @@
       flex-direction: column;
       align-items: center;
     }
+    /* Modified moveHistory styles to allow text selection */
+    #moveHistory {
+      font-size: 16px;
+      padding: 10px;
+      border: 2px solid #8b4513;
+      border-radius: 6px;
+      background: #fff;
+      max-height: 400px;
+      overflow-y: auto;
+      width: 200px;
+      text-align: left;
+      user-select: text;
+      -webkit-user-select: text;
+    }
     
     /* Game Container */
     #gameContainer {
@@ -112,19 +126,6 @@
       border-radius: 6px;
       background: #fff;
       margin-bottom: 10px;
-    }
-    
-    /* Move History */
-    #moveHistory {
-      font-size: 16px;
-      padding: 10px;
-      border: 2px solid #8b4513;
-      border-radius: 6px;
-      background: #fff;
-      max-height: 400px;
-      overflow-y: auto;
-      width: 200px;
-      text-align: left;
     }
     
     /* Temporary Message Overlay */
@@ -215,7 +216,7 @@
   </div>
   <img id="logo" src="logo.png" alt="Logo">
   
-  <!-- All Script Code Runs After Window Loads -->
+  <!-- Script: All Code Runs After Window Loads -->
   <script>
     window.addEventListener("load", function() {
       // --- Debug Function ---
@@ -374,7 +375,7 @@
         houndsPieces = Array(NUM_PIECES).fill(-1);
         jackalsPieces = Array(NUM_PIECES).fill(-1);
         lastMove = null;
-        moveHistory = []; // The move history is now endless.
+        moveHistory = []; // Now endless move history
         updateMoveHistoryDisplay();
         updateTrays();
         prepareTrayImages(() => { 
@@ -478,10 +479,10 @@
           const len = 10;
           ctx.beginPath();
           ctx.moveTo(x, y);
-          ctx.lineTo(x - len * Math.cos(angle - Math.PI/6),
-                     y - len * Math.sin(angle - Math.PI/6));
-          ctx.lineTo(x - len * Math.cos(angle + Math.PI/6),
-                     y - len * Math.sin(angle + Math.PI/6));
+          ctx.lineTo(x - len * Math.cos(angle - Math.PI / 6),
+                     y - len * Math.sin(angle - Math.PI / 6));
+          ctx.lineTo(x - len * Math.cos(angle + Math.PI / 6),
+                     y - len * Math.sin(angle + Math.PI / 6));
           ctx.closePath();
           ctx.fillStyle = "#000";
           ctx.fill();
@@ -526,7 +527,7 @@
         diceRollDisplayEl.textContent = `Dice: ${currentDiceRoll || "-"}`;
         debugLog("updateDiceRollDisplay: currentDiceRoll = " + currentDiceRoll);
       }
-      // Move history is now endless (we removed any shifting).
+      // Move history is now endless.
       function addMoveToHistory(txt) {
         moveHistory.push(txt);
         updateMoveHistoryDisplay();
@@ -553,12 +554,10 @@
         }
         removeWhiteBackground(houndsImg, (cleaned) => {
           houndsImg = cleaned;
-          // Create hounds tray images if needed (or leave blank)
           checkReady();
         });
         removeWhiteBackground(jackalsImg, (cleaned) => {
           jackalsImg = cleaned;
-          // Create jackals tray images if needed (or leave blank)
           checkReady();
         });
       }
@@ -626,8 +625,8 @@
         for (let i = 0; i < own.length; i++) {
           let pos = own[i];
           let label = (color === "hounds") ? boardPathHounds[pos] : boardPathJackals[pos];
-          if ((color === "hounds" && ["B6","B7","B8","B9","B10"].includes(label)) ||
-              (color === "jackals" && ["C6","C7","C8","C9","C10"].includes(label)))
+          if ((color === "hounds" && ["B6", "B7", "B8", "B9", "B10"].includes(label)) ||
+              (color === "jackals" && ["C6", "C7", "C8", "C9", "C10"].includes(label)))
             continue;
           let newPos = getValidMove(pos, diceValue, color);
           if (newPos === null || !canLandOn(newPos, color)) continue;
@@ -988,8 +987,8 @@
         hideAllScreens();
         gameState = "playing";
         initPieces();
-        currentTurn = "hounds"; // Start with human turn
-        nextPlayer = "jackals"; // Next turn will be AI if human discards or moves
+        currentTurn = "hounds"; // Ensure game starts on human's turn
+        nextPlayer = "jackals";
         diceRolled = false;
         currentDiceRoll = 0;
         extraTurn = false;
