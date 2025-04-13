@@ -215,7 +215,7 @@
   </div>
   <img id="logo" src="logo.png" alt="Logo">
   
-  <!-- SCRIPT: All Code Runs After Window Loads -->
+  <!-- All Script Code Runs After Window Loads -->
   <script>
     window.addEventListener("load", function() {
       // --- Debug Function ---
@@ -283,7 +283,7 @@
           currentDiceRoll = 0,
           diceRolled = false,
           extraTurn = false,
-          nextPlayer = "jackals",  // Next turn would be AI if human does nothing
+          nextPlayer = "jackals",
           NUM_PIECES = 5,
           houndsPieces = [],
           jackalsPieces = [],
@@ -374,7 +374,7 @@
         houndsPieces = Array(NUM_PIECES).fill(-1);
         jackalsPieces = Array(NUM_PIECES).fill(-1);
         lastMove = null;
-        moveHistory = [];
+        moveHistory = []; // The move history is now endless.
         updateMoveHistoryDisplay();
         updateTrays();
         prepareTrayImages(() => { 
@@ -423,13 +423,16 @@
           let grad;
           if (["B6","B7","B8","B9","B10"].includes(label)) {
             grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-            grad.addColorStop(0, "#aad4ff"); grad.addColorStop(1, "#005fa3");
+            grad.addColorStop(0, "#aad4ff"); 
+            grad.addColorStop(1, "#005fa3");
           } else if (["C6","C7","C8","C9","C10"].includes(label)) {
             grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-            grad.addColorStop(0, "#aaf0aa"); grad.addColorStop(1, "#007a3d");
+            grad.addColorStop(0, "#aaf0aa"); 
+            grad.addColorStop(1, "#007a3d");
           } else {
             grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-            grad.addColorStop(0, "#fcebbd"); grad.addColorStop(1, "#b38b4d");
+            grad.addColorStop(0, "#fcebbd"); 
+            grad.addColorStop(1, "#b38b4d");
           }
           ctx.fillStyle = grad;
           ctx.fill();
@@ -457,13 +460,13 @@
       function drawDoubleArrow(from, to, direction = "above") {
         debugLog(`drawDoubleArrow: from (${from.x},${from.y}) to (${to.x},${to.y}), direction=${direction}`);
         let midX = (from.x + to.x) / 2, midY;
-        if (direction === "above") {
-          midY = (from.y + to.y) / 2 - SLOT_SPACING * 0.75;
-        } else if (direction === "below") {
-          midY = (from.y + to.y) / 2 + SLOT_SPACING * 0.75;
-        } else if (direction === "between") {
-          midY = (from.y + to.y) / 2;
-          midX += (from.x < to.x ? SLOT_SPACING * 0.9 : -SLOT_SPACING * 0.9);
+        if (direction === "above") { 
+          midY = (from.y + to.y) / 2 - SLOT_SPACING * 0.75; 
+        } else if (direction === "below") { 
+          midY = (from.y + to.y) / 2 + SLOT_SPACING * 0.75; 
+        } else if (direction === "between") { 
+          midY = (from.y + to.y) / 2; 
+          midX += (from.x < to.x ? SLOT_SPACING * 0.9 : -SLOT_SPACING * 0.9); 
         }
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
@@ -475,10 +478,10 @@
           const len = 10;
           ctx.beginPath();
           ctx.moveTo(x, y);
-          ctx.lineTo(x - len * Math.cos(angle - Math.PI / 6),
-                     y - len * Math.sin(angle - Math.PI / 6));
-          ctx.lineTo(x - len * Math.cos(angle + Math.PI / 6),
-                     y - len * Math.sin(angle + Math.PI / 6));
+          ctx.lineTo(x - len * Math.cos(angle - Math.PI/6),
+                     y - len * Math.sin(angle - Math.PI/6));
+          ctx.lineTo(x - len * Math.cos(angle + Math.PI/6),
+                     y - len * Math.sin(angle + Math.PI/6));
           ctx.closePath();
           ctx.fillStyle = "#000";
           ctx.fill();
@@ -523,9 +526,9 @@
         diceRollDisplayEl.textContent = `Dice: ${currentDiceRoll || "-"}`;
         debugLog("updateDiceRollDisplay: currentDiceRoll = " + currentDiceRoll);
       }
+      // Move history is now endless (we removed any shifting).
       function addMoveToHistory(txt) {
         moveHistory.push(txt);
-        if (moveHistory.length > 5) moveHistory.shift();
         updateMoveHistoryDisplay();
         debugLog("addMoveToHistory: " + txt);
       }
@@ -550,36 +553,12 @@
         }
         removeWhiteBackground(houndsImg, (cleaned) => {
           houndsImg = cleaned;
-          for (let i = 0; i < NUM_PIECES; i++) {
-            const hImg = document.createElement("img");
-            hImg.src = houndsImg.src;
-            hImg.alt = "Hound";
-            hImg.style.width = "50px";
-            hImg.style.height = "50px";
-            hImg.style.cursor = "pointer";
-            hImg.dataset.index = i;
-            hImg.onclick = () => {
-              debugLog("Tray clicked: hounds piece " + i);
-              tryMovePiece(i, "hounds");
-            };
-          }
+          // Create hounds tray images if needed (or leave blank)
           checkReady();
         });
         removeWhiteBackground(jackalsImg, (cleaned) => {
           jackalsImg = cleaned;
-          for (let i = 0; i < NUM_PIECES; i++) {
-            const jImg = document.createElement("img");
-            jImg.src = jackalsImg.src;
-            jImg.alt = "Jackal";
-            jImg.style.width = "50px";
-            jImg.style.height = "50px";
-            jImg.style.cursor = "pointer";
-            jImg.dataset.index = i;
-            jImg.onclick = () => {
-              debugLog("Tray clicked: jackals piece " + i);
-              tryMovePiece(i, "jackals");
-            };
-          }
+          // Create jackals tray images if needed (or leave blank)
           checkReady();
         });
       }
@@ -810,7 +789,6 @@
         debugLog("tryMovePiece: using roll = " + rollUsed + (usingExtra ? " (extra)" : " (normal)"));
         const pieces = (color === "hounds") ? houndsPieces : jackalsPieces;
         if (pieces[pieceIndex] === -1) {
-          // Release move: must roll a 6 to bring a piece on board.
           if (rollUsed === 6 && canLandOn(0, color)) {
             debugLog("tryMovePiece: legal release move for piece " + pieceIndex);
             executeMove(pieceIndex, 0, color);
@@ -1010,9 +988,8 @@
         hideAllScreens();
         gameState = "playing";
         initPieces();
-        // Start with human side ("hounds")
-        currentTurn = "hounds";
-        nextPlayer = "jackals";  // Next turn will be AI if human passes or moves.
+        currentTurn = "hounds"; // Start with human turn
+        nextPlayer = "jackals"; // Next turn will be AI if human discards or moves
         diceRolled = false;
         currentDiceRoll = 0;
         extraTurn = false;
