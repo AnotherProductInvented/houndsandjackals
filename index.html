@@ -27,7 +27,7 @@
       margin: 20px;
     }
     
-    /* Left Panel (Dice & Controls) */
+    /* Left Panel: Dice & Controls */
     #leftPanel {
       min-width: 150px;
       display: flex;
@@ -38,7 +38,7 @@
     #releaseControls button { margin: 5px; padding: 5px 10px; font-size: 16px; }
     #offBoardCounts { margin-top: 10px; font-size: 16px; }
     
-    /* Right Panel (Move History) */
+    /* Right Panel: Move History */
     #rightPanel {
       min-width: 200px;
       display: flex;
@@ -160,6 +160,7 @@
     <h2>Another Product Invented</h2>
     <h1>Hounds and Jackals</h1>
   </div>
+  
   <div id="gameWrapper">
     <!-- Left Panel -->
     <div id="leftPanel">
@@ -175,6 +176,7 @@
         <span id="jackalsCount">Jackals Off-board: 5</span>
       </div>
     </div>
+    
     <!-- Center Panel -->
     <div id="gameContainer">
       <div id="diceMessageOverlay"></div>
@@ -205,6 +207,7 @@
       <canvas id="gameCanvas" width="820" height="320" style="width: 100%; height: auto;"></canvas>
       <div id="houndsTray" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;"></div>
     </div>
+    
     <!-- Right Panel -->
     <div id="rightPanel">
       <div id="moveHistory">Moves:<br></div>
@@ -212,7 +215,7 @@
   </div>
   <img id="logo" src="logo.png" alt="Logo">
   
-  <!-- Script: All Code Runs After Window Loads -->
+  <!-- SCRIPT: All Code Runs After Window Loads -->
   <script>
     window.addEventListener("load", function() {
       // --- Debug Function ---
@@ -272,15 +275,15 @@
       }
       debugLog("Board setup complete.");
 
-      // --- Game State Variables (Declared Only Once) ---
+      // --- Game State Variables (Declared Once) ---
       let gameState = "menu",
           humanSide = "hounds",
           aiDifficulty = "medium",
-          currentTurn = null,
+          currentTurn = "hounds",  // Start with the human side
           currentDiceRoll = 0,
           diceRolled = false,
           extraTurn = false,
-          nextPlayer = null,
+          nextPlayer = "jackals",  // Next turn would be AI if human does nothing
           NUM_PIECES = 5,
           houndsPieces = [],
           jackalsPieces = [],
@@ -420,16 +423,13 @@
           let grad;
           if (["B6","B7","B8","B9","B10"].includes(label)) {
             grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-            grad.addColorStop(0, "#aad4ff"); 
-            grad.addColorStop(1, "#005fa3");
+            grad.addColorStop(0, "#aad4ff"); grad.addColorStop(1, "#005fa3");
           } else if (["C6","C7","C8","C9","C10"].includes(label)) {
             grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-            grad.addColorStop(0, "#aaf0aa"); 
-            grad.addColorStop(1, "#007a3d");
+            grad.addColorStop(0, "#aaf0aa"); grad.addColorStop(1, "#007a3d");
           } else {
             grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-            grad.addColorStop(0, "#fcebbd"); 
-            grad.addColorStop(1, "#b38b4d");
+            grad.addColorStop(0, "#fcebbd"); grad.addColorStop(1, "#b38b4d");
           }
           ctx.fillStyle = grad;
           ctx.fill();
@@ -457,13 +457,13 @@
       function drawDoubleArrow(from, to, direction = "above") {
         debugLog(`drawDoubleArrow: from (${from.x},${from.y}) to (${to.x},${to.y}), direction=${direction}`);
         let midX = (from.x + to.x) / 2, midY;
-        if (direction === "above") { 
-          midY = (from.y + to.y) / 2 - SLOT_SPACING * 0.75; 
-        } else if (direction === "below") { 
-          midY = (from.y + to.y) / 2 + SLOT_SPACING * 0.75; 
-        } else if (direction === "between") { 
-          midY = (from.y + to.y) / 2; 
-          midX += (from.x < to.x ? SLOT_SPACING * 0.9 : -SLOT_SPACING * 0.9); 
+        if (direction === "above") {
+          midY = (from.y + to.y) / 2 - SLOT_SPACING * 0.75;
+        } else if (direction === "below") {
+          midY = (from.y + to.y) / 2 + SLOT_SPACING * 0.75;
+        } else if (direction === "between") {
+          midY = (from.y + to.y) / 2;
+          midX += (from.x < to.x ? SLOT_SPACING * 0.9 : -SLOT_SPACING * 0.9);
         }
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
@@ -562,7 +562,6 @@
               debugLog("Tray clicked: hounds piece " + i);
               tryMovePiece(i, "hounds");
             };
-            // Optionally, you can append these to a tray container.
           }
           checkReady();
         });
@@ -580,7 +579,6 @@
               debugLog("Tray clicked: jackals piece " + i);
               tryMovePiece(i, "jackals");
             };
-            // Optionally, you can append these to a tray container.
           }
           checkReady();
         });
@@ -632,7 +630,7 @@
        * Movement & Rules Functions
        ***********************************/
       function getValidMove(piecePos, diceValue, color) {
-        debugLog(`getValidMove: ${color} piece at position ${piecePos} with dice ${diceValue}`);
+        debugLog(`getValidMove: ${color} piece at ${piecePos} with dice ${diceValue}`);
         if (piecePos === -1) return (diceValue === 6 ? 0 : null);
         let target = piecePos + diceValue;
         if (target > 29) return null;
@@ -650,7 +648,8 @@
           let pos = own[i];
           let label = (color === "hounds") ? boardPathHounds[pos] : boardPathJackals[pos];
           if ((color === "hounds" && ["B6","B7","B8","B9","B10"].includes(label)) ||
-              (color === "jackals" && ["C6","C7","C8","C9","C10"].includes(label))) continue;
+              (color === "jackals" && ["C6","C7","C8","C9","C10"].includes(label)))
+            continue;
           let newPos = getValidMove(pos, diceValue, color);
           if (newPos === null || !canLandOn(newPos, color)) continue;
           opts.push({ pieceIndex: i, fromPos: pos, toPos: newPos });
@@ -811,7 +810,7 @@
         debugLog("tryMovePiece: using roll = " + rollUsed + (usingExtra ? " (extra)" : " (normal)"));
         const pieces = (color === "hounds") ? houndsPieces : jackalsPieces;
         if (pieces[pieceIndex] === -1) {
-          // Release move
+          // Release move: must roll a 6 to bring a piece on board.
           if (rollUsed === 6 && canLandOn(0, color)) {
             debugLog("tryMovePiece: legal release move for piece " + pieceIndex);
             executeMove(pieceIndex, 0, color);
@@ -953,7 +952,7 @@
           diceRolled = false;
           currentDiceRoll = 0;
           aiAutoRoll();
-        } else {
+        } else { 
           endTurn();
         }
         debugLog("aiMakeMove: complete");
@@ -1011,7 +1010,9 @@
         hideAllScreens();
         gameState = "playing";
         initPieces();
+        // Start with human side ("hounds")
         currentTurn = "hounds";
+        nextPlayer = "jackals";  // Next turn will be AI if human passes or moves.
         diceRolled = false;
         currentDiceRoll = 0;
         extraTurn = false;
@@ -1019,19 +1020,7 @@
         extraFrom = null;
         addMoveToHistory("Hounds Turn! Roll dice...");
         showTemporaryMessage("Hounds Turn! Roll dice...");
-        if (imagesReady) {
-          redrawPlayScreen();
-          if (currentTurn !== humanSide) {
-            setTimeout(aiAutoRoll, 2000);
-          }
-        } else {
-          prepareTrayImages(() => {
-            redrawPlayScreen();
-            if (currentTurn !== humanSide) {
-              setTimeout(aiAutoRoll, 2000);
-            }
-          });
-        }
+        redrawPlayScreen();
         debugLog("startPlaying: game started");
       }
       function showGameOver() {
@@ -1047,9 +1036,7 @@
       document.getElementById("newGameBtn").onclick = () => showDifficultyScreen();
       document.getElementById("instructionsBtn").onclick = () => showInstructions();
       const gameOverNewGameBtn = document.getElementById("gameOverNewGameBtn");
-      if (gameOverNewGameBtn) {
-        gameOverNewGameBtn.onclick = () => showDifficultyScreen();
-      }
+      if (gameOverNewGameBtn) { gameOverNewGameBtn.onclick = () => showDifficultyScreen(); }
       rollDiceBtn.addEventListener("click", humanRollDice);
       canvas.addEventListener("click", handleBoardClick);
       document.getElementById("easyBtn").onclick = () => setDifficulty("easy");
