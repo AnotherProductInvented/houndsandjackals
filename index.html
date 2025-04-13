@@ -59,7 +59,8 @@
       flex-direction: column;
       align-items: center;
     }
-    /* Revised Move History: Make text selectable and ensure it's not overlapped */
+    /* Moves History:
+       Marked contenteditable to ensure text is selectable and add extensive CSS */
     #moveHistory {
       font-size: 16px;
       padding: 10px;
@@ -77,6 +78,7 @@
       white-space: pre-wrap;
       word-wrap: break-word;
       cursor: text;
+      pointer-events: auto;
       position: relative;
       z-index: 100;
       -webkit-user-drag: auto;
@@ -235,7 +237,8 @@
 
     <!-- Right Panel -->
     <div id="rightPanel">
-      <div id="moveHistory">Moves:<br></div>
+      <!-- Mark the move history editable to allow selection/copying -->
+      <div id="moveHistory" contenteditable="true">Moves:<br></div>
     </div>
   </div>
   <img id="logo" src="logo.png" alt="Logo">
