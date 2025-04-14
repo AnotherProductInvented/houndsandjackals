@@ -278,6 +278,16 @@
       const instructionsContentEl = document.getElementById("instructionsContent");
       const instructionsPrevBtn = document.getElementById("instructionsPrevBtn");
       const instructionsNextBtn = document.getElementById("instructionsNextBtn");
+      instructionsPrevBtn.onclick = () => {
+  currentInstructionsPage--;
+  updateInstructions();
+};
+
+instructionsNextBtn.onclick = () => {
+  currentInstructionsPage++;
+  updateInstructions();
+};
+
       const customDiceInput = document.getElementById("customDiceInput");
       const setCustomDiceBtn = document.getElementById("setCustomDiceBtn");
       const copyHistoryBtn = document.getElementById("copyHistoryBtn");
@@ -347,6 +357,7 @@ unusedRollBtn.addEventListener("click", function() {
       /* -------------------------
          Game State Variables
          ------------------------- */
+      let currentInstructionsPage = 0;
       let gameState = "menu",
           humanSide = "hounds",
           aiDifficulty = "medium",
@@ -364,22 +375,36 @@ unusedRollBtn.addEventListener("click", function() {
           unusedRollOwner = null;
       debugLog("Game state variables initialized.");
 
+      function guaranteedRoll(val) {
+  return Math.min(Math.max(val, 1), 6);
+}
+
+
       /* -------------------------
          Load Piece Images
          ------------------------- */
-      let houndsImg = new Image(), jackalsImg = new Image();
-      houndsImg.src = "hounds.png";
-      houndsImg.crossOrigin = "anonymous";
-      jackalsImg.src = "jackals.png";
-      jackalsImg.crossOrigin = "anonymous";
-      houndsImg.onload = () => {
-        debugLog("houndsImg loaded; cleaning...");
-        removeWhiteBackground(houndsImg, (cleaned) => { houndsImg = cleaned; debugLog("houndsImg cleaned."); });
-      };
-      jackalsImg.onload = () => {
-        debugLog("jackalsImg loaded; cleaning...");
-        removeWhiteBackground(jackalsImg, (cleaned) => { jackalsImg = cleaned; debugLog("jackalsImg cleaned."); });
-      };
+      let houndsImg = new Image();
+let jackalsImg = new Image();
+houndsImg.src = "hounds.png";
+jackalsImg.src = "jackals.png";
+
+     houndsImg.onload = () => {
+  debugLog("houndsImg loaded; cleaning...");
+  removeWhiteBackground(houndsImg, (cleaned) => {
+    houndsImg = cleaned;
+    debugLog("houndsImg cleaned.");
+    if (jackalsImg.complete) prepareTrayImages(() => redrawPlayScreen());
+  });
+};
+jackalsImg.onload = () => {
+  debugLog("jackalsImg loaded; cleaning...");
+  removeWhiteBackground(jackalsImg, (cleaned) => {
+    jackalsImg = cleaned;
+    debugLog("jackalsImg cleaned.");
+    if (houndsImg.complete) prepareTrayImages(() => redrawPlayScreen());
+  });
+};
+
 
       /* -------------------------
          Initialization Functions
@@ -392,7 +417,7 @@ unusedRollBtn.addEventListener("click", function() {
         moveHistory = [];
         updateMoveHistoryDisplay();
         updateTrays();
-        prepareTrayImages(() => { redrawPlayScreen(); debugLog("initPieces: tray images prepared."); });
+        
         debugLog("initPieces: Pieces initialized.");
         updateOffBoardCounts();
       }
@@ -977,7 +1002,6 @@ function processDiceRoll(diceValue) {
         hideAllScreens();
         gameState = "instructions";
         instructionsScreenEl.style.display = "flex";
-        currentInstructionsPage = 0;
         updateInstructions();
         debugLog("showInstructions: Instructions shown");
       }
@@ -1015,6 +1039,20 @@ function processDiceRoll(diceValue) {
         gameOverScreenEl.style.display = "flex";
         debugLog("showGameOver: Game over shown");
       }
+      function updateInstructions() {
+  const instructionsPages = [
+    "Welcome to Hounds and Jackals! Use dice rolls to move your pieces.",
+    "Roll a 6 to bring a piece onto the board. Land on special tiles for bonus moves.",
+    "Teleport between linked tiles. Avoid blocking your own path!",
+    "Win by getting all your pieces to the end or claiming all special tiles."
+  ];
+
+  if (currentInstructionsPage < 0) currentInstructionsPage = 0;
+  if (currentInstructionsPage >= instructionsPages.length) currentInstructionsPage = instructionsPages.length - 1;
+
+  instructionsContentEl.textContent = instructionsPages[currentInstructionsPage];
+}
+
 
       /* -------------------------
          Event Listeners for UI
