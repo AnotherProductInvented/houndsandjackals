@@ -398,6 +398,10 @@
         return roll;
       }
       function processDiceRoll(diceValue) {
+        // Ensure a valid roll (non-zero)
+        if (!diceValue || diceValue <= 0) {
+          diceValue = rollDice();
+        }
         debugLog("processDiceRoll: starting with value " + diceValue);
         const rollValue = diceValue;  // Preserve the roll value
         currentDiceRoll = rollValue;
@@ -544,7 +548,7 @@
         debugLog("updateDiceRollDisplay: currentDiceRoll = " + currentDiceRoll);
       }
       function addMoveToHistory(txt) {
-        // Only add a turn message if it is not the same as the last reported turn.
+        // Only add a turn message if it's not a duplicate
         if (!txt.includes("Turn! Roll dice...") || lastTurnReported !== currentTurn) {
           moveHistory.push(txt);
           if (txt.includes("Turn! Roll dice...")) {
@@ -593,7 +597,7 @@
         currentDiceRoll = 0;
         diceRolled = false;
         updateUnusedRollButton();
-        if (lastTurnReported !== currentTurn) {
+        if (!moveHistory[moveHistory.length - 1] || !moveHistory[moveHistory.length - 1].includes(`${currentTurn}'s Turn!`)) {
           addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
         }
         showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
@@ -809,6 +813,7 @@
         debugLog("tryMovePiece: using roll = " + rollUsed + (usingUnused ? " (unused)" : " (normal)"));
         const pieces = (color === "hounds") ? houndsPieces : jackalsPieces;
         if (pieces[pieceIndex] === -1) {
+          // Release move requires a 6.
           if (rollUsed === 6 && canLandOn(0, color)) {
             debugLog("tryMovePiece: legal release move for piece " + pieceIndex);
             executeMove(pieceIndex, 0, color);
