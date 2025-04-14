@@ -631,38 +631,34 @@ function processDiceRoll(diceValue) {
       /* -------------------------
          Turn Updating
          ------------------------- */
-      function updateTurn() {
-        currentDiceRoll = 0;
-        diceRolled = false;
-        updateUnusedRollButton();
-        if (!moveHistory[moveHistory.length - 1] || !moveHistory[moveHistory.length - 1].includes(`${currentTurn}'s Turn!`)) {
-          addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
-        }
-        showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
-        redrawPlayScreen();
-        if (aiTimeout) clearTimeout(aiTimeout);
-        if (currentTurn !== humanSide && !attemptUnusedRoll()) {
-          aiTimeout = setTimeout(aiAutoRoll, 2000);
-        }
-      }
-      function completeMove(usingUnused) {
-        if (usingUnused) {
-          unusedRoll = null;
-          unusedRollOwner = null;
-          updateUnusedRollButton();
-          updateTurn();
-        } else {
-          if (extraTurn) {
-            extraTurn = false;
-            addMoveToHistory(`${currentTurn} gets another turn!`);
-            showTemporaryMessage(`${currentTurn} gets another turn!`);
-            updateTurn();
-          } else {
-            currentTurn = (currentTurn === "hounds") ? "jackals" : "hounds";
-            updateTurn();
-          }
-        }
-      }
+  function updateTurn() {
+  currentDiceRoll = 0;
+  diceRolled = false;
+
+  const wasHumanTurn = (currentTurn === humanSide); // Save this before switching
+
+  // Show message before switching turn
+  if (!moveHistory[moveHistory.length - 1] || !moveHistory[moveHistory.length - 1].includes(`${currentTurn}'s Turn!`)) {
+    addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+  }
+  showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+
+  redrawPlayScreen();
+
+  // Delay update of the unused roll button until after redraw
+  if (wasHumanTurn && unusedRoll !== null && unusedRollOwner === humanSide) {
+    unusedRollBtn.style.display = "inline-block";
+    unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
+  } else {
+    unusedRollBtn.style.display = "none";
+  }
+
+  if (aiTimeout) clearTimeout(aiTimeout);
+  if (currentTurn !== humanSide && !attemptUnusedRoll()) {
+    aiTimeout = setTimeout(aiAutoRoll, 2000);
+  }
+}
+
 
       /* -------------------------
          Tray and Off-Board Updates
