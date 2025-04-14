@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Hounds and Jackals</title>
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   <style>
-    /* Global Reset & Basic Styles */
+    /* Basic Reset */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       background: #fafafa;
@@ -15,9 +14,13 @@
       align-items: center;
       padding: 10px;
     }
-    h1, h2, p { text-align: center; color: #8b4513; }
+    h1, h2, p {
+      text-align: center;
+      color: #8b4513;
+      margin: 10px 0;
+    }
 
-    /* Layout */
+    /* Layout Wrapper */
     #gameWrapper {
       display: flex;
       justify-content: center;
@@ -27,16 +30,25 @@
       margin: 20px;
     }
 
-    /* Left Panel */
+    /* Left Panel: Dice, Controls */
     #leftPanel {
       min-width: 150px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    #releaseControls { margin-top: 15px; }
-    #releaseControls button { margin: 5px; padding: 5px 10px; font-size: 16px; }
-    #offBoardCounts { margin-top: 10px; font-size: 16px; }
+    button {
+      font-size: 18px;
+      margin: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      background: #ffcc00;
+      border: none;
+      border-radius: 6px;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+      color: #333;
+      font-family: "Papyrus", cursive, serif;
+    }
     #unusedRollBtn {
       display: none;
       margin: 5px;
@@ -50,8 +62,18 @@
       color: #333;
       font-family: "Papyrus", cursive, serif;
     }
+    #releaseControls { margin-top: 15px; }
+    #releaseControls button {
+      margin: 5px;
+      padding: 5px 10px;
+      font-size: 16px;
+    }
+    #offBoardCounts {
+      margin-top: 10px;
+      font-size: 16px;
+    }
 
-    /* Right Panel */
+    /* Right Panel: Move History + Copy Button */
     #rightPanel {
       min-width: 200px;
       display: flex;
@@ -89,7 +111,7 @@
       z-index: 100;
     }
 
-    /* Center Panel */
+    /* Center Panel: The Game Container */
     #gameContainer {
       position: relative;
       width: 100%;
@@ -103,18 +125,17 @@
     }
     canvas {
       display: block;
-      background: radial-gradient(#fef9e7, #e8d6a4);
       margin: auto;
+      background: radial-gradient(#fef9e7, #e8d6a4);
       border-radius: 8px;
       box-shadow: 0 0 15px rgba(0,0,0,0.2);
     }
 
-    /* Overlays */
+    /* Overlay Screens: Menu, Instructions, Difficulty, Game Over */
     .overlayScreen {
       position: absolute;
       top: 0; left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       background: rgba(255,255,255,0.95);
       display: none;
       flex-direction: column;
@@ -128,23 +149,8 @@
       overflow-y: auto;
     }
     .overlayScreen.active { display: flex; }
-
-    /* Instructions & Difficulty Overlays */
     #instructionsContent { font-size: 20px; margin: 10px; }
     #instructionsNav { margin-top: 10px; }
-    /* Global Button Styles */
-    button {
-      font-size: 18px;
-      margin: 10px;
-      padding: 10px 20px;
-      cursor: pointer;
-      background: #ffcc00;
-      border: none;
-      border-radius: 6px;
-      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-      color: #333;
-      font-family: "Papyrus", cursive, serif;
-    }
 
     /* Dice Display */
     #diceRollDisplay {
@@ -184,7 +190,7 @@
   </style>
 </head>
 <body>
-  <!-- Header Banner -->
+  <!-- Header -->
   <div class="header-title">
     <h2>Another Product Invented</h2>
     <h1>Hounds and Jackals</h1>
@@ -198,48 +204,51 @@
       <button id="unusedRollBtn">Use Unused Roll</button>
       <input type="number" id="customDiceInput" min="1" max="6" placeholder="Set Dice (1-6)">
       <button id="setCustomDiceBtn">Use Custom Dice</button>
+
       <div id="releaseControls">
         <button id="releaseHoundBtn">Release Hound</button>
       </div>
+
       <div id="offBoardCounts">
         <span id="houndsCount">Hounds Off-board: 5</span><br>
         <span id="jackalsCount">Jackals Off-board: 5</span>
       </div>
     </div>
 
-    <!-- Center Panel -->
+    <!-- Center Panel (Game Container) -->
     <div id="gameContainer">
       <div id="diceMessageOverlay"></div>
-      <!-- Menu Overlay -->
+
+      <!-- Overlays -->
       <div id="menuScreen" class="overlayScreen active">
         <h1>Hounds and Jackals</h1>
         <button id="newGameBtn">New Game</button>
         <button id="instructionsBtn">Instructions</button>
       </div>
-      <!-- Instructions Overlay (stub) -->
+
       <div id="instructionsScreen" class="overlayScreen">
-        <div id="instructionsContent">Instructions go here.</div>
+        <div id="instructionsContent">Instructions go here</div>
         <div id="instructionsNav">
           <button id="instructionsPrevBtn">Previous</button>
           <button id="instructionsNextBtn">Next</button>
         </div>
       </div>
-      <!-- Difficulty Overlay -->
+
       <div id="difficultyScreen" class="overlayScreen">
         <p>Select AI Difficulty:</p>
         <button id="easyBtn">Easy</button>
         <button id="mediumBtn">Medium</button>
         <button id="hardBtn">Hard</button>
       </div>
-      <!-- Game Over Overlay (stub) -->
+
       <div id="gameOverScreen" class="overlayScreen">
-        <h2 id="gameOverText">Game Over!</h2>
+        <h2 id="gameOverText"></h2>
         <button id="gameOverNewGameBtn">New Game</button>
-        <p>Press [M] to return to the Main Menu.</p>
+        <p>Press [M] to return to Main Menu</p>
       </div>
-      <div id="jackalsTray" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 10px;"></div>
-      <canvas id="gameCanvas" width="820" height="320" style="width: 100%; height: auto;"></canvas>
-      <div id="houndsTray" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;"></div>
+
+      <canvas id="gameCanvas" width="800" height="400"
+              style="width: 800px; height: 400px; background: #fff;"></canvas>
     </div>
 
     <!-- Right Panel -->
@@ -252,7 +261,18 @@
   <img id="logo" src="logo.png" alt="Logo">
 
   <script>
-    // Helper function: always return a random number between 1 and 6.
+    /* 
+      In this minimal version:
+      - We define a small set of squares to draw on the canvas (so you can "see" them).
+      - We handle the overlays (menu, difficulty) so you can click through them.
+      - We ensure dice never show 0 or negative (if a 0 would appear, we re-roll).
+      - We display a minimal "Moves" log and an "Unused Roll" logic.
+    */
+
+    let aiTimeout = null;
+    let lastTurnReported = "";
+
+    // Make sure we always get a valid roll (1..6).
     function guaranteedRoll(val) {
       if (!val || val < 1 || val > 6) {
         return Math.floor(Math.random() * 6) + 1;
@@ -260,18 +280,18 @@
       return val;
     }
 
-    // Utility: Remove white background from an image.
+    // Utility: remove white background from images.
     function removeWhiteBackground(image, callback) {
-      const tempCanvas = document.createElement("canvas");
+      const tempCanvas = document.createElement('canvas');
       tempCanvas.width = image.width;
       tempCanvas.height = image.height;
-      const tempCtx = tempCanvas.getContext("2d");
+      const tempCtx = tempCanvas.getContext('2d');
       tempCtx.drawImage(image, 0, 0);
       const imgData = tempCtx.getImageData(0, 0, image.width, image.height);
       const data = imgData.data;
       for (let i = 0; i < data.length; i += 4) {
-        if (data[i] >= 240 && data[i + 1] >= 240 && data[i + 2] >= 240) {
-          data[i + 3] = 0;
+        if (data[i] >= 240 && data[i+1] >= 240 && data[i+2] >= 240) {
+          data[i+3] = 0;
         }
       }
       tempCtx.putImageData(imgData, 0, 0);
@@ -280,17 +300,12 @@
       newImage.onload = () => callback(newImage);
     }
 
-    let aiTimeout = null;
-    let lastTurnReported = "";
-
     window.addEventListener("load", function() {
       const debugMode = true;
-      function debugLog(msg) {
-        if (debugMode) console.log("[DEBUG]", msg);
-      }
+      function debugLog(msg) { if (debugMode) console.log("[DEBUG]", msg); }
       debugLog("Page loaded. Initializing game...");
 
-      // DOM elements
+      // DOM references
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
       const diceRollDisplayEl = document.getElementById("diceRollDisplay");
@@ -303,137 +318,162 @@
       const gameOverScreenEl = document.getElementById("gameOverScreen");
       const gameOverTextEl = document.getElementById("gameOverText");
       const instructionsContentEl = document.getElementById("instructionsContent");
-      const instructionsPrevBtn = document.getElementById("instructionsPrevBtn");
-      const instructionsNextBtn = document.getElementById("instructionsNextBtn");
       const customDiceInput = document.getElementById("customDiceInput");
       const setCustomDiceBtn = document.getElementById("setCustomDiceBtn");
       const copyHistoryBtn = document.getElementById("copyHistoryBtn");
 
-      copyHistoryBtn.addEventListener("click", () => {
-        const historyText = moveHistoryDiv.innerText;
-        navigator.clipboard.writeText(historyText)
-          .then(() => {
-            showTemporaryMessage("History copied to clipboard!");
-            debugLog("History copied.");
-          })
-          .catch(err => {
-            showTemporaryMessage("Failed to copy history!");
-            debugLog("Copy error: " + err);
-          });
-      });
+      let gameState = "menu",
+          humanSide = "hounds",
+          aiDifficulty = "medium",
+          currentTurn = "hounds",
+          currentDiceRoll = 0,
+          diceRolled = false,
+          extraTurn = false,
+          nextPlayer = "jackals",
+          NUM_PIECES = 5,
+          houndsPieces = [],
+          jackalsPieces = [],
+          moveHistory = [],
+          lastMove = null,
+          unusedRoll = null,
+          unusedRollOwner = null;
 
-      /* -------------------------
-         Board Setup (minimal version)
-         ------------------------- */
-      const boardSquares = {};
-      // For simplicity, we'll define a few squares (in your full game there are more)
-      // Here we assume the board has squares labeled A1..A15, D1..D15, etc.
-      // (Use your full board logic as needed.)
-      const SLOT_RADIUS = 7, SLOT_SPACING = 44, START_X = 40, START_Y = 100;
-      for (let i = 1; i <= 15; i++) {
-        boardSquares["A" + i] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y };
-        boardSquares["D" + i] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y + 3.6 * SLOT_SPACING };
-      }
-      // (Additional squares for B, C, E as needed would go here.)
-
-      /* -------------------------
-         Game State Variables
-         ------------------------- */
-      let gameState = "menu";
-      let humanSide = "hounds";
-      let aiDifficulty = "medium";
-      let currentTurn = "hounds";
-      let currentDiceRoll = 0;
-      let diceRolled = false;
-      let extraTurn = false;
-      let nextPlayer = "jackals";
-      let NUM_PIECES = 5;
-      let houndsPieces = [];
-      let jackalsPieces = [];
-      let moveHistory = [];
-      let lastMove = null;
-      let unusedRoll = null;
-      let unusedRollOwner = null;
-
-      /* -------------------------
-         Load Piece Images
-         ------------------------- */
-      let houndsImg = new Image(),
-          jackalsImg = new Image();
-      houndsImg.src = "hounds.png";
-      jackalsImg.src = "jackals.png";
-      houndsImg.crossOrigin = "anonymous";
-      jackalsImg.crossOrigin = "anonymous";
-      houndsImg.onload = () => {
-        removeWhiteBackground(houndsImg, (cleaned) => {
-          houndsImg = cleaned;
-          debugLog("Hounds image loaded & cleaned.");
-        });
-      };
-      jackalsImg.onload = () => {
-        removeWhiteBackground(jackalsImg, (cleaned) => {
-          jackalsImg = cleaned;
-          debugLog("Jackals image loaded & cleaned.");
-        });
+      // Minimal squares for demonstration
+      const boardSquares = {
+        A1: { x: 100, y: 100 },
+        A2: { x: 160, y: 100 },
+        A3: { x: 220, y: 100 },
+        A4: { x: 280, y: 100 },
+        A5: { x: 340, y: 100 },
+        B1: { x: 100, y: 160 },
+        B2: { x: 160, y: 160 },
+        B3: { x: 220, y: 160 },
+        B4: { x: 280, y: 160 },
+        B5: { x: 340, y: 160 }
       };
 
-      /* -------------------------
-         Initialization Functions
-         ------------------------- */
+      // Minimal piece arrays
       function initPieces() {
         houndsPieces = Array(NUM_PIECES).fill(-1);
         jackalsPieces = Array(NUM_PIECES).fill(-1);
-        lastMove = null;
         moveHistory = [];
         updateMoveHistoryDisplay();
-        debugLog("Pieces reinitialized.");
+        debugLog("Pieces reinitialized (5 each).");
       }
 
-      /* -------------------------
-         Dice and Unused Roll Logic
-         ------------------------- */
+      // Minimal "drawBoard" that draws squares so you can see them
+      function drawBoard() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        Object.entries(boardSquares).forEach(([label, sq]) => {
+          // Draw circle
+          ctx.beginPath();
+          ctx.arc(sq.x, sq.y, 15, 0, 2*Math.PI);
+          ctx.fillStyle = "#fcebbd";
+          ctx.fill();
+          ctx.strokeStyle = "#6b4e2e";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          // Label
+          ctx.fillStyle = "#000";
+          ctx.font = "12px Arial";
+          ctx.fillText(label, sq.x - 10, sq.y - 20);
+        });
+      }
+
+      function drawPieces() {
+        // In a real game, you'd locate each piece in boardSquares, etc.
+        // For demonstration, we won't place them because all are -1 = offboard
+        // But you can do real code here if needed
+      }
+
+      function redrawPlayScreen() {
+        drawBoard();
+        drawPieces();
+        updateDiceRollDisplay();
+        updateUnusedRollButton();
+      }
+
       function rollDice() {
         return guaranteedRoll(Math.floor(Math.random() * 6) + 1);
       }
       function processDiceRoll(diceValue) {
-        // Always get a valid roll between 1 and 6.
-        let rollValue = guaranteedRoll(diceValue);
-        debugLog("processDiceRoll: final rollValue = " + rollValue);
-        currentDiceRoll = rollValue;
+        let val = guaranteedRoll(diceValue);
+        debugLog("processDiceRoll: final roll = " + val);
+        currentDiceRoll = val;
         diceRolled = true;
-        addMoveToHistory(`${currentTurn} rolled ${rollValue}`);
-        showTemporaryMessage(`${currentTurn} rolled ${rollValue}`);
-        // (Your logic to calculate legal moves here. In this minimal version, we assume moves exist.)
-        // For demonstration, if rollValue is 6, we assume a legal move exists.
-        // If rollValue is not 6, we simulate "no legal moves" and pass unused roll.
-        if (rollValue !== 6) {
-          if (currentTurn === humanSide) {
-            nextPlayer = "jackals";
-            unusedRoll = rollValue;
-            unusedRollOwner = nextPlayer;
-            addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
-          } else {
-            nextPlayer = "hounds";
-            unusedRoll = rollValue;
-            unusedRollOwner = nextPlayer;
-            addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
-          }
+        addMoveToHistory(`${currentTurn} rolled ${val}`);
+        showTemporaryMessage(`${currentTurn} rolled ${val}`);
+        redrawPlayScreen();
+        // For demonstration: if val == 6 => "has moves." Otherwise => pass unused roll
+        if (val !== 6) {
+          nextPlayer = (currentTurn === "hounds") ? "jackals" : "hounds";
+          unusedRoll = val;
+          unusedRollOwner = nextPlayer;
+          addMoveToHistory(`${currentTurn} has no moves; roll (${val}) passed to ${nextPlayer}.`);
           diceRolled = false;
           currentDiceRoll = 0;
           currentTurn = nextPlayer;
           updateTurn();
-          return;
         }
       }
 
-      /* -------------------------
-         Dummy Drawing Functions
-         ------------------------- */
-      function redrawPlayScreen() {
-        // In a full game, this function would draw the board and pieces.
-        // Here we simply update the dice display.
-        diceRollDisplayEl.textContent = `Dice: ${currentDiceRoll || "-"}`;
+      // Turn Handling
+      function updateTurn() {
+        currentDiceRoll = 0;
+        diceRolled = false;
+        addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+        showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+        redrawPlayScreen();
+        if (aiTimeout) clearTimeout(aiTimeout);
+        if (currentTurn !== humanSide) {
+          // Minimal AI logic
+          aiTimeout = setTimeout(aiAutoRoll, 2000);
+        }
       }
+      function aiAutoRoll() {
+        if (gameState !== "playing" || currentTurn === humanSide) return;
+        if (unusedRoll !== null && unusedRollOwner === currentTurn) {
+          let finalVal = guaranteedRoll(unusedRoll);
+          processDiceRoll(finalVal);
+          unusedRoll = null;
+          unusedRollOwner = null;
+        } else {
+          let val = rollDice();
+          processDiceRoll(val);
+        }
+      }
+
+      // UI Buttons
+      rollDiceBtn.addEventListener("click", () => {
+        if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
+        let val = rollDice();
+        processDiceRoll(val);
+      });
+      unusedRollBtn.addEventListener("click", () => {
+        if (unusedRoll !== null && unusedRollOwner === humanSide) {
+          let finalVal = guaranteedRoll(unusedRoll);
+          processDiceRoll(finalVal);
+          unusedRoll = null;
+          unusedRollOwner = null;
+        }
+      });
+      setCustomDiceBtn.addEventListener("click", () => {
+        if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
+        let cVal = parseInt(customDiceInput.value);
+        if (isNaN(cVal) || cVal < 1 || cVal > 6) {
+          showTemporaryMessage("Invalid dice value!");
+          return;
+        }
+        processDiceRoll(cVal);
+      });
+
+      // Minimal "releaseHound"
+      document.getElementById("releaseHoundBtn").addEventListener("click", () => {
+        showTemporaryMessage("ReleaseHound is not implemented in this demo!");
+      });
+
+      // Move History
       function updateMoveHistoryDisplay() {
         moveHistoryDiv.innerHTML = "Moves:<br>" + moveHistory.join("<br>");
       }
@@ -442,60 +482,19 @@
         updateMoveHistoryDisplay();
         debugLog("addMoveToHistory: " + txt);
       }
-      function showTemporaryMessage(msg) {
-        const overlay = document.getElementById("diceMessageOverlay");
-        overlay.textContent = msg;
-        overlay.style.display = "block";
-        setTimeout(() => { overlay.style.display = "none"; }, 2000);
+      function updateDiceRollDisplay() {
+        diceRollDisplayEl.textContent = `Dice: ${currentDiceRoll || "-"}`;
       }
-
-      /* -------------------------
-         Unused Roll Handling
-         ------------------------- */
       function updateUnusedRollButton() {
-        if (gameState === "playing" && currentTurn === humanSide && unusedRoll !== null && unusedRollOwner === humanSide) {
+        if (gameState === "playing" && currentTurn === "hounds" && unusedRoll !== null && unusedRollOwner === "hounds") {
           unusedRollBtn.style.display = "inline-block";
           unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
         } else {
           unusedRollBtn.style.display = "none";
         }
       }
-      unusedRollBtn.addEventListener("click", function() {
-        processDiceRoll(guaranteedRoll(unusedRoll));
-        unusedRoll = null;
-        unusedRollOwner = null;
-      });
 
-      /* -------------------------
-         Turn Updating
-         ------------------------- */
-      function updateTurn() {
-        currentDiceRoll = 0;
-        diceRolled = false;
-        updateUnusedRollButton();
-        addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
-        showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
-        redrawPlayScreen();
-        if (aiTimeout) clearTimeout(aiTimeout);
-        if (currentTurn !== humanSide) {
-          aiTimeout = setTimeout(aiAutoRoll, 2000);
-        }
-      }
-      function completeMove(usingUnused) {
-        if (usingUnused) {
-          unusedRoll = null;
-          unusedRollOwner = null;
-          updateUnusedRollButton();
-          updateTurn();
-        } else {
-          currentTurn = (currentTurn === "hounds") ? "jackals" : "hounds";
-          updateTurn();
-        }
-      }
-
-      /* -------------------------
-         Difficulty and Overlay Functions
-         ------------------------- */
+      // Overlays
       function hideAllScreens() {
         menuScreenEl.style.display = "none";
         instructionsScreenEl.style.display = "none";
@@ -507,6 +506,11 @@
         menuScreenEl.style.display = "flex";
         gameState = "menu";
       }
+      function showInstructions() {
+        hideAllScreens();
+        instructionsScreenEl.style.display = "flex";
+        gameState = "instructions";
+      }
       function showDifficultyScreen() {
         hideAllScreens();
         difficultyScreenEl.style.display = "flex";
@@ -514,7 +518,6 @@
       }
       function setDifficulty(d) {
         aiDifficulty = d;
-        debugLog("setDifficulty: " + d);
         startPlaying();
       }
       function startPlaying() {
@@ -537,53 +540,31 @@
         gameState = "gameover";
       }
 
-      /* -------------------------
-         Event Listeners for UI
-         ------------------------- */
-      document.getElementById("newGameBtn").onclick = () => showDifficultyScreen();
-      document.getElementById("instructionsBtn").onclick = () => {
-        hideAllScreens();
-        instructionsScreenEl.style.display = "flex";
-        gameState = "instructions";
-      };
+      // Temporary Message
+      function showTemporaryMessage(msg) {
+        const overlay = document.getElementById("diceMessageOverlay");
+        overlay.textContent = msg;
+        overlay.style.display = "block";
+        setTimeout(() => { overlay.style.display = "none"; }, 2000);
+      }
+
+      // Menu Buttons
+      document.getElementById("newGameBtn").onclick = showDifficultyScreen;
+      document.getElementById("instructionsBtn").onclick = showInstructions;
       document.getElementById("easyBtn").onclick = () => setDifficulty("easy");
       document.getElementById("mediumBtn").onclick = () => setDifficulty("medium");
       document.getElementById("hardBtn").onclick = () => setDifficulty("hard");
-      document.getElementById("gameOverNewGameBtn").onclick = () => showDifficultyScreen();
-      rollDiceBtn.addEventListener("click", function() {
-        if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
-        let val = rollDice();  // Always valid
-        processDiceRoll(val);
-      });
-      setCustomDiceBtn.addEventListener("click", () => {
-        if (gameState !== "playing" || currentTurn !== humanSide || diceRolled) return;
-        let cVal = parseInt(customDiceInput.value);
-        if (isNaN(cVal) || cVal < 1 || cVal > 6) {
-          showTemporaryMessage("Invalid dice value!");
-          return;
-        }
-        processDiceRoll(cVal);
-      });
-      document.getElementById("releaseHoundBtn").onclick = function() {
-        // (Implement release logic here as needed)
-      };
-      document.addEventListener("keydown", (e) => {
-        let key = e.key.toLowerCase();
-        if (gameState === "selectDifficulty") {
-          if (key === "e") setDifficulty("easy");
-          else if (key === "m") setDifficulty("medium");
-          else if (key === "h") setDifficulty("hard");
-        }
-        // Additional key bindings as needed...
-      });
+      document.getElementById("gameOverNewGameBtn").onclick = showDifficultyScreen;
 
-      /* -------------------------
-         Start the Game Loop and show the main menu.
-         ------------------------- */
+      // Main game loop
       function mainLoop() {
-        redrawPlayScreen();
+        if (gameState === "playing") {
+          redrawPlayScreen();
+        }
         requestAnimationFrame(mainLoop);
       }
+
+      // Start
       showMenu();
       requestAnimationFrame(mainLoop);
     });
