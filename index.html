@@ -589,13 +589,6 @@ function processDiceRoll(diceValue) {
   debugLog("updateDiceRollDisplay: currentDiceRoll = " + currentDiceRoll);
 }
 
-        diceRollDisplayEl.textContent = `Dice: ${
-  (currentDiceRoll !== 0) ? currentDiceRoll :
-  (unusedRoll !== null && unusedRollOwner === currentTurn) ? unusedRoll : "-"
-}`;
-
-        debugLog("updateDiceRollDisplay: currentDiceRoll = " + currentDiceRoll);
-      }
       function addMoveToHistory(txt) {
         // Only add a turn message if it's not a duplicate
         if (!txt.includes("Turn! Roll dice...") || lastTurnReported !== currentTurn) {
