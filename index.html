@@ -663,39 +663,52 @@ diceRolled = false;
       /* -------------------------
          Turn Updating
          ------------------------- */
-  function updateTurn() {
+function updateTurn() {
+  // Reset dice-related states for the new turn.
   currentDiceRoll = 0;
   diceRolled = false;
 
-  const wasHumanTurn = (currentTurn === humanSide); // Save this before switching
+  // Hide both roll buttons until we decide which one to show.
+  rollDiceBtn.style.display = "none";
+  unusedRollBtn.style.display = "none";
 
-  // Show message before switching turn
-  if (!moveHistory[moveHistory.length - 1] || !moveHistory[moveHistory.length - 1].includes(`${currentTurn}'s Turn!`)) {
-    addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
-  }
-  showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
-
-  redrawPlayScreen();
-
-  // Delay update of the unused roll button until after redraw
-  if (wasHumanTurn && unusedRoll !== null && unusedRollOwner === humanSide) {
-    unusedRollBtn.style.display = "inline-block";
-    unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
+  // Check if the current player has an unused roll passed from the previous turn.
+  if (
+    unusedRoll !== null &&
+    unusedRollOwner === currentTurn &&
+    unusedRoll >= 1 && unusedRoll <= 6
+  ) {
+    // Inform with a temporary message.
+    showTemporaryMessage(currentTurn + " has an unused roll (" + unusedRoll + ")");
+    
+    // If it's the human player's turn, show the unused roll button.
+    if (currentTurn === humanSide) {
+      updateUnusedRollButton();  // This should display the "Use Unused Roll" button.
+    } else {
+      // For the AI, automatically use the unused roll after a 2-second delay.
+      aiTimeout = setTimeout(() => {
+        processDiceRoll(unusedRoll);
+        // Clear the unused roll since it's now been used.
+        unusedRoll = null;
+        unusedRollOwner = null;
+      }, 2000);
+    }
   } else {
-    unusedRollBtn.style.display = "none";
+    // No unused roll waiting, so proceed with a normal turn.
+    addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
+    showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
+    
+    if (currentTurn === humanSide) {
+      // Display the roll dice button for the human player.
+      rollDiceBtn.style.display = "inline-block";
+    } else {
+      // For the AI, initiate auto-roll after a short delay.
+      aiTimeout = setTimeout(aiAutoRoll, 2000);
+    }
   }
-
-if (aiTimeout) clearTimeout(aiTimeout);
-
-if (currentTurn !== humanSide) {
-  if (!attemptUnusedRoll()) {
-    aiTimeout = setTimeout(aiAutoRoll, 2000);
-  }
-} else if (unusedRoll !== null && unusedRollOwner === humanSide) {
-  updateUnusedRollButton();
+  redrawPlayScreen();
 }
-}
-updateUnusedRollButton(); // Force refresh of the unused roll button
+
 
 
       /* -------------------------
