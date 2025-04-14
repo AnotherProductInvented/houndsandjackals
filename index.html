@@ -582,6 +582,13 @@ function processDiceRoll(diceValue) {
         debugLog("redrawPlayScreen: complete");
       }
       function updateDiceRollDisplay() {
+  diceRollDisplayEl.textContent = `Dice: ${
+    (currentDiceRoll !== 0) ? currentDiceRoll :
+    (unusedRoll !== null && unusedRollOwner === currentTurn) ? unusedRoll : "-"
+  }`;
+  debugLog("updateDiceRollDisplay: currentDiceRoll = " + currentDiceRoll);
+}
+
         diceRollDisplayEl.textContent = `Dice: ${
   (currentDiceRoll !== 0) ? currentDiceRoll :
   (unusedRoll !== null && unusedRollOwner === currentTurn) ? unusedRoll : "-"
