@@ -582,7 +582,11 @@ function processDiceRoll(diceValue) {
         debugLog("redrawPlayScreen: complete");
       }
       function updateDiceRollDisplay() {
-        diceRollDisplayEl.textContent = `Dice: ${currentDiceRoll || "-"}`;
+        diceRollDisplayEl.textContent = `Dice: ${
+  (currentDiceRoll !== 0) ? currentDiceRoll :
+  (unusedRoll !== null && unusedRollOwner === currentTurn) ? unusedRoll : "-"
+}`;
+
         debugLog("updateDiceRollDisplay: currentDiceRoll = " + currentDiceRoll);
       }
       function addMoveToHistory(txt) {
@@ -653,11 +657,16 @@ function processDiceRoll(diceValue) {
     unusedRollBtn.style.display = "none";
   }
 
-  if (aiTimeout) clearTimeout(aiTimeout);
-  if (currentTurn !== humanSide && !attemptUnusedRoll()) {
+if (aiTimeout) clearTimeout(aiTimeout);
+
+if (currentTurn !== humanSide) {
+  if (!attemptUnusedRoll()) {
     aiTimeout = setTimeout(aiAutoRoll, 2000);
   }
+} else if (unusedRoll !== null && unusedRollOwner === humanSide) {
+  updateUnusedRollButton();
 }
+
 
 
       /* -------------------------
