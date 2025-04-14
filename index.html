@@ -236,7 +236,7 @@
   </div>
   <img id="logo" src="logo.png" alt="Logo">
   <script>
-    // Utility: Remove white background from images.
+    // Utility: Remove white background from an image.
     function removeWhiteBackground(image, callback) {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = image.width;
@@ -257,6 +257,7 @@
     }
 
     let aiTimeout = null;
+    let lastTurnReported = "";
 
     window.addEventListener("load", function() {
       const debugMode = true;
@@ -407,7 +408,6 @@
         let opts = getMoveOptions(rollValue, currentTurn);
         debugLog("processDiceRoll: legal moves count = " + opts.length);
         if (opts.length === 0) {
-          // If no legal moves, save the roll for the opponent.
           if (currentTurn === humanSide) {
             nextPlayer = "jackals";
             unusedRoll = rollValue;
@@ -544,11 +544,12 @@
         debugLog("updateDiceRollDisplay: currentDiceRoll = " + currentDiceRoll);
       }
       function addMoveToHistory(txt) {
-        // Avoid duplicate turn messages:
-        if (moveHistory.length && moveHistory[moveHistory.length - 1] === `${currentTurn}'s Turn! Roll dice...`) {
-          // Skip adding duplicate
-        } else {
+        // Only add a turn message if it is not the same as the last reported turn.
+        if (!txt.includes("Turn! Roll dice...") || lastTurnReported !== currentTurn) {
           moveHistory.push(txt);
+          if (txt.includes("Turn! Roll dice...")) {
+            lastTurnReported = currentTurn;
+          }
         }
         updateMoveHistoryDisplay();
         debugLog("addMoveToHistory: " + txt);
@@ -574,7 +575,6 @@
         unusedRoll = null;
         unusedRollOwner = null;
       });
-
       function attemptUnusedRoll() {
         if (unusedRoll !== null && unusedRollOwner === currentTurn && currentTurn !== humanSide) {
           debugLog("AI auto-using unused roll: " + unusedRoll);
@@ -593,8 +593,7 @@
         currentDiceRoll = 0;
         diceRolled = false;
         updateUnusedRollButton();
-        // Avoid adding duplicate turn messages:
-        if (!moveHistory[moveHistory.length - 1] || !moveHistory[moveHistory.length - 1].includes(`${currentTurn}'s Turn!`)) {
+        if (lastTurnReported !== currentTurn) {
           addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
         }
         showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
