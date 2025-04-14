@@ -423,6 +423,12 @@ jackalsImg.onload = () => {
         return roll;
       }
 function processDiceRoll(diceValue) {
+  if (diceValue < 1 || diceValue > 6) {
+  debugLog("processDiceRoll: invalid diceValue = " + diceValue);
+  showTemporaryMessage("Invalid dice roll!");
+  return;
+}
+
   // Ensure the diceValue is valid (between 1 and 6)
   let rollValue = guaranteedRoll(diceValue);
   debugLog("processDiceRoll: final rollValue = " + rollValue);
@@ -441,18 +447,24 @@ function processDiceRoll(diceValue) {
   if (opts.length === 0) {
     if (currentTurn === humanSide) {
       nextPlayer = "jackals";
-      if (rollValue > 0) {
-        unusedRoll = rollValue;
-        unusedRollOwner = nextPlayer;
-      }
+     if (rollValue >= 1 && rollValue <= 6) {
+  unusedRoll = rollValue;
+  unusedRollOwner = nextPlayer;
+} else {
+  debugLog("Attempted to assign invalid unused roll: " + rollValue);
+}
+
 
       addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
     } else {
       nextPlayer = "hounds";
-           if (rollValue > 0) {
-        unusedRoll = rollValue;
-        unusedRollOwner = nextPlayer;
-      }
+    if (rollValue >= 1 && rollValue <= 6) {
+  unusedRoll = rollValue;
+  unusedRollOwner = nextPlayer;
+} else {
+  debugLog("Attempted to assign invalid unused roll: " + rollValue);
+}
+
 
       addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
     }
