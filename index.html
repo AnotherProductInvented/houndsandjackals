@@ -873,12 +873,17 @@ if (currentTurn !== humanSide) {
   diceRolled = false;
   currentDiceRoll = 0;
 
-  if (usingUnused) {
-    unusedRoll = null;
-    unusedRollOwner = null;
-    updateUnusedRollButton();
-    updateTurn();
-  } else {
+if (usingUnused) {
+  unusedRoll = null;
+  unusedRollOwner = null;
+  updateUnusedRollButton();
+
+  // Allow player to roll again after using unused roll
+  diceRolled = false;
+  currentDiceRoll = 0;
+  redrawPlayScreen();
+}
+ else {
     if (extraTurn) {
       debugLog("tryMovePiece: extra turn granted, staying on current turn");
       extraTurn = false;
@@ -907,11 +912,15 @@ if (currentTurn !== humanSide) {
   currentDiceRoll = 0;
 
   if (usingUnused) {
-    unusedRoll = null;
-    unusedRollOwner = null;
-    updateUnusedRollButton();
-    updateTurn();
-  } else {
+  unusedRoll = null;
+  unusedRollOwner = null;
+  updateUnusedRollButton();
+
+  // Let the player roll again after using unused roll
+  diceRolled = false;
+  currentDiceRoll = 0;
+  redrawPlayScreen();
+} else {
     if (extraTurn) {
       debugLog("tryMovePiece: extra turn granted, staying on current turn");
       extraTurn = false;
