@@ -441,13 +441,19 @@ function processDiceRoll(diceValue) {
   if (opts.length === 0) {
     if (currentTurn === humanSide) {
       nextPlayer = "jackals";
-      unusedRoll = rollValue;
-      unusedRollOwner = nextPlayer;
+      if (rollValue > 0) {
+        unusedRoll = rollValue;
+        unusedRollOwner = nextPlayer;
+      }
+
       addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
     } else {
       nextPlayer = "hounds";
-      unusedRoll = rollValue;
-      unusedRollOwner = nextPlayer;
+           if (rollValue > 0) {
+        unusedRoll = rollValue;
+        unusedRollOwner = nextPlayer;
+      }
+
       addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
     }
     updateUnusedRollButton();
@@ -608,11 +614,22 @@ function processDiceRoll(diceValue) {
         }
       }
       unusedRollBtn.addEventListener("click", function() {
-        debugLog("unusedRollBtn clicked. Using unused roll: " + unusedRoll);
-        processDiceRoll(unusedRoll);
-        unusedRoll = null;
-        unusedRollOwner = null;
-      });
+  debugLog("unusedRollBtn clicked. Using unused roll: " + unusedRoll);
+  processDiceRoll(unusedRoll);
+diceRolled = false;
+
+  // Don't clear turn yet; allow player to roll again after using the unused roll
+  // But we do want to prevent reusing it
+  unusedRoll = null;
+  unusedRollOwner = null;
+
+  // Re-enable roll dice button for human player if turn didn't change
+  if (currentTurn === humanSide) {
+    updateUnusedRollButton();
+    rollDiceBtn.style.display = "inline-block";
+  }
+});
+
       function attemptUnusedRoll() {
         if (unusedRoll !== null && unusedRollOwner === currentTurn && currentTurn !== humanSide) {
           debugLog("AI auto-using unused roll: " + unusedRoll);
