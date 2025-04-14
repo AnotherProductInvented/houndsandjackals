@@ -850,33 +850,34 @@ if (currentTurn !== humanSide) {
         if (pieces[pieceIndex] === -1) {
           // Release move requires a 6.
           if (rollUsed === 6 && canLandOn(0, color)) {
-            debugLog("tryMovePiece: legal release move for piece " + pieceIndex);
-            executeMove(pieceIndex, 0, color);
-            addMoveToHistory(`${color} placed piece on board using roll of ${rollUsed}.`);
-            diceRolled = false;
-            currentDiceRoll = 0;
-            extraTurn = false;
-            if (usingUnused) {
-              unusedRoll = null;
-              unusedRollOwner = null;
-              updateUnusedRollButton();
-              updateTurn();
-            } else {
-              if (extraTurn) {
-  debugLog("tryMovePiece: extra turn granted, staying on current turn");
-  extraTurn = false;
-  updateTurn(); // Optional: re-show turn message
+  debugLog("tryMovePiece: legal release move for piece " + pieceIndex);
+  executeMove(pieceIndex, 0, color);
+  addMoveToHistory(`${color} placed piece on board using roll of ${rollUsed}.`);
+  diceRolled = false;
+  currentDiceRoll = 0;
+
+  if (usingUnused) {
+    unusedRoll = null;
+    unusedRollOwner = null;
+    updateUnusedRollButton();
+    updateTurn();
+  } else {
+    if (extraTurn) {
+      debugLog("tryMovePiece: extra turn granted, staying on current turn");
+      extraTurn = false;
+      updateTurn(); // Optional
+    } else {
+      currentTurn = (currentTurn === "hounds") ? "jackals" : "hounds";
+      updateTurn();
+    }
+  }
+
+  redrawPlayScreen();
 } else {
-  currentTurn = (currentTurn === "hounds") ? "jackals" : "hounds";
-  updateTurn();
+  showTemporaryMessage("Cannot place piece! Need a 6.");
+  debugLog("tryMovePiece: illegal release move, rollUsed = " + rollUsed);
 }
 
-            }
-            redrawPlayScreen();
-          } else {
-            showTemporaryMessage("Cannot place piece! Need a 6.");
-            debugLog("tryMovePiece: illegal release move, rollUsed = " + rollUsed);
-          }
           return;
         }
         let opts = getMoveOptions(rollUsed, color);
