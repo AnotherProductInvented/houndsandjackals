@@ -281,6 +281,14 @@
       const customDiceInput = document.getElementById("customDiceInput");
       const setCustomDiceBtn = document.getElementById("setCustomDiceBtn");
       const copyHistoryBtn = document.getElementById("copyHistoryBtn");
+      
+unusedRollBtn.addEventListener("click", function() {
+  debugLog("unusedRollBtn clicked. Using unused roll: " + unusedRoll);
+  // Process the unused roll after ensuring it is valid.
+  processDiceRoll(guaranteedRoll(unusedRoll));
+  unusedRoll = null;
+  unusedRollOwner = null;
+});
 
       copyHistoryBtn.addEventListener("click", () => {
         const historyText = moveHistoryDiv.innerText;
@@ -397,39 +405,42 @@
         debugLog("rollDice: rolled " + roll);
         return roll;
       }
-      function processDiceRoll(diceValue) {
-        // Ensure a valid roll (non-zero)
-        if (!diceValue || diceValue <= 0) {
-          diceValue = rollDice();
-        }
-        debugLog("processDiceRoll: starting with value " + diceValue);
-        const rollValue = diceValue;  // Preserve the roll value
-        currentDiceRoll = rollValue;
-        diceRolled = true;
-        addMoveToHistory(`${currentTurn} rolled ${rollValue}`);
-        showTemporaryMessage(`${currentTurn} rolled ${rollValue}`);
-        redrawPlayScreen();
-        let opts = getMoveOptions(rollValue, currentTurn);
-        debugLog("processDiceRoll: legal moves count = " + opts.length);
-        if (opts.length === 0) {
-          if (currentTurn === humanSide) {
-            nextPlayer = "jackals";
-            unusedRoll = rollValue;
-            unusedRollOwner = nextPlayer;
-            addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
-          } else {
-            nextPlayer = "hounds";
-            unusedRoll = rollValue;
-            unusedRollOwner = nextPlayer;
-            addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
-          }
-          diceRolled = false;
-          currentDiceRoll = 0;
-          currentTurn = nextPlayer;
-          updateTurn();
-          return;
-        }
-      }
+function processDiceRoll(diceValue) {
+  // Ensure the diceValue is valid (between 1 and 6)
+  let rollValue = guaranteedRoll(diceValue);
+  debugLog("processDiceRoll: final rollValue = " + rollValue);
+
+  currentDiceRoll = rollValue;
+  diceRolled = true;
+  addMoveToHistory(`${currentTurn} rolled ${rollValue}`);
+  showTemporaryMessage(`${currentTurn} rolled ${rollValue}`);
+  redrawPlayScreen();
+
+  // Get legal moves for this roll.
+  let opts = getMoveOptions(rollValue, currentTurn);
+  debugLog("processDiceRoll: legal moves count = " + opts.length);
+
+  // If no legal moves, pass the roll as an unused roll to the opponent.
+  if (opts.length === 0) {
+    if (currentTurn === humanSide) {
+      nextPlayer = "jackals";
+      unusedRoll = rollValue;
+      unusedRollOwner = nextPlayer;
+      addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
+    } else {
+      nextPlayer = "hounds";
+      unusedRoll = rollValue;
+      unusedRollOwner = nextPlayer;
+      addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
+    }
+    diceRolled = false;
+    currentDiceRoll = 0;
+    currentTurn = nextPlayer;
+    updateTurn();
+    return;
+  }
+}
+
 
       /* -------------------------
          Drawing Functions
