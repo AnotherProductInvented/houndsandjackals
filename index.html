@@ -862,7 +862,15 @@ if (currentTurn !== humanSide) {
               updateUnusedRollButton();
               updateTurn();
             } else {
-              completeMove(false);
+              if (extraTurn) {
+  debugLog("tryMovePiece: extra turn granted, staying on current turn");
+  extraTurn = false;
+  updateTurn(); // Optional: re-show turn message
+} else {
+  currentTurn = (currentTurn === "hounds") ? "jackals" : "hounds";
+  updateTurn();
+}
+
             }
             redrawPlayScreen();
           } else {
@@ -873,28 +881,31 @@ if (currentTurn !== humanSide) {
         }
         let opts = getMoveOptions(rollUsed, color);
         let moveOpt = opts.find(o => o.pieceIndex === pieceIndex);
-        if (moveOpt) {
-          debugLog("tryMovePiece: legal move for piece " + pieceIndex);
-          executeMove(pieceIndex, moveOpt.toPos, color);
-          addMoveToHistory(`${color} moved with roll (${rollUsed}).`);
-          diceRolled = false;
-          currentDiceRoll = 0;
-          extraTurn = false;
+       if (moveOpt) {
+  debugLog("tryMovePiece: legal move for piece " + pieceIndex);
+  executeMove(pieceIndex, moveOpt.toPos, color);
+  addMoveToHistory(`${color} moved with roll (${rollUsed}).`);
+  diceRolled = false;
+  currentDiceRoll = 0;
 
-          if (usingUnused) {
-            unusedRoll = null;
-            unusedRollOwner = null;
-            updateUnusedRollButton();
-            updateTurn();
-          } else {
-            completeMove(false);
-          }
-          redrawPlayScreen();
-        } else {
-          showTemporaryMessage("Illegal move with this roll!");
-          debugLog("tryMovePiece: piece " + pieceIndex + " cannot move with roll " + rollUsed);
-        }
-      }
+  if (usingUnused) {
+    unusedRoll = null;
+    unusedRollOwner = null;
+    updateUnusedRollButton();
+    updateTurn();
+  } else {
+    if (extraTurn) {
+      debugLog("tryMovePiece: extra turn granted, staying on current turn");
+      extraTurn = false;
+      updateTurn(); // or just redrawPlayScreen if you don't want the message again
+    } else {
+      currentTurn = (currentTurn === "hounds") ? "jackals" : "hounds";
+      updateTurn();
+    }
+  }
+  redrawPlayScreen();
+}
+
 
       /* -------------------------
          AI Functions
@@ -912,14 +923,15 @@ if (currentTurn !== humanSide) {
         let rollVal = rollDice();
         processDiceRoll(rollVal);
         setTimeout(() => aiMakeMove(() => {
-          if (extraTurn) {
-            debugLog("aiAutoRoll: extra turn granted.");
-            extraTurn = false;
-            completeMove(false);
-          } else {
-            currentTurn = "hounds";
-            updateTurn();
-          }
+        if (extraTurn) {
+  debugLog("aiAutoRoll: extra turn granted, staying on AI turn.");
+  extraTurn = false;
+  updateTurn();  // Show message and re-roll
+} else {
+  currentTurn = "hounds";
+  updateTurn();
+}
+
         }), 2000);
       }
       function aiMakeMove(callback = null) {
