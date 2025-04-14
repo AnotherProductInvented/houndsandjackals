@@ -728,19 +728,21 @@ if (currentTurn !== humanSide) {
         debugLog(`getMoveOptions: calculating options for ${color} with dice ${diceValue}`);
         let opts = [];
         let own = (color === "hounds") ? houndsPieces : jackalsPieces;
-        for (let i = 0; i < own.length; i++) {
-          let pos = own[i];
-          let label = (color === "hounds") ? boardPathHounds[pos] : boardPathJackals[pos];
-          if ((color === "hounds" && ["B6","B7","B8","B9","B10"].includes(label)) ||
-              (color === "jackals" && ["C6","C7","C8","C9"].includes(label)))
-            continue;
-          let newPos = getValidMove(pos, diceValue, color);
-          if (newPos === null || !canLandOn(newPos, color)) continue;
-          opts.push({ pieceIndex: i, fromPos: pos, toPos: newPos });
-        }
-        debugLog("getMoveOptions: options for " + color + " = " + JSON.stringify(opts));
-        return opts;
-      }
+  for (let i = 0; i < own.length; i++) {
+    let pos = own[i];
+    let newPos = getValidMove(pos, diceValue, color);
+    if (newPos === null || !canLandOn(newPos, color)) continue;
+
+    let label = (color === "hounds") ? boardPathHounds[newPos] : boardPathJackals[newPos];
+    if ((color === "hounds" && ["B6","B7","B8","B9","B10"].includes(label)) ||
+        (color === "jackals" && ["C6","C7","C8","C9"].includes(label)))
+      continue;
+
+    opts.push({ pieceIndex: i, fromPos: pos, toPos: newPos });
+  }
+  return opts;
+}
+
       function executeMove(pieceIndex, toPos, color) {
         debugLog(`executeMove: moving ${color} piece #${pieceIndex} to ${toPos}`);
         try {
