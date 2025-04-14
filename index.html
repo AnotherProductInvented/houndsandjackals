@@ -617,14 +617,21 @@ function processDiceRoll(diceValue) {
       /* -------------------------
          Unused Roll Handling
          ------------------------- */
-      function updateUnusedRollButton() {
-        if (gameState === "playing" && currentTurn === humanSide && unusedRoll !== null && unusedRollOwner === humanSide) {
-          unusedRollBtn.style.display = "inline-block";
-          unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
-        } else {
-          unusedRollBtn.style.display = "none";
-        }
-      }
+ function updateUnusedRollButton() {
+  if (
+    gameState === "playing" &&
+    currentTurn === humanSide &&
+    unusedRoll !== null &&
+    unusedRollOwner === humanSide &&
+    unusedRoll >= 1 && unusedRoll <= 6
+  ) {
+    unusedRollBtn.style.display = "inline-block";
+    unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
+  } else {
+    unusedRollBtn.style.display = "none";
+  }
+}
+
       unusedRollBtn.addEventListener("click", function() {
   debugLog("unusedRollBtn clicked. Using unused roll: " + unusedRoll);
   processDiceRoll(unusedRoll);
