@@ -855,6 +855,7 @@ if (currentTurn !== humanSide) {
             addMoveToHistory(`${color} placed piece on board using roll of ${rollUsed}.`);
             diceRolled = false;
             currentDiceRoll = 0;
+            extraTurn = false;
             if (usingUnused) {
               unusedRoll = null;
               unusedRollOwner = null;
@@ -878,6 +879,8 @@ if (currentTurn !== humanSide) {
           addMoveToHistory(`${color} moved with roll (${rollUsed}).`);
           diceRolled = false;
           currentDiceRoll = 0;
+          extraTurn = false;
+
           if (usingUnused) {
             unusedRoll = null;
             unusedRollOwner = null;
