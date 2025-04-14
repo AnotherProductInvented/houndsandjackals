@@ -292,14 +292,6 @@ instructionsNextBtn.onclick = () => {
       const setCustomDiceBtn = document.getElementById("setCustomDiceBtn");
       const copyHistoryBtn = document.getElementById("copyHistoryBtn");
       
-unusedRollBtn.addEventListener("click", function() {
-  debugLog("unusedRollBtn clicked. Using unused roll: " + unusedRoll);
-  // Process the unused roll after ensuring it is valid.
-  processDiceRoll(guaranteedRoll(unusedRoll));
-  unusedRoll = null;
-  unusedRollOwner = null;
-});
-
       copyHistoryBtn.addEventListener("click", () => {
         const historyText = moveHistoryDiv.innerText;
         navigator.clipboard.writeText(historyText)
