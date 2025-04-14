@@ -458,6 +458,8 @@ function processDiceRoll(diceValue) {
       unusedRollOwner = nextPlayer;
       addMoveToHistory(`${currentTurn} has no legal moves; roll (${rollValue}) passed to ${nextPlayer}.`);
     }
+    updateUnusedRollButton();
+
     diceRolled = false;
     currentDiceRoll = 0;
     currentTurn = nextPlayer;
