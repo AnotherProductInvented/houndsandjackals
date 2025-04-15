@@ -662,30 +662,6 @@ function processDiceRoll(diceValue) {
   }
 }
 
-  // Don't change anything if we're already showing the buttons
-  if (unusedRollBtn.style.display === "inline-block" || ignoreUnusedRollBtn.style.display === "inline-block") {
-    return;
-  }
-
-  // Show only if it's the human's turn and a valid unused roll exists
-  const shouldShow = (
-    gameState === "playing" &&
-    currentTurn === humanSide &&
-    unusedRoll !== null &&
-    unusedRollOwner === humanSide &&
-    unusedRoll >= 1 && unusedRoll <= 6
-  );
-
-  if (shouldShow) {
-    unusedRollBtn.style.display = "inline-block";
-    unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
-    ignoreUnusedRollBtn.style.display = "inline-block";
-  } else {
-    unusedRollBtn.style.display = "none";
-    ignoreUnusedRollBtn.style.display = "none";
-  }
-}
-
 
 
       function attemptUnusedRoll() {
