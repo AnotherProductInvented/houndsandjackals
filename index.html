@@ -632,7 +632,36 @@ function processDiceRoll(diceValue) {
       /* -------------------------
          Unused Roll Handling
          ------------------------- */
-function updateUnusedRollButton() {
+  function updateUnusedRollButton() {
+  console.log("[BUTTON-CHECK] updateUnusedRollButton called. Turn:", currentTurn, "Owner:", unusedRollOwner, "Roll:", unusedRoll);
+
+  if (unusedRollBtn.style.display === "inline-block" || ignoreUnusedRollBtn.style.display === "inline-block") {
+    console.log("[BUTTON-CHECK] Already visible, skipping");
+    return;
+  }
+
+  const shouldShow = (
+    gameState === "playing" &&
+    currentTurn === humanSide &&
+    unusedRoll !== null &&
+    unusedRollOwner === humanSide &&
+    unusedRoll >= 1 && unusedRoll <= 6
+  );
+
+  console.log("[BUTTON-CHECK] shouldShow =", shouldShow);
+
+  if (shouldShow) {
+    console.log("[BUTTON-CHECK] >>> Showing buttons");
+    unusedRollBtn.style.display = "inline-block";
+    unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
+    ignoreUnusedRollBtn.style.display = "inline-block";
+  } else {
+    console.log("[BUTTON-CHECK] >>> Hiding buttons");
+    unusedRollBtn.style.display = "none";
+    ignoreUnusedRollBtn.style.display = "none";
+  }
+}
+
   // Don't change anything if we're already showing the buttons
   if (unusedRollBtn.style.display === "inline-block" || ignoreUnusedRollBtn.style.display === "inline-block") {
     return;
