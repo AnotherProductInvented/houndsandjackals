@@ -1230,6 +1230,7 @@ if (usingUnused) {
       function mainLoop() {
         if (gameState === "playing") {
           redrawPlayScreen();
+          updateUnusedRollButton();
           rollDiceBtn.style.display = (currentTurn === humanSide) ? "inline-block" : "none";
         }
         requestAnimationFrame(mainLoop);
