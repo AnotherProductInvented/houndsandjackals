@@ -633,37 +633,27 @@ function processDiceRoll(diceValue) {
       /* -------------------------
          Unused Roll Handling
          ------------------------- */
- function updateUnusedRollButton() {
-  if (
+function updateUnusedRollButton() {
+  // Only show if it's the human turn and they have an unused roll
+  const shouldShow = (
     gameState === "playing" &&
     currentTurn === humanSide &&
     unusedRoll !== null &&
     unusedRollOwner === humanSide &&
     unusedRoll >= 1 && unusedRoll <= 6
-  ) {
+  );
+
+  // Only update if the button is not already manually visible
+  if (shouldShow) {
     unusedRollBtn.style.display = "inline-block";
     unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
-  } else {
+    ignoreUnusedRollBtn.style.display = "inline-block";
+  } else if (unusedRollBtn.style.display !== "inline-block" && ignoreUnusedRollBtn.style.display !== "inline-block") {
     unusedRollBtn.style.display = "none";
+    ignoreUnusedRollBtn.style.display = "none";
   }
 }
 
-      unusedRollBtn.addEventListener("click", function() {
-  debugLog("unusedRollBtn clicked. Using unused roll: " + unusedRoll);
-  processDiceRoll(unusedRoll);
-diceRolled = false;
-
-  // Don't clear turn yet; allow player to roll again after using the unused roll
-  // But we do want to prevent reusing it
-  unusedRoll = null;
-  unusedRollOwner = null;
-
-  // Re-enable roll dice button for human player if turn didn't change
-  if (currentTurn === humanSide) {
-    updateUnusedRollButton();
-    rollDiceBtn.style.display = "inline-block";
-  }
-});
 
       function attemptUnusedRoll() {
         if (unusedRoll !== null && unusedRollOwner === currentTurn && currentTurn !== humanSide) {
