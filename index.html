@@ -635,10 +635,6 @@ function processDiceRoll(diceValue) {
   function updateUnusedRollButton() {
   console.log("[BUTTON-CHECK] updateUnusedRollButton called. Turn:", currentTurn, "Owner:", unusedRollOwner, "Roll:", unusedRoll);
 
-  if (unusedRollBtn.style.display === "inline-block" || ignoreUnusedRollBtn.style.display === "inline-block") {
-    console.log("[BUTTON-CHECK] Already visible, skipping");
-    return;
-  }
 
   const shouldShow = (
     gameState === "playing" &&
