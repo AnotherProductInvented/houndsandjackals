@@ -697,12 +697,8 @@ function updateTurn() {
     addMoveToHistory(`${currentTurn} has an unused roll (${unusedRoll}) available.`);
     showTemporaryMessage(`${currentTurn} has an unused roll (${unusedRoll}) available.`);
     
-    // Show both the "Use Unused Roll" and the "Ignore Unused Roll" buttons.
-    unusedRollBtn.style.display = "inline-block";
-    unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
-    
-    ignoreUnusedRollBtn.style.display = "inline-block";
-    ignoreUnusedRollBtn.textContent = "Ignore Unused Roll";
+      updateUnusedRollButton();
+
     
     // For the AI, if no decision is made within 6 seconds, auto-ignore the roll.
     if (currentTurn !== humanSide) {
@@ -729,6 +725,8 @@ function updateTurn() {
   
   redrawPlayScreen();
 }
+        updateUnusedRollButton();
+
 
       /* -------------------------
          Tray and Off-Board Updates
