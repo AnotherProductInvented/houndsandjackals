@@ -719,9 +719,9 @@ function updateTurn() {
     }
   }
   
-  redrawPlayScreen();
+  redrawPlayScreen();          // ✅ inside
+  updateUnusedRollButton();    // ✅ inside, runs after redraw
 }
-        updateUnusedRollButton();
 
 
       /* -------------------------
