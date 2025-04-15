@@ -190,6 +190,8 @@
       <div id="diceRollDisplay">Dice: -</div>
       <button id="rollDiceBtn">Roll Dice</button>
       <button id="unusedRollBtn">Use Unused Roll</button>
+<button id="ignoreUnusedRollBtn" style="display: none;">Ignore Unused Roll</button>
+
       <input type="number" id="customDiceInput" min="1" max="6" placeholder="Set Dice (1-6)">
       <button id="setCustomDiceBtn">Use Custom Dice</button>
       <div id="releaseControls">
@@ -282,6 +284,20 @@
   currentInstructionsPage--;
   updateInstructions();
 };
+      const ignoreUnusedRollBtn = document.getElementById("ignoreUnusedRollBtn");
+
+ignoreUnusedRollBtn.addEventListener("click", function() {
+  debugLog("ignoreUnusedRollBtn clicked. Ignoring unused roll: " + unusedRoll);
+  // Clear the unused roll values.
+  unusedRoll = null;
+  unusedRollOwner = null;
+  // Hide both the Use and Ignore buttons.
+  unusedRollBtn.style.display = "none";
+  ignoreUnusedRollBtn.style.display = "none";
+  // Continue with a normal turn.
+  updateTurn();
+});
+
 
 instructionsNextBtn.onclick = () => {
   currentInstructionsPage++;
@@ -668,52 +684,52 @@ function updateTurn() {
   currentDiceRoll = 0;
   diceRolled = false;
   
-  // Hide both buttons initially.
+  // Hide all roll-related buttons.
   rollDiceBtn.style.display = "none";
   unusedRollBtn.style.display = "none";
+  ignoreUnusedRollBtn.style.display = "none";
   
-  // If the new currentTurn has an unused roll passed from the previous turn…
+  // Check if the current player has an unused roll from the previous turn.
   if (
     unusedRoll !== null &&
     unusedRollOwner === currentTurn &&
     unusedRoll >= 1 && unusedRoll <= 6
   ) {
-    // Log and display that an unused roll is available.
     addMoveToHistory(`${currentTurn} has an unused roll (${unusedRoll}) available.`);
     showTemporaryMessage(`${currentTurn} has an unused roll (${unusedRoll}) available.`);
     
-    // Display the "Use Unused Roll" button with the passed roll value.
+    // Show both the "Use Unused Roll" and the "Ignore Unused Roll" buttons.
     unusedRollBtn.style.display = "inline-block";
     unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
     
-    // For the AI, if not acted upon, auto–use it after a delay.
+    ignoreUnusedRollBtn.style.display = "inline-block";
+    ignoreUnusedRollBtn.textContent = "Ignore Unused Roll";
+    
+    // For the AI, if no decision is made within 6 seconds, auto-ignore the roll.
     if (currentTurn !== humanSide) {
       aiTimeout = setTimeout(() => {
-        processDiceRoll(unusedRoll);
-        // Clear the unused roll since it’s been used.
+        debugLog("AI auto-ignores the unused roll: " + unusedRoll);
         unusedRoll = null;
         unusedRollOwner = null;
-      }, 4000);  // 4 seconds delay (adjust if needed)
+        unusedRollBtn.style.display = "none";
+        ignoreUnusedRollBtn.style.display = "none";
+        updateTurn(); // Proceed with a normal turn.
+      }, 6000);  // 6 seconds delay (adjust as needed)
     }
   } else {
-    // No unused roll is pending; proceed normally.
+    // No unused roll available; proceed with a normal turn.
     addMoveToHistory(`${currentTurn}'s Turn! Roll dice...`);
     showTemporaryMessage(`${currentTurn}'s Turn! Roll dice...`);
     
     if (currentTurn === humanSide) {
-      // For human, show the normal Roll Dice button.
       rollDiceBtn.style.display = "inline-block";
     } else {
-      // For the AI, auto-roll after a 2-second delay.
       aiTimeout = setTimeout(aiAutoRoll, 2000);
     }
   }
   
   redrawPlayScreen();
 }
-
-
-
 
       /* -------------------------
          Tray and Off-Board Updates
