@@ -251,12 +251,12 @@
       newImage.onload = () => callback(newImage);
     }
 
-    // ─── GLOBAL VARIABLES & NEW TURN STATES ─────────────
-    // Instead of using currentTurn with only two options,
-    // we now use turnState with four possibilities:
+    // ─── GLOBAL VARIABLES & TURN STATES ─────────────
+    // We now use a turnState variable that can be one of:
     // "hounds", "hounds_unused", "jackals", "jackals_unused"
+    // The human always plays as hounds.
     let turnState = "hounds";
-    const humanSide = "hounds";  // Human always plays as hounds.
+    const humanSide = "hounds";  
     let aiDifficulty = "medium";
     let currentDiceRoll = 0;
     let diceRolled = false;
@@ -268,10 +268,9 @@
     let lastTurnReported = "";
     let unusedRoll = null;
     let unusedRollOwner = null;
-    let aiTimeout = null;
-    
-    // ─── GAME INITIALIZATION & BOARD SETUP ───────────────
-    // (Board setup code remains the same.)
+    // (We remove auto-playing by not using any timeouts for AI moves.)
+
+    // ─── BOARD SETUP ───────────────────────────────────────
     const boardPath = [];
     const boardSquares = {};
     const boardPathHounds = ["E5","E6","E7","E8","E9",
@@ -281,7 +280,7 @@
           "A15","A14","A13","A12","A11","A10","A9","A8","A7","A6","A5","A4","A3","A2","A1",
           "B1","B2","B3","B4","B5","B6","B7","B8","B9","B10"];
     const SLOT_RADIUS = 7, SLOT_SPACING = 44, START_X = 40, START_Y = 100;
-    
+
     for (let i = 1; i <= 15; i++) {
       boardSquares[`A${i}`] = { x: START_X + (i - 1) * SLOT_SPACING, y: START_Y };
       boardPath.push(`A${i}`);
@@ -314,27 +313,27 @@
       boardSquares[`E${i + 1}`] = archCenters[i];
       boardPath.push(`E${i + 1}`);
     }
-    
-    // ─── PIECE IMAGES ─────────────────────────────────────────────
+
+    // ─── PIECE IMAGES ─────────────────────────────────────
     let houndsImg = new Image();
     let jackalsImg = new Image();
     houndsImg.src = "hounds.png";
     jackalsImg.src = "jackals.png";
-    
+
     houndsImg.onload = () => {
       removeWhiteBackground(houndsImg, (cleaned) => {
-          houndsImg = cleaned;
-          if (jackalsImg.complete) prepareTrayImages(() => redrawPlayScreen());
+        houndsImg = cleaned;
+        if (jackalsImg.complete) prepareTrayImages(() => redrawPlayScreen());
       });
     };
     jackalsImg.onload = () => {
       removeWhiteBackground(jackalsImg, (cleaned) => {
-          jackalsImg = cleaned;
-          if (houndsImg.complete) prepareTrayImages(() => redrawPlayScreen());
+        jackalsImg = cleaned;
+        if (houndsImg.complete) prepareTrayImages(() => redrawPlayScreen());
       });
     };
-    
-    // ─── INITIALIZATION FUNCTION ───────────────────────────────────
+
+    // ─── INITIALIZATION FUNCTIONS ─────────────────────────
     function initPieces() {
       houndsPieces = Array(NUM_PIECES).fill(-1);
       jackalsPieces = Array(NUM_PIECES).fill(-1);
@@ -344,8 +343,8 @@
       updateTrays();
       updateOffBoardCounts();
     }
-    
-    // ─── DICE & UNUSED ROLL LOGIC ─────────────────────────────────
+
+    // ─── DICE & UNUSED ROLL LOGIC ─────────────────────────
     function rollDice() {
       const roll = Math.floor(Math.random() * 6) + 1;
       debugLog("rollDice: rolled " + roll);
@@ -354,9 +353,9 @@
     
     function processDiceRoll(diceValue) {
       if (diceValue < 1 || diceValue > 6) {
-          debugLog("processDiceRoll: invalid diceValue = " + diceValue);
-          showTemporaryMessage("Invalid dice roll!");
-          return;
+        debugLog("processDiceRoll: invalid diceValue = " + diceValue);
+        showTemporaryMessage("Invalid dice roll!");
+        return;
       }
       const rollValue = guaranteedRoll(diceValue);
       debugLog("processDiceRoll: final rollValue = " + rollValue);
@@ -366,68 +365,69 @@
       showTemporaryMessage(`${turnState} rolled ${rollValue}`);
       redrawPlayScreen();
       
-      // Determine legal moves.
-      let opts = getMoveOptions(rollValue, turnState.replace("_unused",""));
+      // Determine legal moves for the current (normal) side.
+      // We strip the "_unused" suffix (if present) for move legality.
+      let opts = getMoveOptions(rollValue, turnState.replace("_unused", ""));
       debugLog("processDiceRoll: legal moves count = " + opts.length);
       if (opts.length === 0) {
-          // If no legal moves, switch to opponent's unused state.
-          if (turnState === "hounds") {
-              turnState = "jackals_unused";
-              unusedRoll = rollValue;
-              unusedRollOwner = turnState;
-          } else if (turnState === "jackals") {
-              turnState = "hounds_unused";
-              unusedRoll = rollValue;
-              unusedRollOwner = turnState;
-          } else {
-              // If already in an unused state and still no moves, just clear the unused roll
-              unusedRoll = null;
-              unusedRollOwner = null;
-              // And go to the opponent's normal state.
-              turnState = (turnState === "hounds_unused") ? "jackals" : "hounds";
-          }
-          addMoveToHistory(`${turnState} turn (unused) due to no legal moves.`);
-          updateTurn();
-          return;
+        // No legal moves → switch to opponent's unused state.
+        if (turnState === "hounds") {
+          turnState = "jackals_unused";
+          unusedRoll = rollValue;
+          unusedRollOwner = turnState;
+        } else if (turnState === "jackals") {
+          turnState = "hounds_unused";
+          unusedRoll = rollValue;
+          unusedRollOwner = turnState;
+        } else {
+          // If already in an unused state but still no moves, clear unused and
+          // switch to the opponent’s normal state.
+          unusedRoll = null;
+          unusedRollOwner = null;
+          turnState = (turnState === "hounds_unused") ? "jackals" : "hounds";
+        }
+        addMoveToHistory(`Switching to ${turnState} state due to no legal moves.`);
+        updateTurn();
+        return;
       }
     }
-    
-    // ─── DRAWING FUNCTIONS ─────────────────────────────────────────
+
+    // ─── DRAWING FUNCTIONS ───────────────────────────────────
     function drawBoard() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       Object.entries(boardSquares).forEach(([label, sq]) => {
-          ctx.beginPath();
-          ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
-          let grad;
-          if (["B6", "B7", "B8", "B9", "B10"].includes(label)) {
-              grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-              grad.addColorStop(0, "#aad4ff");
-              grad.addColorStop(1, "#005fa3");
-          } else if (["C6", "C7", "C8", "C9", "C10"].includes(label)) {
-              grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-              grad.addColorStop(0, "#aaf0aa");
-              grad.addColorStop(1, "#007a3d");
-          } else {
-              grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
-              grad.addColorStop(0, "#fcebbd");
-              grad.addColorStop(1, "#b38b4d");
-          }
-          ctx.fillStyle = grad;
-          ctx.fill();
-          ctx.strokeStyle = "#6b4e2e";
-          ctx.lineWidth = 3;
-          ctx.stroke();
-          ctx.fillStyle = "#000";
-          ctx.font = "12px Arial";
-          ctx.fillText(label, sq.x, sq.y - 18);
+        ctx.beginPath();
+        ctx.arc(sq.x, sq.y, SLOT_RADIUS, 0, Math.PI * 2);
+        let grad;
+        if (["B6","B7","B8","B9","B10"].includes(label)) {
+          grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
+          grad.addColorStop(0, "#aad4ff");
+          grad.addColorStop(1, "#005fa3");
+        } else if (["C6","C7","C8","C9","C10"].includes(label)) {
+          grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
+          grad.addColorStop(0, "#aaf0aa");
+          grad.addColorStop(1, "#007a3d");
+        } else {
+          grad = ctx.createRadialGradient(sq.x, sq.y, 5, sq.x, sq.y, SLOT_RADIUS);
+          grad.addColorStop(0, "#fcebbd");
+          grad.addColorStop(1, "#b38b4d");
+        }
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.strokeStyle = "#6b4e2e";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = "#000";
+        ctx.font = "12px Arial";
+        ctx.fillText(label, sq.x, sq.y - 18);
       });
       ["A5", "A15", "D5", "D15", "E5"].forEach(label => {
-          const sq = boardSquares[label];
-          ctx.beginPath();
-          ctx.arc(sq.x, sq.y, SLOT_RADIUS + 3, 0, Math.PI * 2);
-          ctx.lineWidth = 3;
-          ctx.strokeStyle = "#8b0000";
-          ctx.stroke();
+        const sq = boardSquares[label];
+        ctx.beginPath();
+        ctx.arc(sq.x, sq.y, SLOT_RADIUS + 3, 0, Math.PI * 2);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#8b0000";
+        ctx.stroke();
       });
       drawDoubleArrow(boardSquares["A10"], boardSquares["B5"], "between");
       drawDoubleArrow(boardSquares["D10"], boardSquares["C5"], "between");
@@ -438,12 +438,12 @@
     function drawDoubleArrow(from, to, direction = "above") {
       let midX = (from.x + to.x) / 2, midY;
       if (direction === "above") {
-          midY = (from.y + to.y) / 2 - SLOT_SPACING * 0.75;
+        midY = (from.y + to.y) / 2 - SLOT_SPACING * 0.75;
       } else if (direction === "below") {
-          midY = (from.y + to.y) / 2 + SLOT_SPACING * 0.75;
+        midY = (from.y + to.y) / 2 + SLOT_SPACING * 0.75;
       } else if (direction === "between") {
-          midY = (from.y + to.y) / 2;
-          midX += (from.x < to.x ? SLOT_SPACING * 0.9 : -SLOT_SPACING * 0.9);
+        midY = (from.y + to.y) / 2;
+        midX += (from.x < to.x ? SLOT_SPACING * 0.9 : -SLOT_SPACING * 0.9);
       }
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
@@ -452,21 +452,21 @@
       ctx.lineWidth = 2;
       ctx.stroke();
       function drawArrowhead(x, y, angle) {
-          const len = 10;
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x - len * Math.cos(angle - Math.PI/6),
-                     y - len * Math.sin(angle - Math.PI/6));
-          ctx.lineTo(x - len * Math.cos(angle + Math.PI/6),
-                     y - len * Math.sin(angle + Math.PI/6));
-          ctx.closePath();
-          ctx.fillStyle = "#000";
-          ctx.fill();
+        const len = 10;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - len * Math.cos(angle - Math.PI/6),
+                   y - len * Math.sin(angle - Math.PI/6));
+        ctx.lineTo(x - len * Math.cos(angle + Math.PI/6),
+                   y - len * Math.sin(angle + Math.PI/6));
+        ctx.closePath();
+        ctx.fillStyle = "#000";
+        ctx.fill();
       }
       function getCurveAngle(x0, y0, cx, cy, x1, y1, t = 0.99) {
-          const dx = 2 * (1 - t) * (cx - x0) + 2 * t * (x1 - cx);
-          const dy = 2 * (1 - t) * (cy - y0) + 2 * t * (y1 - cy);
-          return Math.atan2(dy, dx);
+        const dx = 2 * (1 - t) * (cx - x0) + 2 * t * (x1 - cx);
+        const dy = 2 * (1 - t) * (cy - y0) + 2 * t * (y1 - cy);
+        return Math.atan2(dy, dx);
       }
       const angleStart = getCurveAngle(to.x, to.y, midX, midY, from.x, from.y);
       drawArrowhead(from.x, from.y, angleStart);
@@ -476,16 +476,16 @@
     
     function drawPieces() {
       houndsPieces.forEach((pos, i) => {
-          if (pos === -1 || pos === 29) return;
-          const label = boardPathHounds[pos];
-          const sq = boardSquares[label];
-          ctx.drawImage(houndsImg, sq.x - 20, sq.y - 20, 40, 40);
+        if (pos === -1 || pos === 29) return;
+        const label = boardPathHounds[pos];
+        const sq = boardSquares[label];
+        ctx.drawImage(houndsImg, sq.x - 20, sq.y - 20, 40, 40);
       });
       jackalsPieces.forEach((pos, i) => {
-          if (pos === -1 || pos === 29) return;
-          const label = boardPathJackals[pos];
-          const sq = boardSquares[label];
-          ctx.drawImage(jackalsImg, sq.x - 20, sq.y - 20, 40, 40);
+        if (pos === -1 || pos === 29) return;
+        const label = boardPathJackals[pos];
+        const sq = boardSquares[label];
+        ctx.drawImage(jackalsImg, sq.x - 20, sq.y - 20, 40, 40);
       });
     }
     
@@ -499,18 +499,18 @@
     
     function updateDiceRollDisplay() {
       diceRollDisplayEl.textContent = `Dice: ${
-          (currentDiceRoll !== 0) ? currentDiceRoll :
-          (unusedRoll !== null && unusedRollOwner === turnState) ? unusedRoll : "-"
+        (currentDiceRoll !== 0) ? currentDiceRoll :
+        (unusedRoll !== null && unusedRollOwner === turnState) ? unusedRoll : "-"
       }`;
       debugLog("updateDiceRollDisplay: currentDiceRoll = " + currentDiceRoll);
     }
     
     function addMoveToHistory(txt) {
       if (!txt.includes("Turn! Roll dice...") || lastTurnReported !== turnState) {
-          moveHistory.push(txt);
-          if (txt.includes("Turn! Roll dice...")) {
-              lastTurnReported = turnState;
-          }
+        moveHistory.push(txt);
+        if (txt.includes("Turn! Roll dice...")) {
+          lastTurnReported = turnState;
+        }
       }
       updateMoveHistoryDisplay();
       debugLog("addMoveToHistory: " + txt);
@@ -520,37 +520,37 @@
       moveHistoryDiv.innerHTML = "Moves:<br>" + moveHistory.join("<br>");
     }
     
-    // ─── UNUSED ROLL HANDLING ───────────────────────────────
+    // ─── UNUSED ROLL HANDLING ─────────────────────────────
     function updateUnusedRollButton() {
-      // Only show unused roll buttons if we are in an *_unused state and it’s the human’s turn.
+      // Show unused roll buttons only when in an *_unused state.
       const shouldShow = (
-          gameState === "playing" &&
-          (turnState === "hounds_unused" || turnState === "jackals_unused") &&
-          (unusedRoll !== null) &&
-          (unusedRoll >= 1 && unusedRoll <= 6)
+        gameState === "playing" &&
+        (turnState === "hounds_unused" || turnState === "jackals_unused") &&
+        unusedRoll !== null &&
+        unusedRoll >= 1 && unusedRoll <= 6
       );
       if (shouldShow) {
-          unusedRollBtn.style.display = "inline-block";
-          unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
-          ignoreUnusedRollBtn.style.display = "inline-block";
+        unusedRollBtn.style.display = "inline-block";
+        unusedRollBtn.textContent = "Use Unused Roll (" + unusedRoll + ")";
+        ignoreUnusedRollBtn.style.display = "inline-block";
       } else {
-          unusedRollBtn.style.display = "none";
-          ignoreUnusedRollBtn.style.display = "none";
+        unusedRollBtn.style.display = "none";
+        ignoreUnusedRollBtn.style.display = "none";
       }
     }
     
     function attemptUnusedRoll() {
       if (unusedRoll !== null && unusedRollOwner === turnState && turnState !== humanSide) {
-          debugLog("AI auto-using unused roll: " + unusedRoll);
-          processDiceRoll(unusedRoll);
-          unusedRoll = null;
-          unusedRollOwner = null;
-          return true;
+        debugLog("AI auto-using unused roll: " + unusedRoll);
+        processDiceRoll(unusedRoll);
+        unusedRoll = null;
+        unusedRollOwner = null;
+        return true;
       }
       return false;
     }
     
-    // ─── TURN UPDATING ───────────────────────────────────────────
+    // ─── TURN UPDATING ─────────────────────────────────────
     function updateTurn() {
       currentDiceRoll = 0;
       diceRolled = false;
@@ -558,45 +558,33 @@
       unusedRollBtn.style.display = "none";
       ignoreUnusedRollBtn.style.display = "none";
     
-      // If in an unused state, show unused roll buttons and do NOT auto-roll.
+      // If in an unused state, show unused roll buttons.
       if (turnState === "hounds_unused" || turnState === "jackals_unused") {
-          addMoveToHistory(`${turnState} turn: Unused roll available.`);
-          showTemporaryMessage(`${turnState} turn: Unused roll available.`);
-          updateUnusedRollButton();
-          if (turnState !== humanSide) {
-              aiTimeout = setTimeout(() => {
-                  // If AI does nothing in 6 seconds, automatically ignore the unused roll.
-                  debugLog("AI auto-ignores the unused roll: " + unusedRoll);
-                  unusedRoll = null;
-                  unusedRollOwner = null;
-                  // Switch to the opponent's normal turn.
-                  turnState = (turnState === "hounds_unused") ? "jackals" : "hounds";
-                  updateTurn();
-              }, 6000);
-          }
-      } else { // Normal turn states ("hounds" or "jackals")
-          addMoveToHistory(`${turnState}'s Turn! Roll dice...`);
-          showTemporaryMessage(`${turnState}'s Turn! Roll dice...`);
-          if (turnState === humanSide) {
-              rollDiceBtn.style.display = "inline-block";
-          } else {
-              aiTimeout = setTimeout(aiAutoRoll, 2000);
-          }
+        addMoveToHistory(`${turnState} turn: Unused roll available.`);
+        showTemporaryMessage(`${turnState} turn: Unused roll available.`);
+        updateUnusedRollButton();
+        // Do NOT auto-roll in unused state—wait for a click.
+      } else {
+        addMoveToHistory(`${turnState}'s Turn! Roll dice...`);
+        showTemporaryMessage(`${turnState}'s Turn! Roll dice...`);
+        // Always require a click (no auto-roll for either side now).
+        rollDiceBtn.style.display = "inline-block";
       }
       redrawPlayScreen();
     }
     
-    // ─── TRAY & OFF-BOARD UPDATES ──────────────────────────────
+    // ─── TRAY & OFF-BOARD UPDATES ─────────────────────────
     let imagesReady = false;
     function prepareTrayImages(callback) {
       let readyCount = 0;
       function checkReady() {
-          readyCount++;
-          if (readyCount === 2) { imagesReady = true; callback(); }
+        readyCount++;
+        if (readyCount === 2) { imagesReady = true; callback(); }
       }
       removeWhiteBackground(houndsImg, (cleaned) => { houndsImg = cleaned; checkReady(); });
       removeWhiteBackground(jackalsImg, (cleaned) => { jackalsImg = cleaned; checkReady(); });
     }
+    
     function updateTrays() {
       if (!imagesReady) return;
       const houndsTray = document.getElementById("houndsTray");
@@ -605,6 +593,7 @@
       jackalsTray.innerHTML = "";
       updateOffBoardCounts();
     }
+    
     function updateOffBoardCounts() {
       const hCount = houndsPieces.filter(p => p === -1).length;
       const jCount = jackalsPieces.filter(p => p === -1).length;
@@ -612,7 +601,7 @@
       document.getElementById("jackalsCount").textContent = "Jackals Off-board: " + jCount;
     }
     
-    // ─── MOVEMENT & RULES FUNCTIONS ─────────────────────────────
+    // ─── MOVEMENT & RULES FUNCTIONS ─────────────────────
     function getValidMove(piecePos, diceValue, color) {
       if (piecePos === -1) return (diceValue === 6 ? 0 : null);
       let target = piecePos + diceValue;
@@ -629,88 +618,87 @@
       let opts = [];
       let own = (color === "hounds") ? houndsPieces : jackalsPieces;
       for (let i = 0; i < own.length; i++) {
-          let pos = own[i];
-          let newPos = getValidMove(pos, diceValue, color);
-          if (newPos === null || !canLandOn(newPos, color)) continue;
-          let label = (color === "hounds") ? boardPathHounds[newPos] : boardPathJackals[newPos];
-          if ((color === "hounds" && ["B6", "B7", "B8", "B9", "B10"].includes(label)) ||
-              (color === "jackals" && ["C6", "C7", "C8", "C9"].includes(label)))
-              continue;
-          opts.push({ pieceIndex: i, fromPos: pos, toPos: newPos });
+        let pos = own[i];
+        let newPos = getValidMove(pos, diceValue, color);
+        if (newPos === null || !canLandOn(newPos, color)) continue;
+        let label = (color === "hounds") ? boardPathHounds[newPos] : boardPathJackals[newPos];
+        if ((color === "hounds" && ["B6","B7","B8","B9","B10"].includes(label)) ||
+            (color === "jackals" && ["C6","C7","C8","C9"].includes(label)))
+          continue;
+        opts.push({ pieceIndex: i, fromPos: pos, toPos: newPos });
       }
       return opts;
     }
     
     function executeMove(pieceIndex, toPos, color) {
       try {
-          let own = (color === "hounds") ? houndsPieces : jackalsPieces;
-          let fromPos = own[pieceIndex];
-          const teleportPairs = {
-              "A10": "B5", "B5": "A10",
-              "D10": "C5", "C5": "D10",
-              "B1": "B3", "B3": "B1",
-              "C1": "C3", "C3": "C1"
-          };
-          own[pieceIndex] = toPos;
-          let currentLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
-          if (teleportPairs[currentLabel]) {
-              let targetLabel = teleportPairs[currentLabel];
-              let targetIndex = (color === "hounds") ? boardPathHounds.indexOf(targetLabel) : boardPathJackals.indexOf(targetLabel);
-              if (targetIndex !== -1 && canLandOn(targetIndex, color)) {
-                  own[pieceIndex] = targetIndex;
-                  addMoveToHistory(`${color} teleported from ${currentLabel} to ${targetLabel}`);
-                  showTemporaryMessage(`${color} teleported to ${targetLabel}`);
-                  toPos = targetIndex;
-              }
+        let own = (color === "hounds") ? houndsPieces : jackalsPieces;
+        let fromPos = own[pieceIndex];
+        const teleportPairs = {
+          "A10": "B5", "B5": "A10",
+          "D10": "C5", "C5": "D10",
+          "B1": "B3", "B3": "B1",
+          "C1": "C3", "C3": "C1"
+        };
+        own[pieceIndex] = toPos;
+        let currentLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
+        if (teleportPairs[currentLabel]) {
+          let targetLabel = teleportPairs[currentLabel];
+          let targetIndex = (color === "hounds") ? boardPathHounds.indexOf(targetLabel) : boardPathJackals.indexOf(targetLabel);
+          if (targetIndex !== -1 && canLandOn(targetIndex, color)) {
+            own[pieceIndex] = targetIndex;
+            addMoveToHistory(`${color} teleported from ${currentLabel} to ${targetLabel}`);
+            showTemporaryMessage(`${color} teleported to ${targetLabel}`);
+            toPos = targetIndex;
           }
-          addMoveToHistory(`${color} moved piece #${pieceIndex+1} from ${fromPos === -1 ? "off-board" : fromPos+1} to ${toPos+1}`);
-          const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
-          if (["A5", "A15", "D5", "D15", "E5"].includes(landedLabel)) {
-              extraTurn = true;
-              addMoveToHistory(`${color} landed on ${landedLabel}, gets another turn!`);
-              showTemporaryMessage(`${color} gets another turn!`);
-          }
-          let finished = own.filter(p => p === 29).length;
-          if (finished === NUM_PIECES) {
-              if (checkSpecialVictoryCondition()) return true;
-              gameOverTextEl.textContent = (color === humanSide) ? "You Win!" : "You Lose!";
-              addMoveToHistory(`${color} wins the game!`);
-              showGameOver();
-          }
-          updateOffBoardCounts();
-          return true;
+        }
+        addMoveToHistory(`${color} moved piece #${pieceIndex+1} from ${fromPos === -1 ? "off-board" : fromPos+1} to ${toPos+1}`);
+        const landedLabel = (color === "hounds") ? boardPathHounds[toPos] : boardPathJackals[toPos];
+        if (["A5", "A15", "D5", "D15", "E5"].includes(landedLabel)) {
+          extraTurn = true;
+          addMoveToHistory(`${color} landed on ${landedLabel}, gets another turn!`);
+          showTemporaryMessage(`${color} gets another turn!`);
+        }
+        let finished = own.filter(p => p === 29).length;
+        if (finished === NUM_PIECES) {
+          if (checkSpecialVictoryCondition()) return true;
+          gameOverTextEl.textContent = (color === humanSide) ? "You Win!" : "You Lose!";
+          addMoveToHistory(`${color} wins the game!`);
+          showGameOver();
+        }
+        updateOffBoardCounts();
+        return true;
       } catch (error) {
-          console.error("executeMove error:", error);
-          return false;
+        console.error("executeMove error:", error);
+        return false;
       }
     }
     
     function checkSpecialVictoryCondition() {
       const houndsSpecialOccupied = ["B6","B7","B8","B9","B10"].every(label =>
-          houndsPieces.some(pos => boardPathHounds[pos] === label)
+        houndsPieces.some(pos => boardPathHounds[pos] === label)
       );
       const jackalsSpecialOccupied = ["C6","C7","C8","C9"].every(label =>
-          jackalsPieces.some(pos => boardPathJackals[pos] === label)
+        jackalsPieces.some(pos => boardPathJackals[pos] === label)
       );
       if (houndsSpecialOccupied) {
-          gameOverTextEl.textContent = "Hounds Win by Occupying All Special Spots!";
-          addMoveToHistory("Hounds win by occupying all special spots!");
-          showGameOver();
-          return true;
+        gameOverTextEl.textContent = "Hounds Win by Occupying All Special Spots!";
+        addMoveToHistory("Hounds win by occupying all special spots!");
+        showGameOver();
+        return true;
       }
       if (jackalsSpecialOccupied) {
-          gameOverTextEl.textContent = "Jackals Win by Occupying All Special Spots!";
-          addMoveToHistory("Jackals win by occupying all special spots!");
-          showGameOver();
-          return true;
+        gameOverTextEl.textContent = "Jackals Win by Occupying All Special Spots!";
+        addMoveToHistory("Jackals win by occupying all special spots!");
+        showGameOver();
+        return true;
       }
       return false;
     }
     
-    // ─── HUMAN INPUT FUNCTIONS ─────────────────────────────────────
+    // ─── HUMAN INPUT FUNCTIONS ───────────────────────────
     function humanRollDice() {
       if (gameState !== "playing" || turnState !== humanSide || diceRolled) return;
-      // In case an unused roll is present on human side, we now let it remain
       const rollValue = rollDice();
       processDiceRoll(rollValue);
     }
@@ -722,134 +710,97 @@
       const ownPieces = (humanSide === "hounds") ? houndsPieces : jackalsPieces;
       const boardPathSide = (humanSide === "hounds") ? boardPathHounds : boardPathJackals;
       for (let i = 0; i < ownPieces.length; i++) {
-          const pos = ownPieces[i];
-          if (pos === -1 || pos === 29) continue;
-          const label = boardPathSide[pos];
-          const sq = boardSquares[label];
-          if (mx >= sq.x - 25 && mx <= sq.x + 25 && my >= sq.y - 25 && my <= sq.y + 25) {
-              tryMovePiece(i, humanSide);
-              return;
-          }
+        const pos = ownPieces[i];
+        if (pos === -1 || pos === 29) continue;
+        const label = boardPathSide[pos];
+        const sq = boardSquares[label];
+        if (mx >= sq.x - 25 && mx <= sq.x + 25 && my >= sq.y - 25 && my <= sq.y + 25) {
+          tryMovePiece(i, humanSide);
+          return;
+        }
       }
     }
     
     function tryMovePiece(pieceIndex, color) {
-      if (gameState !== "playing" || turnState.replace("_unused","") !== humanSide || ((!diceRolled) && (turnState !== humanSide + "_unused"))) {
-          showTemporaryMessage("Can't move right now!");
-          return;
+      if (gameState !== "playing" || turnState.replace("_unused", "") !== humanSide || ((!diceRolled) && (turnState !== humanSide + "_unused"))) {
+        showTemporaryMessage("Can't move right now!");
+        return;
       }
-      const usingUnused = (turnState.endsWith("_unused"));
+      const usingUnused = turnState.endsWith("_unused");
       const rollUsed = usingUnused ? unusedRoll : currentDiceRoll;
       const pieces = (color === "hounds") ? houndsPieces : jackalsPieces;
-      if (pieces[pieceIndex] === -1) { // release move
-          if (rollUsed === 6 && canLandOn(0, color)) {
-              executeMove(pieceIndex, 0, color);
-              addMoveToHistory(`${color} placed piece on board using roll of ${rollUsed}.`);
-              diceRolled = false;
-              currentDiceRoll = 0;
-              if (usingUnused) {
-                  unusedRoll = null;
-                  unusedRollOwner = null;
-              }
-              // After a move, if extraTurn is not granted, switch from normal to the opponent’s normal state;
-              // if we are in an unused state, after using it, clear it and then switch.
-              if (!extraTurn) {
-                  if (turnState === "hounds" || turnState === "hounds_unused")
-                      turnState = "jackals";
-                  else
-                      turnState = "hounds";
-              }
-              updateTurn();
-          } else {
-              showTemporaryMessage("Cannot place piece! Need a 6.");
+      if (pieces[pieceIndex] === -1) {
+        // Release move requires a 6.
+        if (rollUsed === 6 && canLandOn(0, color)) {
+          executeMove(pieceIndex, 0, color);
+          addMoveToHistory(`${color} placed piece on board using roll of ${rollUsed}.`);
+          diceRolled = false;
+          currentDiceRoll = 0;
+          if (usingUnused) {
+            unusedRoll = null;
+            unusedRollOwner = null;
           }
-          return;
+          // If not granted an extra turn, switch states.
+          if (!extraTurn) {
+            turnState = (turnState === "hounds" || turnState === "hounds_unused") ? "jackals" : "hounds";
+          }
+          updateTurn();
+        } else {
+          showTemporaryMessage("Cannot place piece! Need a 6.");
+        }
+        return;
       }
       let opts = getMoveOptions(rollUsed, color);
       let moveOpt = opts.find(o => o.pieceIndex === pieceIndex);
       if (moveOpt) {
-          executeMove(pieceIndex, moveOpt.toPos, color);
-          addMoveToHistory(`${color} moved with roll (${rollUsed}).`);
-          diceRolled = false;
-          currentDiceRoll = 0;
-          if (usingUnused) {
-              unusedRoll = null;
-              unusedRollOwner = null;
-          }
-          if (!extraTurn) {
-              if (turnState === "hounds" || turnState === "hounds_unused")
-                  turnState = "jackals";
-              else
-                  turnState = "hounds";
-          }
-          updateTurn();
+        executeMove(pieceIndex, moveOpt.toPos, color);
+        addMoveToHistory(`${color} moved with roll (${rollUsed}).`);
+        diceRolled = false;
+        currentDiceRoll = 0;
+        if (usingUnused) {
+          unusedRoll = null;
+          unusedRollOwner = null;
+        }
+        if (!extraTurn) {
+          turnState = (turnState === "hounds" || turnState === "hounds_unused") ? "jackals" : "hounds";
+        }
+        updateTurn();
       }
     }
     
-    // ─── AI FUNCTIONS ─────────────────────────────────────────────
+    // ─── AI FUNCTIONS (NO AUTO-PLAY – USER MUST CLICK ROLL) ─────────
+    // (The AI functions are retained for reference but not auto-triggered.)
     function aiAutoRoll() {
-      if (gameState !== "playing" || (turnState === humanSide || turnState === humanSide + "_unused")) return;
-      if (turnState.endsWith("_unused")) {
-          processDiceRoll(unusedRoll);
-          unusedRoll = null;
-          unusedRollOwner = null;
-          return;
-      }
-      let rollVal = rollDice();
-      processDiceRoll(rollVal);
-      setTimeout(() => aiMakeMove(() => {
-          if (extraTurn) {
-              extraTurn = false;
-              updateTurn();
-          } else {
-              turnState = "hounds";  // switch back to hounds after AI turn
-              updateTurn();
-          }
-      }), 2000);
+      // Do nothing automatically. To progress an AI turn, the user must click "Roll Dice".
     }
     
     function aiMakeMove(callback = null) {
-      let opts = getMoveOptions(currentDiceRoll, turnState);
+      let opts = getMoveOptions(currentDiceRoll, turnState.replace("_unused", ""));
       if (opts.length === 0) {
-          showTemporaryMessage("AI has no moves. Passing turn...");
-          unusedRoll = currentDiceRoll;
-          // Switch to opponent’s normal state:
-          turnState = (turnState === "jackals") ? "hounds" : "jackals";
-          diceRolled = false;
-          currentDiceRoll = 0;
-          updateTurn();
-          if (callback) callback();
-          return;
+        showTemporaryMessage("AI has no moves. Passing turn...");
+        unusedRoll = currentDiceRoll;
+        // Switch turn to opponent’s normal state.
+        turnState = (turnState === "jackals") ? "hounds" : "jackals";
+        diceRolled = false;
+        currentDiceRoll = 0;
+        updateTurn();
+        if (callback) callback();
+        return;
       }
-      let pick;
-      if (aiDifficulty === "easy") {
-          pick = opts[Math.floor(Math.random() * opts.length)];
-      } else if (aiDifficulty === "medium") {
-          let captureMoves = opts.filter(o => houndsPieces.includes(o.toPos));
-          pick = (captureMoves.length > 0)
-              ? captureMoves[Math.floor(Math.random() * captureMoves.length)]
-              : opts[Math.floor(Math.random() * opts.length)];
-      } else if (aiDifficulty === "hard") {
-          let captureMoves = opts.filter(o => houndsPieces.includes(o.toPos));
-          if (captureMoves.length > 0) {
-              pick = captureMoves[Math.floor(Math.random() * captureMoves.length)];
-          } else {
-              pick = opts.reduce((best, o) => (o.fromPos < best.fromPos ? o : best), opts[0]);
-          }
-      }
-      if (!executeMove(pick.pieceIndex, pick.toPos, turnState.replace("_unused",""))) {
-          turnState = "hounds";
-          diceRolled = false;
-          currentDiceRoll = 0;
-          updateTurn();
-          return;
+      let pick = opts[Math.floor(Math.random() * opts.length)];
+      if (!executeMove(pick.pieceIndex, pick.toPos, turnState.replace("_unused", ""))) {
+        turnState = "hounds";
+        diceRolled = false;
+        currentDiceRoll = 0;
+        updateTurn();
+        return;
       }
       if (extraTurn) {
-          addMoveToHistory(`${turnState} gets another turn!`);
-          showTemporaryMessage(`${turnState} gets another turn!`);
-          // In extra turn, remain in the same state.
+        addMoveToHistory(`${turnState} gets another turn!`);
+        showTemporaryMessage(`${turnState} gets another turn!`);
+        // Remain in the current state.
       } else {
-          turnState = "hounds";  // After AI move, return to hounds turn.
+        turnState = "hounds";  // After an AI move, switch to hounds.
       }
       updateTurn();
       if (callback) callback();
@@ -899,7 +850,7 @@
       hideAllScreens();
       gameState = "playing";
       initPieces();
-      turnState = "hounds"; // Human always starts normally.
+      turnState = "hounds";  // Human always starts normally.
       diceRolled = false;
       currentDiceRoll = 0;
       extraTurn = false;
@@ -929,7 +880,7 @@
       instructionsContentEl.textContent = instructionsPages[currentInstructionsPage];
     }
     
-    // ─── EVENT LISTENERS ─────────────────────────────────────────────
+    // ─── EVENT LISTENERS ───────────────────────────────────────────
     document.getElementById("newGameBtn").onclick = () => showDifficultyScreen();
     document.getElementById("instructionsBtn").onclick = () => showInstructions();
     const gameOverNewGameBtn = document.getElementById("gameOverNewGameBtn");
@@ -947,7 +898,7 @@
           return;
       }
       processDiceRoll(customValue);
-      let opts = getMoveOptions(currentDiceRoll, turnState.replace("_unused",""));
+      let opts = getMoveOptions(currentDiceRoll, turnState.replace("_unused", ""));
       if (opts.length === 0) {
           showTemporaryMessage("No legal moves. Your roll is passed to your opponent.");
           addMoveToHistory(`No legal moves. ${turnState} passes roll (${currentDiceRoll}) to opponent.`);
@@ -965,53 +916,49 @@
           updateTurn();
       }
     });
-    document.getElementById("releaseHoundBtn").onclick = releaseHound;
-    document.addEventListener("keydown", (e) => {
-      let key = e.key.toLowerCase();
-      if (gameState === "selectDifficulty") {
-          if (key === "e") setDifficulty("easy");
-          else if (key === "m") setDifficulty("medium");
-          else if (key === "h") setDifficulty("hard");
-      } else if (gameState === "playing") {
-          if (key === "r" && turnState === humanSide && !diceRolled) {
-              humanRollDice();
-          } else if (key === "m") {
-              initPieces();
-              showMenu();
-          }
-      } else if (gameState === "instructions" || gameState === "gameover") {
-          if (key === "m") {
-              initPieces();
-              showMenu();
-          }
-      }
-    });
-    
-    function releaseHound() {
+    document.getElementById("releaseHoundBtn").onclick = () => {
       if (turnState !== "hounds") {
-          showTemporaryMessage("Not your turn!");
-          return;
+        showTemporaryMessage("Not your turn!");
+        return;
       }
       if (!diceRolled || currentDiceRoll !== 6) {
-          showTemporaryMessage("Must roll a 6 to release!");
-          return;
+        showTemporaryMessage("Must roll a 6 to release!");
+        return;
       }
       const index = houndsPieces.findIndex(p => p === -1);
       if (index === -1) {
-          showTemporaryMessage("No off-board hounds left!");
-          return;
+        showTemporaryMessage("No off-board hounds left!");
+        return;
       }
       tryMovePiece(index, humanSide);
-    }
+    };
+    document.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+      if (gameState === "selectDifficulty") {
+        if (key === "e") setDifficulty("easy");
+        else if (key === "m") setDifficulty("medium");
+        else if (key === "h") setDifficulty("hard");
+      } else if (gameState === "playing") {
+        if (key === "r" && turnState === humanSide && !diceRolled) {
+          humanRollDice();
+        } else if (key === "m") {
+          initPieces();
+          showMenu();
+        }
+      } else if (gameState === "instructions" || gameState === "gameover") {
+        if (key === "m") {
+          initPieces();
+          showMenu();
+        }
+      }
+    });
     
+    // ─── MAIN LOOP & START ─────────────────────────────────────
     function mainLoop() {
       if (gameState === "playing") {
-          redrawPlayScreen();
-          if (turnState === humanSide) {
-              rollDiceBtn.style.display = "inline-block";
-          } else {
-              rollDiceBtn.style.display = "none";
-          }
+        redrawPlayScreen();
+        // Only show the Roll Dice button when it's the human's turn (for manual play).
+        rollDiceBtn.style.display = (turnState === humanSide) ? "inline-block" : "none";
       }
       requestAnimationFrame(mainLoop);
     }
@@ -1024,7 +971,7 @@
     // Start the game
     startAll();
     
-    // ─── DEBUG FUNCTION ─────────────────────────────────────────────
+    // ─── DEBUG FUNCTION ─────────────────────────────────────────
     function debugLog(msg) {
       console.log("[DEBUG]", msg);
     }
