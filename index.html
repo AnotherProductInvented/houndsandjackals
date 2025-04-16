@@ -502,6 +502,12 @@
       }
       requestAnimationFrame(mainLoop);
     }
+function handleBoardClick(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  console.log(`Board clicked at: ${x}, ${y}`);
+}
 
     /**********************************************************
       5) GAME LOGIC, DRAWING, & UI
