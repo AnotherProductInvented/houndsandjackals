@@ -1285,10 +1285,8 @@ if (extraTurn) {
         requestAnimationFrame(mainLoop);
         debugLog("startAll: Main loop started.");
       }
-startAll();
-}); // ✅ closes the event listener correctly
-
-
+      startAll();
+    }); // closes window.addEventListener("load", function() {
   </script>
 </body>
 </html>
